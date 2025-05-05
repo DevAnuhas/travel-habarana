@@ -5,9 +5,9 @@ import Package from "@/modals/Package";
 
 export async function GET(
 	request: Request,
-	{ params }: { params: { id: string } }
+	context: { params: { id: string } }
 ) {
-	const { id } = await Promise.resolve(params);
+	const { id } = await Promise.resolve(context.params);
 	await connectMongoDB();
 	Package.init();
 	const data = await Inquiry.findById(id).populate("packageId", "name").lean();
