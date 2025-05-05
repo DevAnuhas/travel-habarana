@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import connectMongoDB from "@/lib/mongodb";
 import Inquiry from "@/modals/Inquiry";
 import Package from "@/modals/Package";
 
 export async function GET(
-	request: Request,
+	request: NextRequest,
 	context: { params: { id: string } }
 ) {
 	const { id } = await Promise.resolve(context.params);
