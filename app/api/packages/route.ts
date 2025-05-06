@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import connectMongoDB from "@/lib/mongodb";
-import Package from "@/modals/Package";
+import Package from "@/models/Package";
 import { packageSchema } from "@/lib/types";
 
 // Get all packages

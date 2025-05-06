@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import connectMongoDB from "@/lib/mongodb";
-import Inquiry from "@/modals/Inquiry";
-import Package from "@/modals/Package";
+import Inquiry from "@/models/Inquiry";
+import Package from "@/models/Package";
 import { inquirySchema } from "@/lib/types";
 
 // Get all inquiries
