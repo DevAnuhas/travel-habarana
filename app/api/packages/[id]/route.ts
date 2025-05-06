@@ -1,12 +1,12 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import connectMongoDB from "@/lib/mongodb";
 import Package from "@/modals/Package";
 
 export async function GET(
-	request: NextRequest,
-	context: { params: { id: string } }
+	request: Request,
+	{ params }: { params: Promise<{ id: string }> }
 ) {
-	const { id } = await Promise.resolve(context.params);
+	const { id } = await params;
 	await connectMongoDB();
 	const data = await Package.findById(id);
 	return NextResponse.json(data, { status: 200 });
@@ -14,9 +14,9 @@ export async function GET(
 
 export async function PUT(
 	request: Request,
-	{ params }: { params: { id: string } }
+	{ params }: { params: Promise<{ id: string }> }
 ) {
-	const { id } = await Promise.resolve(params);
+	const { id } = await params;
 	const updatedPackage = await request.json();
 
 	await Package.findByIdAndUpdate(id, updatedPackage);
@@ -25,9 +25,9 @@ export async function PUT(
 
 export async function DELETE(
 	request: Request,
-	{ params }: { params: { id: string } }
+	{ params }: { params: Promise<{ id: string }> }
 ) {
-	const { id } = await Promise.resolve(params);
+	const { id } = await params;
 
 	await Package.findByIdAndDelete(id);
 	return new NextResponse(null, { status: 204 });
