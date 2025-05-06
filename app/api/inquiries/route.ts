@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import connectMongoDB from "@/lib/mongodb";
 import Inquiry from "@/modals/Inquiry";
 import Package from "@/modals/Package";
+import { inquirySchema } from "@/lib/types";
 
+// Get all inquiries
 export async function GET() {
 	await connectMongoDB();
 	Package.init();
@@ -13,28 +15,17 @@ export async function GET() {
 	return NextResponse.json(data, { status: 200 });
 }
 
+// Create a new inquiry
 export async function POST(request: Request) {
-	const {
-		name,
-		email,
-		phone,
-		packageId,
-		date,
-		numberOfPeople,
-		specialRequests,
-	} = await request.json();
+	const inquiry = inquirySchema.safeParse(await request.json());
+
+	if (!inquiry.success) {
+		return NextResponse.json(inquiry.error.issues, { status: 400 });
+	}
 
 	await connectMongoDB();
 
-	const newInquiry = new Inquiry({
-		name,
-		email,
-		phone,
-		packageId,
-		date,
-		numberOfPeople,
-		specialRequests,
-	});
+	const newInquiry = new Inquiry(inquiry.data);
 
 	await newInquiry.save();
 	return NextResponse.json(newInquiry, { status: 201 });
