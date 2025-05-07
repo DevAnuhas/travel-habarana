@@ -30,7 +30,6 @@ type LoginFormValues = z.infer<typeof userSchema>;
 
 const LoginForm = () => {
 	const router = useRouter();
-	const navigate = router.push;
 	const [isLoading, setIsLoading] = useState(false);
 
 	const form = useForm<LoginFormValues>({
@@ -41,38 +40,35 @@ const LoginForm = () => {
 		},
 	});
 
-	const onSubmit = async (formData: LoginFormValues) => {
+	async function onSubmit(formData: LoginFormValues) {
 		setIsLoading(true);
+
 		try {
-			const res = await signIn("credentials", {
+			const result = await signIn("credentials", {
 				email: formData.email,
 				password: formData.password,
 				redirect: false,
 			});
 
-			if (!res?.ok) {
-				toast.error("Check your credentials and try again");
+			if (result?.error) {
+				toast.error(result.error);
 				return;
 			}
 
-			navigate("/dashboard");
-
-			toast.success("Login successful", {
-				duration: 5000,
-			});
+			toast.success("Logged in successfully");
+			router.push("/admin/dashboard");
+			router.refresh();
 		} catch {
-			toast.error("Login failed", {
-				description: "An unexpected error occurred. Please try again.",
-			});
+			toast.error("An error occurred during login");
 		} finally {
 			setIsLoading(false);
 		}
-	};
+	}
 
 	return (
 		<Card>
 			<CardHeader>
-				<CardTitle className="text-2xl tracking-tight">Log in</CardTitle>
+				<CardTitle className="text-2xl tracking-tight">Login</CardTitle>
 				<CardDescription>
 					Enter your credentials to access the dashboard
 				</CardDescription>
@@ -118,7 +114,7 @@ const LoginForm = () => {
 							className="w-full mt-2"
 							disabled={isLoading}
 						>
-							{isLoading ? "Signing in..." : "Sign in"}
+							{isLoading ? "Logging in..." : "Login"}
 						</Button>
 					</form>
 				</Form>
