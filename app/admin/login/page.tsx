@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 const LoginPage = async () => {
 	const session = await getServerSession(authOptions);
 
-	if (session) redirect("/dashboard");
+	if (session) redirect("/admin/dashboard");
 
 	return (
 		<div className="flex min-h-[80vh] items-center justify-center px-4 py-12">
