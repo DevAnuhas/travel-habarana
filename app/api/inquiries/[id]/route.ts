@@ -73,7 +73,7 @@ export async function DELETE(
 			}
 
 			await Inquiry.findByIdAndDelete(id);
-			return new NextResponse(null, { status: 204 });
+			return NextResponse.json({ message: "Inquiry deleted successfully" });
 		});
 	});
 }
