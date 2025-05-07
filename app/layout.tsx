@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, DM_Serif_Display } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider } from "@/app/Providers";
 
 const inter = Inter({
 	variable: "--font-inter",
@@ -30,7 +31,7 @@ export default function RootLayout({
 			<body
 				className={`${inter.variable} ${dmSerifDisplay.variable} antialiased`}
 			>
-				{children}
+				<AuthProvider>{children}</AuthProvider>
 				<Toaster richColors />
 			</body>
 		</html>

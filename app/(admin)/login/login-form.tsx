@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { login } from "./actions";
+import { signIn } from "next-auth/react";
 import {
 	Card,
 	CardContent,
@@ -44,25 +44,22 @@ const LoginForm = () => {
 	const onSubmit = async (formData: LoginFormValues) => {
 		setIsLoading(true);
 		try {
-			const data = new FormData();
-			data.append("email", formData.email);
-			data.append("password", formData.password);
+			const res = await signIn("credentials", {
+				email: formData.email,
+				password: formData.password,
+				redirect: false,
+			});
 
-			const response = await login(data);
-
-			if (response.success) {
-				navigate("/dashboard");
-				console.log(response);
-
-				toast.success(response.message, {
-					description: response.description,
-					duration: 5000,
-				});
-			} else {
-				toast.error(response.message, {
-					description: response.description,
-				});
+			if (!res?.ok) {
+				toast.error("Check your credentials and try again");
+				return;
 			}
+
+			navigate("/dashboard");
+
+			toast.success("Login successful", {
+				duration: 5000,
+			});
 		} catch {
 			toast.error("Login failed", {
 				description: "An unexpected error occurred. Please try again.",
