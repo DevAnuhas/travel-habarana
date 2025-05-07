@@ -24,15 +24,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { userSchema } from "@/lib/types";
 
-const loginFormSchema = z.object({
-	email: z.string().email({ message: "Please enter a valid email address" }),
-	password: z
-		.string()
-		.min(6, { message: "Password must be at least 6 characters" }),
-});
-
-type LoginFormValues = z.infer<typeof loginFormSchema>;
+type LoginFormValues = z.infer<typeof userSchema>;
 
 const LoginForm = () => {
 	const router = useRouter();
@@ -40,7 +34,7 @@ const LoginForm = () => {
 	const [isLoading, setIsLoading] = useState(false);
 
 	const form = useForm<LoginFormValues>({
-		resolver: zodResolver(loginFormSchema),
+		resolver: zodResolver(userSchema),
 		defaultValues: {
 			email: "",
 			password: "",
