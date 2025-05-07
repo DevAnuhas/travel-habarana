@@ -1,36 +1,141 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Travel Habarana - Safari Booking Web Application
 
-## Getting Started
+## Overview
 
-First, run the development server:
+Travel Habarana is a Next.js 15 web application designed to promote and manage safari and village tour bookings in Sri Lanka. The platform allows users to browse safari packages (Hurulu Eco Park, Minneriya National Park, Kaudulla National Park) and a village tour, submit booking inquiries, and receive follow-up from the client. A secure admin panel enables authorized admins to manage packages, inquiries, and admin users. The application uses MongoDB for data storage, Auth.js for authentication, and Tailwind CSS and Shadcn UI for styling.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Features
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **User Side**: Browse safari and village tour packages, submit booking inquiries (no sign-up required), and access contact details.
+- **Admin Panel**: Manage packages (CRUD operations), view and delete inquiries, and add/remove admin users.
+- **Authentication**: Email and password login for admins with JWT session management and password change functionality.
+- **Error Handling**: Centralized error handling for API routes with custom error classes.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Tech Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Framework**: Next.js 15
+- **Database**: MongoDB (via Mongoose)
+- **Authentication**: Auth.js (NextAuth.js)
+- **Styling**: Tailwind CSS, Shadcn UI
+- **Dependencies**: `bcryptjs`, `nodemailer`, `nanoid`, `zod`
+- **Hosting**: Recommended deployment on Vercel
 
-## Learn More
+## Prerequisites
 
-To learn more about Next.js, take a look at the following resources:
+- Node.js (v18 or later)
+- MongoDB Atlas account (for cloud database)
+- Gmail account or SendGrid for email sending
+- Vercel account (for deployment)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Installation
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. **Clone the Repository**:
 
-## Deploy on Vercel
+   ```bash
+   https://github.com/DevAnuhas/travel-habarana.git
+   cd travel-habarana
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+2. **Install Dependencies**:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+   ```bash
+   npm install
+   ```
+
+3. **Set Up Environment Variables**:
+
+   - Create a `.env.local` file in the root directory and add the following:
+
+   ```env
+   MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/travelHabaranaDB?retryWrites=true&w=majority
+   NEXTAUTH_SECRET=<your-nextauth-secret>
+   EMAIL_USER=<your-email@gmail.com>
+   EMAIL_PASS=<your-email-password>
+   ```
+
+   - Generate a `NEXTAUTH_SECRET` using `openssl rand -base64 32` or an online generator.
+   - Update `MONGODB_URI` with your MongoDB Atlas connection string.
+   - Use a Gmail account or SendGrid for `EMAIL_USER` and `EMAIL_PASS`.
+
+4. **Set Up MongoDB Atlas**:
+
+   - Create a cluster in MongoDB Atlas.
+   - Add your IP address to the network access list.
+   - Create a database user and use `travelHabaranaDB` as the database name.
+
+5. **Run the Development Server**:
+
+   ```bash
+   npm run dev
+   ```
+
+   - Open [http://localhost:3000](http://localhost:3000) to view the app.
+
+## Project Structure
+
+- **`app/`**: Next.js app directory with pages and API routes.
+  - `api/`: Backend API routes (e.g., `packages`, `inquiries`, `auth`).
+  - `admin/`: Admin panel pages (e.g., `login`, `dashboard`, `packages`).
+- **`lib/`**: Utility and model files.
+  - `mongodb.ts`: Singleton MongoDB connection.
+  - `models/`: Mongoose schemas.
+  - `errors.ts`: Custom error classes.
+- **`middleware/error-handler.ts`**: Error handling middleware.
+- **`middleware.ts`**: Authentication middleware for protected routes.
+- **`components/`**: React components for the UI.
+
+## Usage
+
+### User Side
+
+- Visit the homepage to browse packages.
+- Click "Book Now" to submit an inquiry via a form (data is emailed to your email and stored in MongoDB).
+
+### Admin Panel
+
+1. **Sign In**:
+   - Go to `/admin/login` and log in with an admin email and password.
+2. **Dashboard**:
+   - View an overview of recent inquiries and packages at `/admin/dashboard`.
+3. **Packages Management**:
+   - Manage packages (create, edit, delete) at `/admin/packages`.
+4. **Inquiries Management**:
+   - View and delete inquiries at `/admin/inquiries` with filters for package and date.
+5. **Admin Management**:
+   - Add or remove users at `/admin/users`.
+6. **Change Password**:
+   - Update your password at `/admin/change-password`.
+
+## API Endpoints
+
+### Packages
+
+- `GET /api/packages`: List all packages.
+- `GET /api/packages/[id]`: Get a package by ID.
+- `POST /api/packages`: Create a package (admin-only).
+- `PUT /api/packages/[id]`: Update a package (admin-only).
+- `DELETE /api/packages/[id]`: Delete a package (admin-only).
+
+### Inquiries
+
+- `POST /api/inquiries`: Submit a booking inquiry.
+- `GET /api/inquiries`: List inquiries (admin-only).
+- `GET /api/inquiries/[id]`: Get an inquiry by ID (admin-only).
+- `DELETE /api/inquiries/[id]`: Delete an inquiry (admin-only).
+
+### Auth
+
+- `POST /api/auth/register`: Add a new admin (admin-only).
+- `GET /api/auth/users`: List all users (admin-only).
+- `PATCH /api/auth/users/[id]`: Change password (admin-only).
+- `DELETE /api/auth/users/[id]`: Delete user (admin-only).
+
+## Deployment
+
+This application can be easily deployed to Vercel:
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FDevAnuhas%2Fclean-ease)
+
+## License
+
+This project is licensed under the [MIT License](License.txt).
