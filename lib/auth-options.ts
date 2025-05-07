@@ -24,7 +24,7 @@ export const authOptions: NextAuthOptions = {
 
 					const user = await User.findOne({ email: credentials?.email });
 					if (!user) {
-						throw new Error("No user found with this email");
+						throw new Error("Invalid credentials, please try again");
 					}
 
 					const passwordMatch = await bcrypt.compare(
@@ -32,7 +32,7 @@ export const authOptions: NextAuthOptions = {
 						user.password
 					);
 					if (!passwordMatch) {
-						throw new Error("Invalid password");
+						throw new Error("Invalid credentials, please try again");
 					}
 
 					return user;

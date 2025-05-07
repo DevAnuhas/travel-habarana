@@ -1,63 +1,75 @@
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import connectMongoDB from "@/lib/mongodb";
 import Package from "@/models/Package";
 import { packageSchema } from "@/lib/types";
+import { NotFoundError } from "@/lib/errors";
+import { withErrorHandler, withAdminAuth } from "@/middleware/error-handler";
 
 // Get a package by id
 export async function GET(
-	request: Request,
+	request: NextRequest,
 	{ params }: { params: Promise<{ id: string }> }
 ) {
-	const { id } = await params;
-	await connectMongoDB();
+	return withErrorHandler(request, async () => {
+		const { id } = await params;
+		await connectMongoDB();
 
-	const pkg = await Package.findById(id);
+		const packageItem = await Package.findById(id);
 
-	if (!pkg) {
-		return new NextResponse(null, { status: 404 });
-	}
+		if (!packageItem) {
+			throw new NotFoundError("Package not found");
+		}
 
-	return NextResponse.json(pkg, { status: 200 });
+		return NextResponse.json(packageItem, { status: 200 });
+	});
 }
 
 // Update a package by id
 export async function PUT(
-	request: Request,
+	request: NextRequest,
 	{ params }: { params: Promise<{ id: string }> }
 ) {
-	const { id } = await params;
-	const updatedPackage = packageSchema.safeParse(await request.json());
+	return withErrorHandler(request, async () => {
+		return withAdminAuth(request, async () => {
+			const { id } = await params;
+			const updatedPackage = packageSchema.safeParse(await request.json());
 
-	if (!updatedPackage.success) {
-		return NextResponse.json(updatedPackage.error.issues, { status: 400 });
-	}
+			if (!updatedPackage.success) {
+				return NextResponse.json(updatedPackage.error.issues, { status: 400 });
+			}
 
-	await connectMongoDB();
+			await connectMongoDB();
 
-	const pkg = await Package.findById(id);
+			const packageItem = await Package.findById(id);
 
-	if (!pkg) {
-		return new NextResponse(null, { status: 404 });
-	}
+			if (!packageItem) {
+				throw new NotFoundError("Package not found");
+			}
 
-	await Package.findByIdAndUpdate(id, updatedPackage.data);
-	return NextResponse.json(updatedPackage.data, { status: 201 });
+			await Package.findByIdAndUpdate(id, updatedPackage.data);
+			return NextResponse.json(updatedPackage.data, { status: 201 });
+		});
+	});
 }
 
 // Delete a package by id
 export async function DELETE(
-	request: Request,
+	request: NextRequest,
 	{ params }: { params: Promise<{ id: string }> }
 ) {
-	const { id } = await params;
-	await connectMongoDB();
+	return withErrorHandler(request, async () => {
+		return withAdminAuth(request, async () => {
+			const { id } = await params;
+			await connectMongoDB();
 
-	const pkg = await Package.findById(id);
+			const packageItem = await Package.findById(id);
 
-	if (!pkg) {
-		return new NextResponse(null, { status: 404 });
-	}
+			if (!packageItem) {
+				throw new NotFoundError("Package not found");
+			}
 
-	await Package.findByIdAndDelete(id);
-	return new NextResponse(null, { status: 204 });
+			await Package.findByIdAndDelete(id);
+			return NextResponse.json({ message: "Package deleted successfully" });
+		});
+	});
 }
