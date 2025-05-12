@@ -23,17 +23,15 @@ export async function GET(request: NextRequest) {
 // Create a new inquiry
 export async function POST(request: NextRequest) {
 	return withErrorHandler(request, async () => {
-		return withAdminAuth(request, async () => {
-			const inquiry = inquirySchema.safeParse(await request.json());
+		const inquiry = inquirySchema.safeParse(await request.json());
 
-			if (!inquiry.success) {
-				return NextResponse.json(inquiry.error.issues, { status: 400 });
-			}
+		if (!inquiry.success) {
+			return NextResponse.json(inquiry.error.issues, { status: 400 });
+		}
 
-			await connectMongoDB();
+		await connectMongoDB();
 
-			const newInquiry = Inquiry.create(inquiry.data);
-			return NextResponse.json(newInquiry, { status: 201 });
-		});
+		const newInquiry = Inquiry.create(inquiry.data);
+		return NextResponse.json(newInquiry, { status: 201 });
 	});
 }
