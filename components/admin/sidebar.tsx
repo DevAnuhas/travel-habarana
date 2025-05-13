@@ -4,13 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import {
-	LayoutDashboard,
-	MapPinned,
-	MessageSquare,
+	SquaresFour,
+	ChatText,
+	MapPinArea,
 	Users,
-	LockKeyhole,
-	LogOut,
-} from "lucide-react";
+	Password,
+	SignOut,
+} from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -21,17 +21,17 @@ export function Sidebar() {
 		{
 			name: "Dashboard",
 			href: "/admin/dashboard",
-			icon: LayoutDashboard,
-		},
-		{
-			name: "Packages",
-			href: "/admin/packages",
-			icon: MapPinned,
+			icon: SquaresFour,
 		},
 		{
 			name: "Inquiries",
 			href: "/admin/inquiries",
-			icon: MessageSquare,
+			icon: ChatText,
+		},
+		{
+			name: "Packages",
+			href: "/admin/packages",
+			icon: MapPinArea,
 		},
 		{
 			name: "Users",
@@ -41,7 +41,7 @@ export function Sidebar() {
 		{
 			name: "Change Password",
 			href: "/admin/change-password",
-			icon: LockKeyhole,
+			icon: Password,
 		},
 	];
 
@@ -78,7 +78,7 @@ export function Sidebar() {
 					className="w-full justify-start"
 					onClick={() => signOut({ callbackUrl: "/admin/login" })}
 				>
-					<LogOut className="mr-3 h-5 w-5" />
+					<SignOut className="mr-3 h-5 w-5" />
 					Sign Out
 				</Button>
 			</div>

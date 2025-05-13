@@ -18,7 +18,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Trash2, Calendar, Package } from "lucide-react";
+import { Trash, CalendarDots, MapPinArea } from "@phosphor-icons/react";
 import LoadingSpinner from "@/components/ui/spinner";
 import { toast } from "sonner";
 
@@ -209,21 +209,21 @@ export default function InquiriesPage() {
 											size="sm"
 											onClick={() => handleDelete(inquiry._id)}
 										>
-											<Trash2 className="h-4 w-4" />
+											<Trash className="h-4 w-4" />
 										</Button>
 									</div>
 								</CardHeader>
 								<CardContent>
 									<div className="grid gap-2 text-sm">
 										<div className="flex items-center">
-											<Package className="mr-2 h-4 w-4 text-muted-foreground" />
+											<MapPinArea className="mr-2 h-4 w-4 text-muted-foreground" />
 											<span className="font-medium">Package:</span>
 											<span className="ml-2">
 												{getPackageName(inquiry.packageId)}
 											</span>
 										</div>
 										<div className="flex items-center">
-											<Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
+											<CalendarDots className="mr-2 h-4 w-4 text-muted-foreground" />
 											<span className="font-medium">Date:</span>
 											<span className="ml-2">
 												{new Date(inquiry.date).toLocaleDateString()}

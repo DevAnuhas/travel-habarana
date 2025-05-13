@@ -6,7 +6,7 @@ import { AdminLayout } from "@/components/admin/layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import LoadingSpinner from "@/components/ui/spinner";
-import { MapPinned, MessageSquare } from "lucide-react";
+import { MapPinArea, ChatText } from "@phosphor-icons/react";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -88,7 +88,7 @@ export default function DashboardPage() {
 							<CardTitle className="text-sm font-medium">
 								Total Packages
 							</CardTitle>
-							<MapPinned className="h-6 w-6 text-muted-foreground" />
+							<MapPinArea className="h-6 w-6 text-muted-foreground" />
 						</CardHeader>
 						<CardContent>
 							<div className="text-3xl font-bold">{stats.totalPackages}</div>
@@ -106,7 +106,7 @@ export default function DashboardPage() {
 							<CardTitle className="text-sm font-medium">
 								Total Inquiries
 							</CardTitle>
-							<MessageSquare className="h-6 w-6 text-muted-foreground" />
+							<ChatText className="h-6 w-6 text-muted-foreground" />
 						</CardHeader>
 						<CardContent>
 							<div className="text-3xl font-bold">{stats.totalInquiries}</div>

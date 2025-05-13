@@ -35,7 +35,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { AdminLayout } from "@/components/admin/layout";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, PencilSimpleLine, Trash } from "@phosphor-icons/react";
 import { packageSchema } from "@/lib/types";
 
 type PackageFormValues = z.input<typeof packageSchema>;
@@ -370,7 +370,7 @@ https://res.cloudinary.com/..."
 											setIsDialogOpen(true);
 										}}
 									>
-										<Pencil className="mr-2 h-4 w-4" />
+										<PencilSimpleLine className="mr-2 h-4 w-4" />
 										Edit
 									</Button>
 									<Button
@@ -378,7 +378,7 @@ https://res.cloudinary.com/..."
 										size="sm"
 										onClick={() => handleDelete(pkg._id)}
 									>
-										<Trash2 className="mr-2 h-4 w-4" />
+										<Trash className="mr-2 h-4 w-4" />
 										Delete
 									</Button>
 								</CardFooter>

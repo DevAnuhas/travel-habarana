@@ -28,7 +28,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import LoadingSpinner from "@/components/ui/spinner";
-import { Plus, Trash2, User } from "lucide-react";
+import { Plus, Trash, User } from "@phosphor-icons/react";
 
 // Schema for admin registration
 const adminSchema = z
@@ -269,7 +269,7 @@ export default function AdminsPage() {
 											(session.user as { id?: string }).id === admin._id
 										}
 									>
-										<Trash2 className="h-4 w-4" />
+										<Trash className="h-4 w-4" />
 									</Button>
 								</CardContent>
 							</Card>
