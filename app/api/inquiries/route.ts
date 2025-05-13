@@ -6,21 +6,6 @@ import { inquirySchema } from "@/lib/types";
 import { NotFoundError } from "@/lib/errors";
 import { withErrorHandler, withAdminAuth } from "@/middleware/error-handler";
 
-// Get all inquiries
-/* export async function GET(request: NextRequest) {
-	return withErrorHandler(request, async () => {
-		return withAdminAuth(request, async () => {
-			await connectMongoDB();
-			Package.init();
-			const data = await Inquiry.find()
-				.populate("packageId", "name")
-				.lean()
-				.sort({ createdAt: -1 });
-			return NextResponse.json(data, { status: 200 });
-		});
-	});
-} */
-
 export async function GET(req: NextRequest) {
 	return withErrorHandler(req, async (req) => {
 		return withAdminAuth(req, async () => {
