@@ -11,13 +11,18 @@ export const packageSchema = z.object({
 
 // Inquiry Schema
 export const inquirySchema = z.object({
-	name: z.string(),
-	email: z.string().email(),
-	phone: z.string(),
-	packageId: z.string(),
-	date: z.string(),
-	numberOfPeople: z.number(),
-	specialRequests: z.string(),
+	name: z.string().min(2, "Name must be at least 2 characters"),
+	email: z.string().email("Invalid email address"),
+	phone: z.string().min(5, "Phone number is required"),
+	packageId: z.string().min(1, "Package ID is required"),
+	date: z
+		.string()
+		.regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
+	numberOfPeople: z
+		.number()
+		.int()
+		.positive("Number of people must be positive"),
+	specialRequests: z.string().optional(),
 });
 
 // User Schema
@@ -44,3 +49,9 @@ export const passwordChangeSchema = z
 		message: "Passwords do not match",
 		path: ["confirmPassword"],
 	});
+
+// Inquiry Status Update Schema
+export const inquiryStatusUpdateSchema = z.object({
+	ids: z.array(z.string()),
+	status: z.enum(["new", "contacted", "confirmed", "cancelled"]),
+});

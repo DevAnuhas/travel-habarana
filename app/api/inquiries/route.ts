@@ -3,6 +3,7 @@ import connectMongoDB from "@/lib/mongodb";
 import Inquiry from "@/models/Inquiry";
 import Package from "@/models/Package";
 import { inquirySchema } from "@/lib/types";
+import { NotFoundError } from "@/lib/errors";
 import { withErrorHandler, withAdminAuth } from "@/middleware/error-handler";
 
 // Get all inquiries
@@ -31,7 +32,13 @@ export async function POST(request: NextRequest) {
 
 		await connectMongoDB();
 
-		const newInquiry = Inquiry.create(inquiry.data);
-		return NextResponse.json(newInquiry, { status: 201 });
+		// Check if package exists
+		const packageExists = await Package.findById(inquiry.data.packageId);
+		if (!packageExists) {
+			throw new NotFoundError("Package not found");
+		}
+
+		// const newInquiry = Inquiry.create(inquiry.data);
+		return NextResponse.json({ status: 201 });
 	});
 }
