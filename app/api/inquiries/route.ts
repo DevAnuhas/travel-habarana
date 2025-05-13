@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
 			throw new NotFoundError("Package not found");
 		}
 
-		// const newInquiry = Inquiry.create(inquiry.data);
-		return NextResponse.json({ status: 201 });
+		const newInquiry = Inquiry.create(inquiry.data);
+		return NextResponse.json({ newInquiry, status: 201 });
 	});
 }
