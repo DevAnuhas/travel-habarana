@@ -7,7 +7,7 @@ import { NotFoundError } from "@/lib/errors";
 import { withErrorHandler, withAdminAuth } from "@/middleware/error-handler";
 
 // Get all inquiries
-export async function GET(request: NextRequest) {
+/* export async function GET(request: NextRequest) {
 	return withErrorHandler(request, async () => {
 		return withAdminAuth(request, async () => {
 			await connectMongoDB();
@@ -17,6 +17,58 @@ export async function GET(request: NextRequest) {
 				.lean()
 				.sort({ createdAt: -1 });
 			return NextResponse.json(data, { status: 200 });
+		});
+	});
+} */
+
+export async function GET(req: NextRequest) {
+	return withErrorHandler(req, async (req) => {
+		return withAdminAuth(req, async () => {
+			await connectMongoDB();
+
+			const url = new URL(req.url);
+			const packageId = url.searchParams.get("packageId");
+			const date = url.searchParams.get("date");
+			const status = url.searchParams.get("status");
+			const search = url.searchParams.get("search");
+			const page = Number.parseInt(url.searchParams.get("page") || "1");
+			const pageSize = Number.parseInt(
+				url.searchParams.get("pageSize") || "10"
+			);
+
+			// Build query based on filters
+			const query: Record<string, unknown> = {};
+			if (packageId) query.packageId = packageId;
+			if (date) query.date = date;
+			if (status) query.status = status;
+
+			// Add search functionality
+			if (search) {
+				query.$or = [
+					{ name: { $regex: search, $options: "i" } },
+					{ email: { $regex: search, $options: "i" } },
+					{ phone: { $regex: search, $options: "i" } },
+				];
+			}
+
+			// Get total count for pagination
+			const total = await Inquiry.countDocuments(query);
+
+			// Get inquiries with pagination and sorting
+			const inquiries = await Inquiry.find(query)
+				.sort({ createdAt: -1 })
+				.skip((page - 1) * pageSize)
+				.limit(pageSize);
+
+			return NextResponse.json({
+				inquiries,
+				pagination: {
+					total,
+					page,
+					pageSize,
+					pageCount: Math.ceil(total / pageSize),
+				},
+			});
 		});
 	});
 }
