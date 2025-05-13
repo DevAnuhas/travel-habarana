@@ -41,6 +41,7 @@ export async function GET(req: NextRequest) {
 
 			// Get inquiries with pagination and sorting
 			const inquiries = await Inquiry.find(query)
+				.populate("packageId", "name")
 				.sort({ createdAt: -1 })
 				.skip((page - 1) * pageSize)
 				.limit(pageSize);
