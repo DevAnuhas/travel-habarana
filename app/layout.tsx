@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, DM_Serif_Display } from "next/font/google";
 import "./globals.css";
+import Navbar from "@/components/layout/navbar";
+import Footer from "@/components/layout/footer";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/components/providers/session-provider";
 
@@ -30,7 +32,9 @@ export default function RootLayout({
 		<html lang="en" suppressHydrationWarning>
 			<body className={`${inter.variable} ${dmSerifDisplay.variable}`}>
 				<AuthProvider>
-					{children}
+					<Navbar />
+					<main className="flex-grow">{children}</main>
+					<Footer />
 					<Toaster />
 				</AuthProvider>
 			</body>
