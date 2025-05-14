@@ -1,9 +1,18 @@
 import CredentialsProvider from "next-auth/providers/credentials";
-import type { NextAuthOptions } from "next-auth";
+import type { NextAuthOptions, DefaultSession } from "next-auth";
 import bcrypt from "bcryptjs";
 import User from "@/models/User";
 import { userSchema } from "@/lib/types";
 import connectMongoDB from "@/lib/mongodb";
+
+declare module "next-auth" {
+	interface Session {
+		user: {
+			role: string;
+			id: string;
+		} & DefaultSession["user"];
+	}
+}
 
 export const authOptions: NextAuthOptions = {
 	providers: [
@@ -35,7 +44,11 @@ export const authOptions: NextAuthOptions = {
 						throw new Error("Invalid credentials, please try again");
 					}
 
-					return user;
+					return {
+						id: user._id.toString(),
+						email: user.email,
+						role: user.role,
+					};
 				} catch (error: unknown) {
 					if (error instanceof Error) {
 						throw new Error(error.message || "Authentication failed");
@@ -46,6 +59,26 @@ export const authOptions: NextAuthOptions = {
 			},
 		}),
 	],
+	callbacks: {
+		async jwt({ token, user }) {
+			if (user) {
+				token.id = user.id;
+				token.email = user.email;
+				if ("role" in user) {
+					token.role = user.role;
+				}
+			}
+			return token;
+		},
+		async session({ session, token }) {
+			if (token) {
+				session.user.id = token.id as string;
+				session.user.email = token.email as string;
+				session.user.role = token.role as string;
+			}
+			return session;
+		},
+	},
 	session: {
 		strategy: "jwt",
 		maxAge: 30 * 24 * 60 * 60, // 30 days
