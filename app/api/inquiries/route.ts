@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
 
 			// Build query based on filters
 			const query: Record<string, unknown> = {};
-			if (packageId) query.packageId = packageId;
+			if (packageId) query["packageId._id"] = packageId;
 			if (date) query.date = date;
 			if (status) query.status = status;
 

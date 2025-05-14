@@ -1,59 +1,97 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { AdminLayout } from "@/components/admin/layout";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Trash, CalendarDots, MapPinArea } from "@phosphor-icons/react";
-import LoadingSpinner from "@/components/ui/spinner";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
+import { format } from "date-fns";
+import type { ColumnDef } from "@tanstack/react-table";
+import {
+	CheckCircle,
+	PhoneCall,
+	XCircle,
+	Clock,
+	DotsThreeOutline,
+	MapPinArea,
+	CalendarDots,
+	Users,
+	Copy,
+} from "@phosphor-icons/react";
+import { DataTable } from "@/components/ui/data-table";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { AdminLayout } from "@/components/admin/layout";
 
 type Inquiry = {
 	_id: string;
 	name: string;
 	email: string;
 	phone: string;
-	packageId: string;
+	packageId: {
+		_id: string;
+		name: string;
+	};
 	date: string;
 	numberOfPeople: number;
 	specialRequests?: string;
+	status: "new" | "contacted" | "confirmed" | "cancelled";
 	createdAt: string;
 };
 
-type PackageType = {
+type Package = {
 	_id: string;
 	name: string;
 };
 
 export default function InquiriesPage() {
 	const [inquiries, setInquiries] = useState<Inquiry[]>([]);
-	const [packages, setPackages] = useState<PackageType[]>([]);
+	const [packages, setPackages] = useState<Package[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
-	const [selectedPackage, setSelectedPackage] = useState<string>("");
-	const [selectedDate, setSelectedDate] = useState<string>("");
+	const [pagination, setPagination] = useState({
+		pageIndex: 0,
+		pageSize: 10,
+		pageCount: 0,
+		total: 0,
+	});
+	const [rowSelection, setRowSelection] = useState({});
+	const [selectedInquiryIds, setSelectedInquiryIds] = useState<string[]>([]);
+	const [statusToUpdate, setStatusToUpdate] = useState<string | null>(null);
+	const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
+	const [searchQuery, setSearchQuery] = useState("");
+	const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+	const [selectedPackageId, setSelectedPackageId] = useState<string | null>(
+		null
+	);
+	const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
 
+	// Fetch packages on mount
 	useEffect(() => {
 		fetchPackages();
-		fetchInquiries();
 	}, []);
 
+	// Update selected inquiry IDs when row selection changes
 	useEffect(() => {
-		fetchInquiries(selectedPackage, selectedDate);
-	}, [selectedPackage, selectedDate]);
+		const selectedIds = Object.keys(rowSelection).map(
+			(index) => inquiries[Number.parseInt(index)]._id
+		);
+		setSelectedInquiryIds(selectedIds);
+	}, [rowSelection, inquiries]);
 
 	const fetchPackages = async () => {
 		try {
@@ -65,193 +103,471 @@ export default function InquiriesPage() {
 		}
 	};
 
-	const fetchInquiries = async (packageId?: string, date?: string) => {
+	const fetchInquiries = async () => {
 		try {
 			setIsLoading(true);
 
-			let url = "/api/inquiries";
+			const controller = new AbortController();
+			const signal = controller.signal;
+
 			const params = new URLSearchParams();
+			params.append("page", String(pagination.pageIndex + 1));
+			params.append("pageSize", String(pagination.pageSize));
 
-			if (packageId) params.append("packageId", packageId);
-			if (date) params.append("date", date);
+			if (searchQuery) params.append("search", searchQuery);
+			if (selectedDate)
+				params.append("date", format(selectedDate, "yyyy-MM-dd"));
+			if (selectedPackageId) params.append("packageId", selectedPackageId);
+			if (selectedStatus) params.append("status", selectedStatus);
 
-			if (params.toString()) {
-				url += `?${params.toString()}`;
+			const res = await fetch(`/api/inquiries?${params.toString()}`, {
+				signal,
+			});
+			if (!res.ok) {
+				throw new Error("Network response was not ok");
 			}
-
-			const res = await fetch(url);
 			const data = await res.json();
-			setInquiries(data);
-		} catch {
-			toast.error("Failed to load inquiries");
+
+			setPagination({
+				...pagination,
+				pageCount: data.pagination.pageCount,
+				total: data.pagination.total,
+			});
+
+			setInquiries(data.inquiries);
+		} catch (err) {
+			if (err instanceof Error && err.name !== "AbortError") {
+				toast.error(`Failed to load inquiries: ${err.message}`);
+			}
 		} finally {
 			setIsLoading(false);
 		}
 	};
 
-	const handleDelete = async (id: string) => {
-		if (!confirm("Are you sure you want to delete this inquiry?")) {
-			return;
-		}
+	useEffect(() => {
+		const controller = new AbortController();
+
+		fetchInquiries();
+
+		return () => {
+			controller.abort();
+		};
+	}, [
+		pagination.pageIndex,
+		pagination.pageSize,
+		searchQuery,
+		selectedDate,
+		selectedPackageId,
+		selectedStatus,
+	]);
+
+	const handlePaginationChange = useCallback(
+		(pageIndex: number, pageSize: number) => {
+			setPagination((prev) => ({
+				...prev,
+				pageIndex,
+				pageSize,
+			}));
+		},
+		[]
+	);
+
+	const handleStatusUpdate = async () => {
+		if (!statusToUpdate || selectedInquiryIds.length === 0) return;
 
 		try {
-			const res = await fetch(`/api/inquiries/${id}`, {
-				method: "DELETE",
+			const res = await fetch("/api/inquiries/status", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					ids: selectedInquiryIds,
+					status: statusToUpdate,
+				}),
 			});
 
 			if (!res.ok) {
 				const errorData = await res.json();
-				throw new Error(errorData.error || "Failed to delete inquiry");
+				throw new Error(errorData.error || "Failed to update status");
 			}
 
-			toast.success("Inquiry deleted successfully");
-			fetchInquiries(selectedPackage, selectedDate);
+			toast.success(
+				`Updated status to ${statusToUpdate} for ${selectedInquiryIds.length} inquiries`
+			);
+			setRowSelection({});
+			fetchInquiries();
 		} catch (error: unknown) {
-			if (error instanceof Error) {
-				toast.error(error.message || "An error occurred");
-			} else {
-				toast.error("An unexpected error occurred");
-			}
+			const errorMessage =
+				error instanceof Error ? error.message : "An error occurred";
+			toast.error(errorMessage);
+		} finally {
+			setStatusToUpdate(null);
+			setIsStatusDialogOpen(false);
 		}
 	};
 
-	const getPackageName = (packageId: string) => {
-		const pkg = packages.find((p) => p._id === packageId);
-		return pkg ? pkg.name : "Unknown Package";
+	const openStatusDialog = (status: string) => {
+		setStatusToUpdate(status);
+		setIsStatusDialogOpen(true);
 	};
 
-	const resetFilters = () => {
-		setSelectedPackage("");
-		setSelectedDate("");
+	const getStatusBadge = (status: string) => {
+		switch (status) {
+			case "new":
+				return <Badge className="bg-blue-500">New</Badge>;
+			case "contacted":
+				return <Badge className="bg-yellow-500">Contacted</Badge>;
+			case "confirmed":
+				return <Badge className="bg-green-500">Confirmed</Badge>;
+			case "cancelled":
+				return <Badge className="bg-red-500">Cancelled</Badge>;
+			default:
+				return <Badge>Unknown</Badge>;
+		}
 	};
+
+	const handlePackageFilterChange = (packageId: string | undefined) => {
+		setSelectedPackageId(packageId || null);
+	};
+
+	const handleStatusFilterChange = (status: string | undefined) => {
+		setSelectedStatus(status || null);
+	};
+
+	const handleDateFilterChange = (date: Date | undefined) => {
+		setSelectedDate(date || null);
+	};
+
+	// Define columns for the data table
+	const columns: ColumnDef<Inquiry>[] = [
+		{
+			id: "select",
+			header: ({ table }) => (
+				<input
+					type="checkbox"
+					ref={(el) => {
+						if (el) {
+							el.indeterminate = table.getIsSomePageRowsSelected();
+						}
+					}}
+					checked={table.getIsAllPageRowsSelected()}
+					onChange={table.getToggleAllPageRowsSelectedHandler()}
+					className="h-4 w-4 rounded border-gray-300"
+				/>
+			),
+			cell: ({ row }) => (
+				<input
+					type="checkbox"
+					checked={row.getIsSelected()}
+					onChange={row.getToggleSelectedHandler()}
+					className="h-4 w-4 rounded border-gray-300"
+				/>
+			),
+			enableSorting: false,
+			enableHiding: false,
+		},
+		{
+			accessorKey: "name",
+			header: "Customer",
+			cell: ({ row }) => {
+				const inquiry = row.original;
+				return (
+					<div className="flex flex-col">
+						<span className="font-medium">{inquiry.name}</span>
+						<span className="text-xs text-muted-foreground">
+							{inquiry.email}
+						</span>
+						<span className="text-xs text-muted-foreground">
+							{inquiry.phone}
+						</span>
+					</div>
+				);
+			},
+			// Custom filter function for client-side search (though primarily handled server-side)
+			filterFn: (row, id, value) => {
+				const inquiry = row.original;
+				const searchTerm = value.toLowerCase();
+				return (
+					inquiry.name.toLowerCase().includes(searchTerm) ||
+					inquiry.email.toLowerCase().includes(searchTerm) ||
+					inquiry.phone.toLowerCase().includes(searchTerm)
+				);
+			},
+		},
+		{
+			accessorKey: "packageId",
+			header: "Package",
+			cell: ({ row }) => {
+				return (
+					<div className="flex items-center">
+						<MapPinArea className="mr-2 h-4 w-4 text-muted-foreground" />
+						<span>{row.original.packageId?.name || "Unknown Package"}</span>
+					</div>
+				);
+			},
+			accessorFn: (row) => row.packageId?._id, // Use packageId._id for filtering
+			id: "packageId", // Ensure the column ID matches the filterable column ID
+			filterFn: (row, id, value) => {
+				return value.includes(row.original.packageId?._id);
+			},
+		},
+		{
+			accessorKey: "date",
+			header: "Date",
+			cell: ({ row }) => {
+				const date = new Date(row.original.date);
+				return (
+					<div className="flex items-center">
+						<CalendarDots className="mr-2 h-4 w-4 text-muted-foreground" />
+						<span>
+							{isNaN(date.getTime())
+								? "Invalid Date"
+								: date.toLocaleDateString()}
+						</span>
+					</div>
+				);
+			},
+		},
+		{
+			accessorKey: "numberOfPeople",
+			header: "People",
+			cell: ({ row }) => {
+				return (
+					<div className="flex items-center">
+						<Users className="mr-2 h-4 w-4 text-muted-foreground" />
+						<span>{row.original.numberOfPeople}</span>
+					</div>
+				);
+			},
+		},
+		{
+			accessorKey: "status",
+			header: "Status",
+			cell: ({ row }) => getStatusBadge(row.original.status),
+			filterFn: (row, id, value) => {
+				return value.includes(row.getValue(id));
+			},
+		},
+		{
+			accessorKey: "createdAt",
+			header: "Created At",
+			cell: ({ row }) => {
+				const date = new Date(row.original.createdAt);
+				return !isNaN(date.getTime()) ? format(date, "PPP p") : "Invalid Date";
+			},
+		},
+		{
+			id: "actions",
+			cell: ({ row }) => {
+				const inquiry = row.original;
+
+				return (
+					<DropdownMenu>
+						<DropdownMenuTrigger asChild>
+							<Button variant="ghost" className="h-8 w-8 p-0">
+								<span className="sr-only">Open menu</span>
+								<DotsThreeOutline className="h-4 w-4" weight="fill" />
+							</Button>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent align="end">
+							<DropdownMenuItem
+								onClick={() => {
+									navigator.clipboard.writeText(inquiry.email);
+									toast.success("Email copied to clipboard");
+								}}
+							>
+								<Copy />
+								Copy email
+							</DropdownMenuItem>
+							<DropdownMenuItem
+								onClick={() => {
+									navigator.clipboard.writeText(inquiry.phone);
+									toast.success("Phone number copied to clipboard");
+								}}
+							>
+								<Copy />
+								Copy phone
+							</DropdownMenuItem>
+							<DropdownMenuSeparator />
+							<DropdownMenuItem
+								onClick={() => {
+									setRowSelection({ [row.index]: true });
+									openStatusDialog("new");
+								}}
+							>
+								<Clock />
+								Mark as New
+							</DropdownMenuItem>
+							<DropdownMenuItem
+								onClick={() => {
+									setRowSelection({ [row.index]: true });
+									openStatusDialog("contacted");
+								}}
+							>
+								<PhoneCall />
+								Mark as Contacted
+							</DropdownMenuItem>
+							<DropdownMenuItem
+								onClick={() => {
+									setRowSelection({ [row.index]: true });
+									openStatusDialog("confirmed");
+								}}
+							>
+								<CheckCircle />
+								Mark as Confirmed
+							</DropdownMenuItem>
+							<DropdownMenuItem
+								onClick={() => {
+									setRowSelection({ [row.index]: true });
+									openStatusDialog("cancelled");
+								}}
+							>
+								<XCircle />
+								Mark as Cancelled
+							</DropdownMenuItem>
+						</DropdownMenuContent>
+					</DropdownMenu>
+				);
+			},
+		},
+	];
+
+	// Create package filter options
+	const packageFilterOptions = packages.map((pkg) => ({
+		label: pkg.name,
+		value: pkg._id,
+	}));
+
+	// Create status filter options
+	const statusFilterOptions = [
+		{ label: "New", value: "new", icon: Clock },
+		{ label: "Contacted", value: "contacted", icon: PhoneCall },
+		{ label: "Confirmed", value: "confirmed", icon: CheckCircle },
+		{ label: "Cancelled", value: "cancelled", icon: XCircle },
+	];
 
 	return (
 		<AdminLayout>
 			<div className="space-y-6">
-				<div>
-					<h1 className="text-3xl font-bold">Inquiries</h1>
-					<p className="text-muted-foreground">
-						Manage booking inquiries from customers
-					</p>
+				<div className="flex justify-between items-center">
+					<div>
+						<h1 className="text-3xl">Inquiries</h1>
+						<p className="text-muted-foreground">
+							Manage booking inquiries from customers
+						</p>
+					</div>
+
+					{selectedInquiryIds.length > 0 && (
+						<div className="flex items-center gap-2">
+							<span className="text-sm text-muted-foreground">
+								{selectedInquiryIds.length} selected
+							</span>
+							<Button
+								size="sm"
+								variant="outline"
+								onClick={() => openStatusDialog("new")}
+							>
+								<Clock className="mr-2 h-4 w-4" />
+								Mark as New
+							</Button>
+							<Button
+								size="sm"
+								variant="outline"
+								onClick={() => openStatusDialog("contacted")}
+							>
+								<PhoneCall className="mr-2 h-4 w-4" />
+								Mark as Contacted
+							</Button>
+							<Button
+								size="sm"
+								variant="outline"
+								onClick={() => openStatusDialog("confirmed")}
+							>
+								<CheckCircle className="mr-2 h-4 w-4" />
+								Mark as Confirmed
+							</Button>
+							<Button
+								size="sm"
+								variant="outline"
+								className="text-destructive"
+								onClick={() => openStatusDialog("cancelled")}
+							>
+								<XCircle className="mr-2 h-4 w-4" />
+								Mark as Cancelled
+							</Button>
+						</div>
+					)}
 				</div>
 
 				<Card>
-					<CardHeader>
-						<CardTitle>Filters</CardTitle>
-						<CardDescription>
-							Filter inquiries by package and date
-						</CardDescription>
-					</CardHeader>
 					<CardContent>
-						<div className="grid gap-4 md:grid-cols-3">
-							<div className="space-y-2">
-								<label className="text-sm font-medium">Package</label>
-								<Select
-									value={selectedPackage}
-									onValueChange={setSelectedPackage}
-								>
-									<SelectTrigger>
-										<SelectValue placeholder="All Packages" />
-									</SelectTrigger>
-									<SelectContent>
-										<SelectItem value="all">All Packages</SelectItem>
-										{packages.map((pkg) => (
-											<SelectItem key={pkg._id} value={pkg._id}>
-												{pkg.name}
-											</SelectItem>
-										))}
-									</SelectContent>
-								</Select>
-							</div>
-
-							<div className="space-y-2">
-								<label className="text-sm font-medium">Date</label>
-								<Input
-									type="date"
-									value={selectedDate}
-									onChange={(e) => setSelectedDate(e.target.value)}
-								/>
-							</div>
-
-							<div className="flex items-end">
-								<Button variant="outline" onClick={resetFilters}>
-									Reset Filters
-								</Button>
-							</div>
-						</div>
+						<DataTable
+							columns={columns}
+							data={inquiries}
+							isLoading={isLoading}
+							pageCount={pagination.pageCount}
+							onPaginationChange={handlePaginationChange}
+							searchableColumns={[
+								{
+									id: "name",
+									title: "name, email, phone",
+								},
+							]}
+							filterableColumns={[
+								{
+									id: "packageId", // Match the column ID for package filtering
+									title: "Package",
+									options: packageFilterOptions,
+								},
+								{
+									id: "status",
+									title: "Status",
+									options: statusFilterOptions,
+								},
+							]}
+							dateFilterColumn={{
+								id: "date",
+								title: "Date",
+								onDateChange: handleDateFilterChange,
+							}}
+							onPackageFilterChange={handlePackageFilterChange}
+							onStatusFilterChange={handleStatusFilterChange}
+							onSearchChange={setSearchQuery}
+						/>
 					</CardContent>
 				</Card>
-
-				{isLoading ? (
-					<div className="flex items-center justify-center h-64">
-						<LoadingSpinner />
-					</div>
-				) : inquiries.length === 0 ? (
-					<Card>
-						<CardContent className="flex flex-col items-center justify-center h-64">
-							<p className="text-muted-foreground">No inquiries found</p>
-						</CardContent>
-					</Card>
-				) : (
-					<div className="space-y-4">
-						{inquiries.map((inquiry) => (
-							<Card key={inquiry._id}>
-								<CardHeader className="pb-2">
-									<div className="flex justify-between items-start">
-										<div>
-											<CardTitle>{inquiry.name}</CardTitle>
-											<CardDescription>
-												{inquiry.email} • {inquiry.phone}
-											</CardDescription>
-										</div>
-										<Button
-											variant="destructive"
-											size="sm"
-											onClick={() => handleDelete(inquiry._id)}
-										>
-											<Trash className="h-4 w-4" />
-										</Button>
-									</div>
-								</CardHeader>
-								<CardContent>
-									<div className="grid gap-2 text-sm">
-										<div className="flex items-center">
-											<MapPinArea className="mr-2 h-4 w-4 text-muted-foreground" />
-											<span className="font-medium">Package:</span>
-											<span className="ml-2">
-												{getPackageName(inquiry.packageId)}
-											</span>
-										</div>
-										<div className="flex items-center">
-											<CalendarDots className="mr-2 h-4 w-4 text-muted-foreground" />
-											<span className="font-medium">Date:</span>
-											<span className="ml-2">
-												{new Date(inquiry.date).toLocaleDateString()}
-											</span>
-										</div>
-										<div>
-											<span className="font-medium">Number of People:</span>
-											<span className="ml-2">{inquiry.numberOfPeople}</span>
-										</div>
-										{inquiry.specialRequests && (
-											<div>
-												<span className="font-medium">Special Requests:</span>
-												<p className="mt-1 text-muted-foreground">
-													{inquiry.specialRequests}
-												</p>
-											</div>
-										)}
-										<div className="text-xs text-muted-foreground mt-2">
-											Submitted on{" "}
-											{new Date(inquiry.createdAt).toLocaleString()}
-										</div>
-									</div>
-								</CardContent>
-							</Card>
-						))}
-					</div>
-				)}
 			</div>
+
+			<AlertDialog
+				open={isStatusDialogOpen}
+				onOpenChange={setIsStatusDialogOpen}
+			>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Update Inquiry Status</AlertDialogTitle>
+						<AlertDialogDescription>
+							Are you sure you want to change the status of{" "}
+							{selectedInquiryIds.length} inquiries to{" "}
+							<span className="font-medium">
+								{statusToUpdate === "new" && "New"}
+								{statusToUpdate === "contacted" && "Contacted"}
+								{statusToUpdate === "confirmed" && "Confirmed"}
+								{statusToUpdate === "cancelled" && "Cancelled"}
+							</span>
+							?
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel onClick={() => setStatusToUpdate(null)}>
+							Cancel
+						</AlertDialogCancel>
+						<AlertDialogAction onClick={handleStatusUpdate}>
+							Update Status
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</AdminLayout>
 	);
 }

@@ -50,7 +50,8 @@ export default function DashboardPage() {
 
 				// Fetch recent inquiries
 				const inquiriesRes = await fetch("/api/inquiries");
-				const inquiries = await inquiriesRes.json();
+				const data = await inquiriesRes.json();
+				const inquiries = data.inquiries;
 
 				setStats({
 					totalPackages: packages.length,
