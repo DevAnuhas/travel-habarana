@@ -10,23 +10,21 @@ import {
 	MapPin,
 	CaretDoubleDown,
 	Star,
-	Calendar,
-	Clock,
-	Sun,
-	CloudRain,
+	IconProps,
 	FacebookLogo,
 	InstagramLogo,
 	TiktokLogo,
 	WhatsappLogo,
 	EnvelopeOpen,
-	IconProps,
 	ArrowRight,
 } from "@phosphor-icons/react";
 
 // Import custom components
 import PackageCard from "@/components/ui/package-card";
+import PlanningStepCard from "@/components/ui/planning-step-card";
 import FeatureCard from "@/components/ui/feature-card";
 import SectionHeading from "@/components/ui/section-heading";
+import LoadingSpinner from "@/components/ui/spinner";
 import { Button } from "@/components/ui/button";
 
 interface Package {
@@ -247,13 +245,11 @@ export default function Home() {
 				<div className="container mx-auto">
 					<SectionHeading
 						title="Explore Our Safari & Village Tours"
-						subtitle="Discover the beauty of Sri Lanka's wildlife and culture with our carefully crafted tour packages"
+						subtitle="Discover the beauty of Sri Lanka's wildlife and culture with our tour packages"
 					/>
 
 					{isLoading ? (
-						<div className="flex justify-center items-center h-64">
-							<div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-						</div>
+						<LoadingSpinner />
 					) : packages.length === 0 ? (
 						// If API returns no packages, show fallback content
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -330,139 +326,78 @@ export default function Home() {
 			</section>
 
 			{/* Plan Your Visit Section */}
-			<section className="py-20 px-4">
-				<div className="container mx-auto">
+			<section className="py-20 px-4 relative overflow-hidden bg-gray-50">
+				{/* Background gradient and overlay */}
+				<div className="absolute inset-0 bg-gradient-to-br from-secondary/0 to-primary/0 opacity-70"></div>
+
+				{/* Semi-transparent background */}
+				<div className="absolute inset-0 w-full h-full opacity-25">
+					<Image
+						alt="Semi-transparent background"
+						src="https://res.cloudinary.com/dsq09tlrm/image/upload/v1747309472/section-bg_sxd9qc.webp"
+						fill
+						className="object-cover"
+					/>
+				</div>
+
+				<div className="container mx-auto relative">
 					<SectionHeading
 						title="Plan Your Visit"
-						subtitle="Everything you need to know to make the most of your safari adventure"
+						subtitle="Follow these simple steps to start your unforgettable tour"
 					/>
 
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mt-12">
-						<motion.div
-							className="bg-white p-6 rounded-xl shadow-lg"
-							initial={{ opacity: 0, y: 20 }}
-							whileInView={{ opacity: 1, y: 0 }}
-							transition={{ duration: 0.5 }}
-							viewport={{ once: true }}
-						>
-							<div className="text-primary mb-4">
-								<Calendar size={40} />
-							</div>
-							<h3 className="text-xl font-bold mb-3">Best Time to Visit</h3>
-							<p className="text-gray-600 mb-4">
-								The dry season (May to September) offers the best wildlife
-								viewing opportunities as animals gather around water holes.
-							</p>
-							<ul className="text-sm text-gray-600 space-y-2">
-								<li className="flex items-center">
-									<span className="w-2 h-2 bg-primary rounded-full mr-2"></span>
-									<span>Elephant Gathering: July-October</span>
-								</li>
-								<li className="flex items-center">
-									<span className="w-2 h-2 bg-primary rounded-full mr-2"></span>
-									<span>Bird Watching: December-March</span>
-								</li>
-							</ul>
-						</motion.div>
+					{/* Steps container */}
+					<div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 max-w-5xl mx-auto relative">
+						{/* Step 1 */}
+						<PlanningStepCard
+							number={1}
+							title="Explore & Inquire"
+							description="Browse our safari and village tour packages, then submit an inquiry with your preferences."
+							tip="Include your preferred dates in the inquiry!"
+						/>
 
-						<motion.div
-							className="bg-white p-6 rounded-xl shadow-lg"
-							initial={{ opacity: 0, y: 20 }}
-							whileInView={{ opacity: 1, y: 0 }}
-							transition={{ duration: 0.5, delay: 0.1 }}
-							viewport={{ once: true }}
-						>
-							<div className="text-primary mb-4">
-								<Clock size={40} />
-							</div>
-							<h3 className="text-xl font-bold mb-3">Safari Times</h3>
-							<p className="text-gray-600 mb-4">
-								We offer two daily safari sessions to maximize wildlife
-								sightings during the most active periods.
-							</p>
-							<ul className="text-sm text-gray-600 space-y-2">
-								<li className="flex items-center">
-									<span className="w-2 h-2 bg-primary rounded-full mr-2"></span>
-									<span>Morning: 5:30 AM - 9:30 AM</span>
-								</li>
-								<li className="flex items-center">
-									<span className="w-2 h-2 bg-primary rounded-full mr-2"></span>
-									<span>Evening: 2:30 PM - 6:30 PM</span>
-								</li>
-							</ul>
-						</motion.div>
+						{/* Step 2 */}
+						<PlanningStepCard
+							number={2}
+							title="Get Confirmation"
+							description="Our team will contact you to confirm pricing, availability, and details."
+							tip="Have your travel dates ready for a smooth discussion!"
+						/>
 
-						<motion.div
-							className="bg-white p-6 rounded-xl shadow-lg"
-							initial={{ opacity: 0, y: 20 }}
-							whileInView={{ opacity: 1, y: 0 }}
-							transition={{ duration: 0.5, delay: 0.2 }}
-							viewport={{ once: true }}
-						>
-							<div className="text-primary mb-4">
-								<Sun size={40} />
-							</div>
-							<h3 className="text-xl font-bold mb-3">What to Bring</h3>
-							<p className="text-gray-600 mb-4">
-								Prepare for your safari adventure with these essential items for
-								comfort and enjoyment.
-							</p>
-							<ul className="text-sm text-gray-600 space-y-2">
-								<li className="flex items-center">
-									<span className="w-2 h-2 bg-primary rounded-full mr-2"></span>
-									<span>Comfortable clothing & hat</span>
-								</li>
-								<li className="flex items-center">
-									<span className="w-2 h-2 bg-primary rounded-full mr-2"></span>
-									<span>Sunscreen & sunglasses</span>
-								</li>
-								<li className="flex items-center">
-									<span className="w-2 h-2 bg-primary rounded-full mr-2"></span>
-									<span>Camera & binoculars</span>
-								</li>
-							</ul>
-						</motion.div>
-
-						<motion.div
-							className="bg-white p-6 rounded-xl shadow-lg"
-							initial={{ opacity: 0, y: 20 }}
-							whileInView={{ opacity: 1, y: 0 }}
-							transition={{ duration: 0.5, delay: 0.3 }}
-							viewport={{ once: true }}
-						>
-							<div className="text-primary mb-4">
-								<CloudRain size={40} />
-							</div>
-							<h3 className="text-xl font-bold mb-3">Weather</h3>
-							<p className="text-gray-600 mb-4">
-								Sri Lanka has a tropical climate with distinct wet and dry
-								seasons that vary by region.
-							</p>
-							<ul className="text-sm text-gray-600 space-y-2">
-								<li className="flex items-center">
-									<span className="w-2 h-2 bg-primary rounded-full mr-2"></span>
-									<span>Dry Season: May to September</span>
-								</li>
-								<li className="flex items-center">
-									<span className="w-2 h-2 bg-primary rounded-full mr-2"></span>
-									<span>Wet Season: October to January</span>
-								</li>
-								<li className="flex items-center">
-									<span className="w-2 h-2 bg-primary rounded-full mr-2"></span>
-									<span>Avg. Temp: 25-30°C (77-86°F)</span>
-								</li>
-							</ul>
-						</motion.div>
+						{/* Step 3 */}
+						<PlanningStepCard
+							number={3}
+							title="Prepare for Adventure"
+							description="Once confirmed, pack your essentials and get ready for a thrilling experience."
+							tip="Bring sunscreen, a hat, and a camera for the best experience!"
+						/>
 					</div>
 
-					<div className="text-center mt-12">
-						<Link href="/book-now" className="group">
-							<Button size="lg">
-								Book Your Safari
-								<ArrowRight className="ml-1 group-hover:translate-x-1 transition-all" />
-							</Button>
-						</Link>
-					</div>
+					{/* Additional text and CTA Buttons */}
+					<motion.div
+						className="text-center mt-16"
+						initial={{ opacity: 0, y: 20 }}
+						whileInView={{ opacity: 1, y: 0 }}
+						transition={{ duration: 0.5, delay: 0.7 }}
+						viewport={{ once: true }}
+					>
+						<p className="mb-8 max-w-2xl mx-auto">
+							Have questions or need assistance? Contact us for a quick
+							response!
+						</p>
+
+						<div className="flex flex-col sm:flex-row gap-4 justify-center">
+							<Link href="/contact">
+								<Button size="lg">Contact Us</Button>
+							</Link>
+							<Link href="/book-now" className="group">
+								<Button size="lg" variant={"secondary"}>
+									Book Your Safari
+									<ArrowRight className="ml-1 group-hover:translate-x-1 transition-all" />
+								</Button>
+							</Link>
+						</div>
+					</motion.div>
 				</div>
 			</section>
 
