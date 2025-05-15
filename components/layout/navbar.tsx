@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { List, X } from "@phosphor-icons/react";
+import { PaperPlaneTilt, List, X } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 
 export default function Navbar() {
@@ -87,7 +87,10 @@ export default function Navbar() {
 									: "bg-primary hover:bg-primary text-white"
 							}`}
 						>
-							<Link href="/book-now">Send Inquiry</Link>
+							<Link href="/book-now" className="group">
+								Send Inquiry
+								<PaperPlaneTilt className="group-hover:rotate-45 transition-all" />
+							</Link>
 						</Button>
 					</nav>
 
@@ -139,6 +142,7 @@ export default function Navbar() {
 						<Button asChild className="w-full bg-primary hover:bg-primary">
 							<Link href="/book-now" onClick={() => setIsMobileMenuOpen(false)}>
 								Send Inquiry
+								<PaperPlaneTilt className="group-hover:translate-x-1 transition-all" />
 							</Link>
 						</Button>
 					</div>
