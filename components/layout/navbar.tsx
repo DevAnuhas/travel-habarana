@@ -83,8 +83,8 @@ export default function Navbar() {
 							asChild
 							className={`ml-4 ${
 								isHomePage && !isScrolled
-									? "bg-white text-emerald-600 hover:bg-gray-100"
-									: "bg-emerald-600 hover:bg-emerald-700 text-white"
+									? "bg-white text-primary hover:bg-gray-100"
+									: "bg-primary hover:bg-primary text-white"
 							}`}
 						>
 							<Link href="/book-now">Send Inquiry</Link>
@@ -136,10 +136,7 @@ export default function Navbar() {
 							onClick={() => setIsMobileMenuOpen(false)}
 						/>
 
-						<Button
-							asChild
-							className="w-full bg-emerald-600 hover:bg-emerald-700"
-						>
+						<Button asChild className="w-full bg-primary hover:bg-primary">
 							<Link href="/book-now" onClick={() => setIsMobileMenuOpen(false)}>
 								Send Inquiry
 							</Link>
@@ -170,11 +167,12 @@ function NavLink({
 	return (
 		<Link
 			href={href}
-			className={`relative font-medium transition-colors hover:text-emerald-500 ${textColor} ${
-				isActive && "!text-emerald-600"
-			}`}
+			className={`relative font-medium transition-colors hover:text-primary ${textColor}`}
 		>
 			{label}
+			{isActive && (
+				<span className="absolute bottom-0 left-0 w-full h-0.5 bg-primary transform translate-y-1"></span>
+			)}
 		</Link>
 	);
 }
@@ -197,8 +195,8 @@ function MobileNavLink({
 		<Link
 			href={href}
 			className={`block py-2 font-medium ${
-				isActive ? "text-emerald-600" : "text-gray-800"
-			} hover:text-emerald-500`}
+				isActive ? "text-primary" : "text-gray-800"
+			} hover:text-primary`}
 			onClick={onClick}
 		>
 			{label}

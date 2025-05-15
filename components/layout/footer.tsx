@@ -4,6 +4,7 @@ import Link from "next/link";
 import {
 	FacebookLogo,
 	InstagramLogo,
+	TiktokLogo,
 	WhatsappLogo,
 	EnvelopeOpen,
 	MapPinLine,
@@ -12,7 +13,7 @@ import {
 
 export default function Footer() {
 	return (
-		<footer className="bg-gray-900 text-white">
+		<footer className="bg-gray-900 text-secondary">
 			<div className="container mx-auto px-4 py-12">
 				<div className="grid grid-cols-1 md:grid-cols-3 gap-8">
 					{/* Company Info */}
@@ -27,30 +28,39 @@ export default function Footer() {
 								href="https://facebook.com/people/Jeep-safari-habarana/61557160063166/"
 								target="_blank"
 								rel="noopener noreferrer"
-								className="text-gray-300 hover:text-white transition-colors"
+								className="text-gray-300 hover:text-secondary transition-colors"
 								aria-label="Facebook"
 							>
 								<FacebookLogo size={20} />
 							</a>
 							<a
-								href="https://instagram.com"
+								href="https://www.instagram.com/travel_in_habarana"
 								target="_blank"
 								rel="noopener noreferrer"
-								className="text-gray-300 hover:text-white transition-colors"
+								className="text-gray-300 hover:text-secondary transition-colors"
 								aria-label="Instagram"
 							>
 								<InstagramLogo size={20} />
 							</a>
 							<a
+								href="https://www.tiktok.com/@travel.in.habaran"
+								target="_blank"
+								rel="noopener noreferrer"
+								className="text-gray-300 hover:text-secondary transition-colors"
+								aria-label="Instagram"
+							>
+								<TiktokLogo size={20} />
+							</a>
+							<a
 								href="https://wa.me/+94766675883"
-								className="text-gray-300 hover:text-white transition-colors"
+								className="text-gray-300 hover:text-secondary transition-colors"
 								aria-label="Email"
 							>
 								<WhatsappLogo size={20} />
 							</a>
 							<a
 								href="mailto:fernandoprashan2003@icloud.com"
-								className="text-gray-300 hover:text-white transition-colors"
+								className="text-gray-300 hover:text-secondary transition-colors"
 								aria-label="Email"
 							>
 								<EnvelopeOpen size={20} />
@@ -65,7 +75,7 @@ export default function Footer() {
 							<li>
 								<Link
 									href="/"
-									className="text-gray-300 hover:text-white transition-colors"
+									className="text-gray-300 hover:text-secondary transition-colors"
 								>
 									Home
 								</Link>
@@ -73,7 +83,7 @@ export default function Footer() {
 							<li>
 								<Link
 									href="/packages"
-									className="text-gray-300 hover:text-white transition-colors"
+									className="text-gray-300 hover:text-secondary transition-colors"
 								>
 									Safari Packages
 								</Link>
@@ -81,7 +91,7 @@ export default function Footer() {
 							<li>
 								<Link
 									href="/book-now"
-									className="text-gray-300 hover:text-white transition-colors"
+									className="text-gray-300 hover:text-secondary transition-colors"
 								>
 									Book Now
 								</Link>
@@ -89,7 +99,7 @@ export default function Footer() {
 							<li>
 								<Link
 									href="/contact"
-									className="text-gray-300 hover:text-white transition-colors"
+									className="text-gray-300 hover:text-secondary transition-colors"
 								>
 									Contact Us
 								</Link>
