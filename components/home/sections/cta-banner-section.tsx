@@ -28,15 +28,14 @@ function CTABannerSection() {
 				</motion.h2>
 
 				<motion.p
-					className="text-white font-light max-w-xl mx-auto mb-8"
+					className="text-white max-w-xl mx-auto mb-8"
 					initial={{ opacity: 0, y: 20 }}
 					whileInView={{ opacity: 1, y: 0 }}
 					transition={{ duration: 0.5, delay: 0.2 }}
 					viewport={{ once: true }}
 				>
-					Join us for an unforgettable adventure through Sri Lanka’s magnificent
-					national parks and authentic village experiences. Our team is ready to
-					create the perfect itinerary for your visit.
+					Book your safari tour or cultural experience today and create
+					unforgettable memories in the beautiful island of Sri Lanka.
 				</motion.p>
 
 				<motion.div
