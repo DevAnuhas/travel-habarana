@@ -1,6 +1,10 @@
-import { useState } from "react";
 import { motion } from "framer-motion";
-import { CaretRight } from "@phosphor-icons/react";
+import {
+	Accordion,
+	AccordionContent,
+	AccordionItem,
+	AccordionTrigger,
+} from "@/components/ui/accordion";
 import SectionHeading from "@/components/ui/section-heading";
 
 const faqs: Array<{ question: string; answer: string }> = [
@@ -32,11 +36,6 @@ const faqs: Array<{ question: string; answer: string }> = [
 ];
 
 function FAQSection() {
-	const [openIndex, setOpenIndex] = useState<number | null>(null);
-
-	const toggleFAQ = (index: number) => {
-		setOpenIndex(openIndex === index ? null : index);
-	};
 	return (
 		<section className="py-16">
 			<div className="container mx-auto px-4">
@@ -45,36 +44,32 @@ function FAQSection() {
 					subtitle="Find answers to common questions about our safari and tour packages"
 				/>
 				<div className="max-w-3xl mx-auto mt-12 space-y-4">
-					{faqs.map((faq, index) => (
-						<motion.div
-							key={index}
-							className="overflow-hidden rounded-lg border border-gray-200 bg-white"
-							initial={{ opacity: 0, y: 20 }}
-							whileInView={{ opacity: 1, y: 0 }}
-							transition={{ duration: 0.3, delay: index * 0.1 }}
-							viewport={{ once: true }}
-						>
-							<button
-								className="flex w-full items-center justify-between p-4 text-left font-medium text-gray-900 hover:bg-gray-50"
-								onClick={() => toggleFAQ(index)}
-								aria-expanded={openIndex === index}
+					<Accordion
+						type="single"
+						defaultValue="item-1"
+						collapsible
+						className="space-y-4"
+					>
+						{faqs.map((faq, index) => (
+							<motion.div
+								key={index}
+								className="overflow-hidden rounded-lg border border-gray-200 bg-white"
+								initial={{ opacity: 0, y: 20 }}
+								whileInView={{ opacity: 1, y: 0 }}
+								transition={{ duration: 0.3, delay: index * 0.1 }}
+								viewport={{ once: true }}
 							>
-								<span>{faq.question}</span>
-								<CaretRight
-									className={`h-5 w-5 text-gray-500 transition-transform duration-300 ${
-										openIndex === index ? "rotate-90" : ""
-									}`}
-								/>
-							</button>
-							<div
-								className={`overflow-hidden transition-all duration-300 ${
-									openIndex === index ? "max-h-40 p-4 pt-0" : "max-h-0"
-								}`}
-							>
-								<p className="text-gray-600">{faq.answer}</p>
-							</div>
-						</motion.div>
-					))}
+								<AccordionItem key={index} value={`item-${index + 1}`}>
+									<AccordionTrigger className="p-4 text-sm sm:text-lg font-sans">
+										{faq.question}
+									</AccordionTrigger>
+									<AccordionContent className="p-4 pt-2">
+										{faq.answer}
+									</AccordionContent>
+								</AccordionItem>
+							</motion.div>
+						))}
+					</Accordion>
 				</div>
 			</div>
 		</section>
