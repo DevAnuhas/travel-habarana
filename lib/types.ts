@@ -14,13 +14,14 @@ export const inquirySchema = z.object({
 	name: z.string().min(2, "Name must be at least 2 characters"),
 	email: z.string().email("Invalid email address"),
 	phone: z.string().min(5, "Phone number is required"),
-	packageId: z.string().min(1, "Package ID is required"),
-	date: z
-		.string()
-		.regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format"),
+	packageId: z.string().min(1, "Please select a package"),
+	date: z.date({
+		required_error: "Please select a date",
+	}),
 	numberOfPeople: z
 		.number()
 		.int()
+		.min(1, { message: "Number of people is required" })
 		.positive("Number of people must be positive"),
 	specialRequests: z.string().optional(),
 });

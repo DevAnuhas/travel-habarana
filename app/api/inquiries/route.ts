@@ -62,7 +62,14 @@ export async function GET(req: NextRequest) {
 // Create a new inquiry
 export async function POST(request: NextRequest) {
 	return withErrorHandler(request, async () => {
-		const inquiry = inquirySchema.safeParse(await request.json());
+		const requestData = await request.json();
+
+		// Parse the date string to a Date object
+		if (requestData.date) {
+			requestData.date = new Date(requestData.date);
+		}
+
+		const inquiry = inquirySchema.safeParse(requestData);
 
 		if (!inquiry.success) {
 			return NextResponse.json(inquiry.error.issues, { status: 400 });
