@@ -20,6 +20,7 @@ import {
 	Phone,
 } from "@phosphor-icons/react/dist/ssr";
 import { toast } from "sonner";
+import { favoritesManager } from "@/utils/favoritesManager";
 
 import { Button } from "@/components/ui/button";
 import SectionHeading from "@/components/ui/section-heading";
@@ -251,6 +252,14 @@ function PackageDetails({ id }: { id: string }) {
 	const [packageData, setPackageData] = useState<Package | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [isFavorite, setIsFavorite] = useState(false);
+
+	// Initialize the favorite state from localStorage
+	useEffect(() => {
+		if (packageData?._id) {
+			setIsFavorite(favoritesManager.isFavorite(packageData._id));
+		}
+	}, [packageData]);
+
 	const [relatedPackages, setRelatedPackages] = useState<Package[]>([]);
 	const [isLoadingRelated, setIsLoadingRelated] = useState(true);
 
@@ -305,9 +314,18 @@ function PackageDetails({ id }: { id: string }) {
 	}, [id, router]);
 
 	const toggleFavorite = () => {
-		setIsFavorite(!isFavorite);
+		if (!packageData?._id) return;
 
-		toast.success(isFavorite ? "Removed from favorites" : "Added to favorites");
+		const newFavoriteState = !isFavorite;
+		setIsFavorite(newFavoriteState);
+
+		if (newFavoriteState) {
+			favoritesManager.add(packageData._id);
+			toast.success("Added to favorites");
+		} else {
+			favoritesManager.remove(packageData._id);
+			toast.success("Removed from favorites");
+		}
 	};
 
 	const sharePackage = () => {
