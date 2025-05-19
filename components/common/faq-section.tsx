@@ -1,3 +1,5 @@
+"use client";
+
 import { motion } from "framer-motion";
 import {
 	Accordion,
@@ -6,8 +8,9 @@ import {
 	AccordionTrigger,
 } from "@/components/ui/accordion";
 import SectionHeading from "@/components/ui/section-heading";
+import { usePathname } from "next/navigation";
 
-const faqs: Array<{ question: string; answer: string }> = [
+const safariFAQs: Array<{ question: string; answer: string }> = [
 	{
 		question: "What is the best time for wildlife viewing?",
 		answer:
@@ -35,13 +38,45 @@ const faqs: Array<{ question: string; answer: string }> = [
 	},
 ];
 
+const bookingFAQs: Array<{ question: string; answer: string }> = [
+	{
+		question: "How far in advance should I book a safari?",
+		answer:
+			"We recommend booking at least 3-5 days in advance during regular season and 1-2 weeks during peak season (December-January and July-August) to ensure availability.",
+	},
+	{
+		question: "Do you offer hotel pickup and drop-off?",
+		answer:
+			"Yes, we offer complimentary pickup and drop-off from hotels in Habarana, Sigiriya, and Dambulla. For hotels outside these areas, there may be an additional charge.",
+	},
+	{
+		question: "What payment methods do you accept?",
+		answer:
+			"We accept cash, major credit cards, and bank transfers. For credit card payments, a small processing fee may apply.",
+	},
+	{
+		question: "What is your cancellation policy?",
+		answer:
+			"Cancellations made 48 hours or more before the scheduled safari. Cancellations less than 24 hours in advance are non-refundable.",
+	},
+];
+
 function FAQSection() {
+	// Display different FAQs based on the current page
+	const pathname = usePathname();
+	const isHomePage = pathname === "/";
+	const faqs = isHomePage ? safariFAQs : bookingFAQs;
+
 	return (
 		<section className="py-16">
 			<div className="container mx-auto px-4">
 				<SectionHeading
 					title="Frequently Asked Questions"
-					subtitle="Find answers to common questions about our safari and tour packages"
+					subtitle={
+						isHomePage
+							? "Find answers to common questions about our safari and tour packages"
+							: "Find answers to common questions about contacting and booking with us"
+					}
 				/>
 				<div className="max-w-3xl mx-auto mt-12 space-y-4">
 					<Accordion
