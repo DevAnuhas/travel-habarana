@@ -54,7 +54,7 @@ export default function Footer() {
 							<a
 								href="https://wa.me/+94766675883"
 								className="text-gray-300 hover:text-secondary transition-colors"
-								aria-label="Email"
+								aria-label="WhatsApp"
 							>
 								<WhatsappLogo size={20} />
 							</a>
