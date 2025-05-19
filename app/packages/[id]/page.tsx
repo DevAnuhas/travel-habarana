@@ -251,6 +251,32 @@ function PackageDetails({ id }: { id: string }) {
 	const [packageData, setPackageData] = useState<Package | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
 	const [isFavorite, setIsFavorite] = useState(false);
+	const [relatedPackages, setRelatedPackages] = useState<Package[]>([]);
+	const [isLoadingRelated, setIsLoadingRelated] = useState(true);
+
+	const fetchRelatedPackages = async () => {
+		try {
+			setIsLoadingRelated(true);
+			const res = await fetch("/api/packages");
+
+			if (!res.ok) {
+				throw new Error("Failed to fetch related packages");
+			}
+
+			const data = await res.json();
+
+			// Filter out the current package and limit to 3 packages
+			const filtered = data
+				.filter((pkg: Package) => pkg._id !== id)
+				.slice(0, 3);
+
+			setRelatedPackages(filtered);
+		} catch (error) {
+			console.error("Failed to fetch related packages:", error);
+		} finally {
+			setIsLoadingRelated(false);
+		}
+	};
 
 	useEffect(() => {
 		const fetchPackage = async () => {
@@ -263,6 +289,9 @@ function PackageDetails({ id }: { id: string }) {
 
 				const data = await res.json();
 				setPackageData(data);
+
+				// Fetch related packages after main package is loaded
+				fetchRelatedPackages();
 			} catch (error) {
 				console.error("Failed to fetch package:", error);
 				toast.error("Failed to load package details. Please try again.");
@@ -519,64 +548,52 @@ function PackageDetails({ id }: { id: string }) {
 					subtitle="Explore our other safari and cultural experiences"
 				/>
 
-				<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-					{/* This would be populated with actual related packages */}
-					{[
-						{
-							id: "minneriya",
-							name: "Minneriya National Park Safari",
-							description:
-								"Witness the famous Elephant Gathering, one of Asia’s greatest wildlife spectacles.",
-							image: "/placeholder.svg?height=400&width=600",
-						},
-						{
-							id: "kaudulla",
-							name: "Kaudulla National Park Safari",
-							description:
-								"Discover diverse wildlife year-round including elephants, deer, and numerous bird species.",
-							image: "/placeholder.svg?height=400&width=600",
-						},
-						{
-							id: "village",
-							name: "Cultural Village Tour",
-							description:
-								"Immerse in local life with a traditional boat ride, farming experience, and authentic lunch.",
-							image: "/placeholder.svg?height=400&width=600",
-						},
-					].map((pkg, index) => (
-						<motion.div
-							key={index}
-							className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200 transition-all hover:shadow-md"
-							initial={{ opacity: 0, y: 20 }}
-							whileInView={{ opacity: 1, y: 0 }}
-							transition={{ duration: 0.3, delay: index * 0.1 }}
-							viewport={{ once: true }}
-							whileHover={{ y: -5 }}
-						>
-							<div className="relative h-48 bg-gray-200">
-								<Image
-									src={pkg.image || "/placeholder.svg"}
-									alt={pkg.name}
-									fill
-									className="object-cover"
-								/>
-							</div>
-							<div className="p-4">
-								<h3 className="font-bold text-lg mb-2">{pkg.name}</h3>
-								<p className="text-sm text-gray-600 mb-3 line-clamp-2">
-									{pkg.description}
-								</p>
-								<Link
-									href={`/packages/${pkg.id}`}
-									className="text-primary text-sm font-medium hover:text-primary flex items-center"
-								>
-									View Details
-									<CaretRight size={16} className="ml-1" />
-								</Link>
-							</div>
-						</motion.div>
-					))}
-				</div>
+				{isLoadingRelated ? (
+					<div className="flex justify-center items-center h-48 mt-8">
+						<LoadingSpinner />
+					</div>
+				) : relatedPackages.length > 0 ? (
+					<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+						{relatedPackages.map((pkg) => (
+							<motion.div
+								key={pkg._id}
+								className="bg-white rounded-xl overflow-hidden border border-gray-200 shadow-md"
+								initial={{ opacity: 0, y: 20 }}
+								whileInView={{ opacity: 1, y: 0 }}
+								transition={{ duration: 0.5 }}
+								viewport={{ once: true }}
+								whileHover={{ y: -5 }}
+							>
+								<div className="relative h-48 bg-gray-200">
+									<Image
+										src={
+											pkg.images?.[0] || "/placeholder.svg?height=400&width=600"
+										}
+										alt={pkg.name}
+										fill
+										className="object-cover"
+									/>
+								</div>
+								<div className="p-4">
+									<h3 className="font-bold text-lg mb-2">{pkg.name}</h3>
+									<p className="text-sm text-gray-600 mb-3 line-clamp-2">
+										{pkg.description}
+									</p>
+									<Link href={`/packages/${pkg._id}`}>
+										<Button variant="link" className="!p-0">
+											View Details
+											<CaretRight size={16} className="ml-1" />
+										</Button>
+									</Link>
+								</div>
+							</motion.div>
+						))}
+					</div>
+				) : (
+					<div className="text-center py-12 text-gray-500 mt-8">
+						<p>No related packages found</p>
+					</div>
+				)}
 			</section>
 		</>
 	);
