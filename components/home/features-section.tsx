@@ -12,7 +12,7 @@ import {
 } from "@phosphor-icons/react";
 import SectionHeading from "@/components/ui/section-heading";
 
-const features = [
+const features: Array<Feature> = [
 	{
 		icon: HandHeart,
 		title: "Safe & Insured",
@@ -70,7 +70,6 @@ type Feature = {
 	icon: React.ComponentType<IconProps>;
 	title: string;
 	description: string;
-	delay?: number;
 	image?: string;
 };
 

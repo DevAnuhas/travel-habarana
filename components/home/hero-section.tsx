@@ -1,16 +1,17 @@
-import { useState, useEffect } from "react";
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
 	CaretDoubleDown,
-	IconProps,
 	FacebookLogo,
 	InstagramLogo,
 	TiktokLogo,
 	WhatsappLogo,
 	EnvelopeOpen,
 	ArrowRight,
+	IconProps,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 
@@ -20,7 +21,7 @@ function SocialIcon({
 	label,
 }: {
 	href: string;
-	icon: React.ComponentType<React.SVGProps<SVGSVGElement> & IconProps>;
+	icon: React.ComponentType<IconProps>;
 	label: string;
 }) {
 	return (
@@ -39,27 +40,11 @@ function SocialIcon({
 }
 
 function HeroSection() {
-	const [currentImageIndex, setCurrentImageIndex] = useState(0);
-
-	// Hero image rotation effect
-	useEffect(() => {
-		const interval = setInterval(() => {
-			setCurrentImageIndex((prev) => (prev + 1) % heroImages.length);
-		}, 5000);
-
-		return () => clearInterval(interval);
-	}, []);
-
-	// Hero images array
-	const heroImages = [
-		"https://res.cloudinary.com/dsq09tlrm/image/upload/v1747296498/hero-image_hmg1je.webp",
-	];
 	return (
 		<section className="relative h-screen">
-			{/* Background image carousel */}
+			{/* Background image */}
 			<AnimatePresence mode="wait">
 				<motion.div
-					key={currentImageIndex}
 					className="absolute inset-0"
 					initial={{ opacity: 0 }}
 					animate={{ opacity: 1 }}
@@ -67,7 +52,7 @@ function HeroSection() {
 					transition={{ duration: 1 }}
 				>
 					<Image
-						src={heroImages[currentImageIndex] || "/placeholder.svg"}
+						src="https://res.cloudinary.com/dsq09tlrm/image/upload/v1747296498/hero-image_hmg1je.webp"
 						alt="Sri Lankan Safari"
 						fill
 						priority

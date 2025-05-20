@@ -1,5 +1,3 @@
-"use client";
-
 import Link from "next/link";
 import {
 	FacebookLogo,
@@ -9,7 +7,7 @@ import {
 	EnvelopeOpen,
 	MapPinLine,
 	Phone,
-} from "@phosphor-icons/react";
+} from "@phosphor-icons/react/dist/ssr";
 
 export default function Footer() {
 	return (

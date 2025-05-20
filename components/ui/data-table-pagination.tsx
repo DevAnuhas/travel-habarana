@@ -1,11 +1,9 @@
-"use client";
-
 import {
 	CaretLeft,
 	CaretRight,
 	CaretDoubleLeft,
 	CaretDoubleRight,
-} from "@phosphor-icons/react";
+} from "@phosphor-icons/react/dist/ssr";
 import type { Table } from "@tanstack/react-table";
 
 import { Button } from "@/components/ui/button";

@@ -1,6 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Quotes, Star } from "@phosphor-icons/react";
+import { Quotes, Star } from "@phosphor-icons/react/dist/ssr";
 import SectionHeading from "@/components/ui/section-heading";
 
 // Testimonials data

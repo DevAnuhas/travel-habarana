@@ -1,4 +1,4 @@
-import { SpinnerGap } from "@phosphor-icons/react";
+import { SpinnerGap } from "@phosphor-icons/react/dist/ssr";
 
 export default function LoadingSpinner() {
 	return (

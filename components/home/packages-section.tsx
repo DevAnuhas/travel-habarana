@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from "react";
 import LoadingSpinner from "@/components/ui/spinner";
 import SectionHeading from "@/components/ui/section-heading";

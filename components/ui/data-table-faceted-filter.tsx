@@ -1,7 +1,5 @@
-"use client";
-
 import type * as React from "react";
-import { Check, PlusCircle } from "@phosphor-icons/react";
+import { Check, PlusCircle } from "@phosphor-icons/react/dist/ssr";
 import type { Column } from "@tanstack/react-table";
 
 import { cn } from "@/lib/utils";

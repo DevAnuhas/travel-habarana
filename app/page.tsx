@@ -1,5 +1,3 @@
-"use client";
-
 import HeroSection from "@/components/home/hero-section";
 import PackagesSection from "@/components/home/packages-section";
 import PlanVisitSection from "@/components/home/plan-visit-section";

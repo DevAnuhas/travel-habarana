@@ -1,7 +1,5 @@
-"use client";
-
 import * as React from "react";
-import { CalendarDots } from "@phosphor-icons/react";
+import { CalendarDots } from "@phosphor-icons/react/dist/ssr";
 import { format } from "date-fns";
 import type { Column } from "@tanstack/react-table";
 
