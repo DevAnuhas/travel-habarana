@@ -1,7 +1,15 @@
-export async function generateMetadata({ params }: { params: { id: string } }) {
-	const res = await fetch(`http://localhost:3000/api/packages/${params.id}`, {
-		cache: "no-store", // Ensure fresh data for each request
-	});
+export async function generateMetadata({
+	params,
+}: {
+	params: Promise<{ id: string }>;
+}) {
+	const resolvedParams = await params;
+	const res = await fetch(
+		`http://localhost:3000/api/packages/${resolvedParams.id}`,
+		{
+			cache: "no-store", // Ensure fresh data for each request
+		}
+	);
 
 	if (!res.ok) {
 		return {
@@ -20,7 +28,7 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
 		openGraph: {
 			title: `${packageData.name} - Travel Habarana`,
 			description: packageData.description.substring(0, 160),
-			url: `https://travelhabarana.com/packages/${params.id}`,
+			url: `https://travelhabarana.com/packages/${resolvedParams.id}`,
 			siteName: "Travel Habarana",
 			images: [
 				{
