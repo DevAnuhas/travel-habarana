@@ -36,7 +36,6 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { AdminLayout } from "@/components/admin/layout";
 
 type Inquiry = {
 	_id: string;
@@ -448,7 +447,7 @@ export default function InquiriesPage() {
 	];
 
 	return (
-		<AdminLayout>
+		<>
 			<div className="space-y-6">
 				<div className="flex justify-between items-center">
 					<div>
@@ -568,6 +567,6 @@ export default function InquiriesPage() {
 					</AlertDialogFooter>
 				</AlertDialogContent>
 			</AlertDialog>
-		</AdminLayout>
+		</>
 	);
 }

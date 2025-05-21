@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
-import { Sidebar } from "@/components/admin/sidebar";
+import { Sidebar } from "@/components/layout/sidebar";
 
 interface AdminLayoutProps {
 	children: ReactNode;
 }
 
-export function AdminLayout({ children }: AdminLayoutProps) {
+export default function AdminLayout({ children }: AdminLayoutProps) {
 	return (
 		<div className="flex h-screen bg-background">
 			<div className="w-64 hidden md:block">

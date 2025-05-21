@@ -24,7 +24,6 @@ import {
 	FormLabel,
 	FormMessage,
 } from "@/components/ui/form";
-import { AdminLayout } from "@/components/admin/layout";
 
 type PasswordFormValues = z.infer<typeof passwordChangeSchema>;
 
@@ -77,7 +76,7 @@ export default function ChangePasswordPage() {
 	};
 
 	return (
-		<AdminLayout>
+		<>
 			<div className="max-w-md mx-auto">
 				<h1 className="text-3xl font-bold mb-6">Change Password</h1>
 
@@ -158,6 +157,6 @@ export default function ChangePasswordPage() {
 					</CardContent>
 				</Card>
 			</div>
-		</AdminLayout>
+		</>
 	);
 }
