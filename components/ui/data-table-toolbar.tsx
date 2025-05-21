@@ -1,5 +1,3 @@
-"use client";
-
 import type React from "react";
 import type { Table } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
@@ -7,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { DataTableViewOptions } from "./data-table-view-options";
 import { DataTableFacetedFilter } from "./data-table-faceted-filter";
 import { DataTableDateFilter } from "./data-table-date-filter";
-import { X } from "@phosphor-icons/react";
+import { X } from "@phosphor-icons/react/dist/ssr";
 
 interface DataTableToolbarProps<TData> {
 	table: Table<TData>;

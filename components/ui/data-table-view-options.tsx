@@ -1,7 +1,5 @@
-"use client";
-
 import { DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
-import { SlidersHorizontal } from "@phosphor-icons/react";
+import { SlidersHorizontal } from "@phosphor-icons/react/dist/ssr";
 import type { Table } from "@tanstack/react-table";
 
 import { Button } from "@/components/ui/button";

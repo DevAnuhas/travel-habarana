@@ -44,7 +44,7 @@
 }
 
 :root {
-	--radius: 0rem;
+	--radius: 0.25rem;
 	--background: oklch(0.96 0.01 100);
 	--foreground: oklch(0.2 0.02 120);
 	--card: oklch(0.97 0.015 100);
@@ -118,6 +118,9 @@
 	}
 	body {
 		@apply bg-background text-foreground font-sans;
+	}
+	html {
+		scroll-behavior: smooth;
 	}
 	h1 {
 		@apply text-5xl font-serif;
