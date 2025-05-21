@@ -1,11 +1,18 @@
-import type { ReactNode } from "react";
+import type { Metadata } from "next";
 import { Sidebar } from "@/components/layout/sidebar";
 
-interface AdminLayoutProps {
-	children: ReactNode;
-}
+export const metadata: Metadata = {
+	title: "Admin Dashboard - Travel Habarana",
+	description:
+		"Manage and oversee operations within the Travel Habarana administration dashboard.",
+	robots: "noindex, nofollow",
+};
 
-export default function AdminLayout({ children }: AdminLayoutProps) {
+export default function AdminLayout({
+	children,
+}: Readonly<{
+	children: React.ReactNode;
+}>) {
 	return (
 		<div className="flex h-screen bg-background">
 			<div className="w-64 hidden md:block">
