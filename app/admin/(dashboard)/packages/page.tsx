@@ -26,6 +26,9 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TagInput } from "@/components/ui/tag-input";
+import { ImageUpload } from "@/components/ui/image-upload";
 import {
 	Form,
 	FormControl,
@@ -34,17 +37,24 @@ import {
 	FormLabel,
 	FormMessage,
 } from "@/components/ui/form";
-import { Plus, PencilSimpleLine, Trash } from "@phosphor-icons/react";
+import {
+	Plus,
+	PencilSimpleLine,
+	Trash,
+	Image as ImageIcon,
+	ListChecks,
+	Info,
+} from "@phosphor-icons/react";
 import { packageSchema } from "@/lib/types";
 
-type PackageFormValues = z.input<typeof packageSchema>;
+type PackageFormValues = z.infer<typeof packageSchema>;
 type Package = {
 	_id: string;
 	name: string;
 	description: string;
 	duration: string;
-	included: string[];
-	images: string[];
+	included: [];
+	images: [];
 	createdAt: string;
 	updatedAt: string;
 };
@@ -55,6 +65,7 @@ export default function PackagesPage() {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 	const [editingPackage, setEditingPackage] = useState<Package | null>(null);
+	const [activeTab, setActiveTab] = useState("general");
 
 	const form = useForm<PackageFormValues>({
 		resolver: zodResolver(packageSchema),
@@ -177,18 +188,55 @@ export default function PackagesPage() {
 		}
 	};
 
+	const handleTabChange = (value: string) => {
+		setActiveTab(value);
+	};
+
+	const handleNextTab = async () => {
+		if (activeTab === "general") {
+			// Validate general tab fields before proceeding
+			const generalValid = await form.trigger([
+				"name",
+				"description",
+				"duration",
+			]);
+			if (generalValid) {
+				setActiveTab("images");
+			}
+		} else if (activeTab === "images") {
+			// Validate images tab fields before proceeding
+			const imagesValid = await form.trigger(["images"]);
+			if (imagesValid) {
+				setActiveTab("included");
+			}
+		}
+	};
+
+	const handlePreviousTab = () => {
+		if (activeTab === "included") {
+			setActiveTab("images");
+		} else if (activeTab === "images") {
+			setActiveTab("general");
+		}
+	};
+
 	return (
 		<div className="space-y-6">
 			<div className="flex justify-between items-center">
 				<h1 className="text-3xl font-bold">Packages</h1>
 				<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
 					<DialogTrigger asChild>
-						<Button onClick={() => setEditingPackage(null)}>
+						<Button
+							onClick={() => {
+								setEditingPackage(null);
+								setActiveTab("general");
+							}}
+						>
 							<Plus className="mr-2 h-4 w-4" />
 							Add Package
 						</Button>
 					</DialogTrigger>
-					<DialogContent className="sm:max-w-[600px]">
+					<DialogContent className="sm:max-w-[600px] max-h-[700px] overflow-y-auto">
 						<DialogHeader>
 							<DialogTitle>
 								{editingPackage ? "Edit Package" : "Add New Package"}
@@ -204,117 +252,147 @@ export default function PackagesPage() {
 								onSubmit={form.handleSubmit(onSubmit)}
 								className="space-y-4"
 							>
-								<FormField
-									control={form.control}
-									name="name"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>Name</FormLabel>
-											<FormControl>
-												<Input
-													placeholder="Hurulu Eco Park Safari"
-													{...field}
-												/>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-								<FormField
-									control={form.control}
-									name="description"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>Description</FormLabel>
-											<FormControl>
-												<Textarea
-													placeholder="Embark on a thrilling jeep safari through Hurulu Eco Park..."
-													rows={4}
-													{...field}
-												/>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-								<FormField
-									control={form.control}
-									name="duration"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>Duration</FormLabel>
-											<FormControl>
-												<Input placeholder="3 hours" {...field} />
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-								<FormField
-									control={form.control}
-									name="included"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>Included Items</FormLabel>
-											<FormControl>
-												<Textarea
-													placeholder="Luxury jeep
-Water bottles
-Snacks"
-													rows={3}
-													{...field}
-													onChange={(e) => {
-														// Split by newlines or commas and trim whitespace
-														const value = e.target.value
-															.split(/[\n,]/)
-															.map((item) => item.trim())
-															.filter((item) => item.length > 0);
-														field.onChange(value);
-													}}
-													value={
-														Array.isArray(field.value)
-															? field.value.join("\n")
-															: ""
-													}
-												/>
-											</FormControl>
-											<FormMessage />
-											<p className="text-sm text-muted-foreground">
-												Enter each item on a new line, or separate with commas
-											</p>
-										</FormItem>
-									)}
-								/>
-								<FormField
-									control={form.control}
-									name="images"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>Images</FormLabel>
-											<FormControl>
-												<Textarea
-													placeholder="https://res.cloudinary.com/...
-https://res.cloudinary.com/..."
-													rows={3}
-													{...field}
-												/>
-											</FormControl>
-											<FormMessage />
-											<p className="text-sm text-muted-foreground">
-												Enter each image URL on a new line
-											</p>
-										</FormItem>
-									)}
-								/>
-								<DialogFooter>
-									<Button type="submit" disabled={isSubmitting}>
-										{isSubmitting
-											? "Saving..."
-											: editingPackage
-											? "Update Package"
-											: "Create Package"}
-									</Button>
-								</DialogFooter>
+								<Tabs value={activeTab} onValueChange={handleTabChange}>
+									<TabsList className="grid grid-cols-3 mb-4 bg-primary/10">
+										<TabsTrigger value="general" className="flex items-center">
+											<Info className="mr-2 h-4 w-4" />
+											General
+										</TabsTrigger>
+										<TabsTrigger value="images" className="flex items-center">
+											<ImageIcon className="mr-2 h-4 w-4" />
+											Images
+										</TabsTrigger>
+										<TabsTrigger value="included" className="flex items-center">
+											<ListChecks className="mr-2 h-4 w-4" />
+											Included Items
+										</TabsTrigger>
+									</TabsList>
+
+									{/* General Tab */}
+									<TabsContent value="general" className="space-y-4">
+										<FormField
+											control={form.control}
+											name="name"
+											render={({ field }) => (
+												<FormItem>
+													<FormLabel>Name</FormLabel>
+													<FormControl>
+														<Input
+															placeholder="Hurulu Eco Park Safari"
+															{...field}
+														/>
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+										<FormField
+											control={form.control}
+											name="description"
+											render={({ field }) => (
+												<FormItem>
+													<FormLabel>Description</FormLabel>
+													<FormControl>
+														<Textarea
+															placeholder="Embark on a thrilling jeep safari through Hurulu Eco Park..."
+															rows={4}
+															{...field}
+														/>
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+										<FormField
+											control={form.control}
+											name="duration"
+											render={({ field }) => (
+												<FormItem>
+													<FormLabel>Duration</FormLabel>
+													<FormControl>
+														<Input placeholder="3 hours" {...field} />
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+										<div className="flex justify-end">
+											<Button type="button" onClick={handleNextTab}>
+												Next
+											</Button>
+										</div>
+									</TabsContent>
+
+									{/* Images Tab */}
+									<TabsContent value="images" className="space-y-4">
+										<FormField
+											control={form.control}
+											name="images"
+											render={({ field }) => (
+												<FormItem>
+													<FormLabel>Images</FormLabel>
+													<FormControl>
+														<ImageUpload
+															value={field.value}
+															onChange={field.onChange}
+															maxFiles={10}
+														/>
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+										<div className="flex justify-between">
+											<Button
+												type="button"
+												variant="outline"
+												onClick={handlePreviousTab}
+											>
+												Back
+											</Button>
+											<Button type="button" onClick={handleNextTab}>
+												Next
+											</Button>
+										</div>
+									</TabsContent>
+
+									{/* Included Items Tab */}
+									<TabsContent value="included" className="space-y-4">
+										<FormField
+											control={form.control}
+											name="included"
+											render={({ field }) => (
+												<FormItem>
+													<FormLabel>Included Items</FormLabel>
+													<FormControl>
+														<TagInput
+															value={field.value}
+															onChange={field.onChange}
+															placeholder="Add an included item and press Enter..."
+														/>
+													</FormControl>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+										<DialogFooter className="flex !justify-between">
+											<Button
+												type="button"
+												variant="outline"
+												onClick={handlePreviousTab}
+											>
+												Back
+											</Button>
+											<Button type="submit" disabled={isSubmitting}>
+												{isSubmitting
+													? "Saving..."
+													: editingPackage
+													? "Update Package"
+													: "Create Package"}
+											</Button>
+										</DialogFooter>
+									</TabsContent>
+								</Tabs>
 							</form>
 						</Form>
 					</DialogContent>
