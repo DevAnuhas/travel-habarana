@@ -5,6 +5,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import Image from "next/image";
 import LoadingSpinner from "@/components/ui/spinner";
 import {
 	Card,
@@ -26,7 +27,18 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TagInput } from "@/components/ui/tag-input";
 import { ImageUpload } from "@/components/ui/image-upload";
 import {
@@ -46,6 +58,7 @@ import {
 	Info,
 } from "@phosphor-icons/react";
 import { packageSchema } from "@/lib/types";
+import { motion, AnimatePresence } from "framer-motion";
 
 type PackageFormValues = z.infer<typeof packageSchema>;
 type Package = {
@@ -53,12 +66,13 @@ type Package = {
 	name: string;
 	description: string;
 	duration: string;
-	included: [];
-	images: [];
+	included: string[];
+	images: string[];
 	createdAt: string;
 	updatedAt: string;
 };
 
+// TODO: This component should be refactored
 export default function PackagesPage() {
 	const [packages, setPackages] = useState<Package[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
@@ -163,10 +177,6 @@ export default function PackagesPage() {
 	};
 
 	const handleDelete = async (id: string) => {
-		if (!confirm("Are you sure you want to delete this package?")) {
-			return;
-		}
-
 		try {
 			const res = await fetch(`/api/packages/${id}`, {
 				method: "DELETE",
@@ -268,130 +278,159 @@ export default function PackagesPage() {
 										</TabsTrigger>
 									</TabsList>
 
-									{/* General Tab */}
-									<TabsContent value="general" className="space-y-4">
-										<FormField
-											control={form.control}
-											name="name"
-											render={({ field }) => (
-												<FormItem>
-													<FormLabel>Name</FormLabel>
-													<FormControl>
-														<Input
-															placeholder="Hurulu Eco Park Safari"
-															{...field}
-														/>
-													</FormControl>
-													<FormMessage />
-												</FormItem>
-											)}
-										/>
-										<FormField
-											control={form.control}
-											name="description"
-											render={({ field }) => (
-												<FormItem>
-													<FormLabel>Description</FormLabel>
-													<FormControl>
-														<Textarea
-															placeholder="Embark on a thrilling jeep safari through Hurulu Eco Park..."
-															rows={4}
-															{...field}
-														/>
-													</FormControl>
-													<FormMessage />
-												</FormItem>
-											)}
-										/>
-										<FormField
-											control={form.control}
-											name="duration"
-											render={({ field }) => (
-												<FormItem>
-													<FormLabel>Duration</FormLabel>
-													<FormControl>
-														<Input placeholder="3 hours" {...field} />
-													</FormControl>
-													<FormMessage />
-												</FormItem>
-											)}
-										/>
-										<div className="flex justify-end">
-											<Button type="button" onClick={handleNextTab}>
-												Next
-											</Button>
-										</div>
-									</TabsContent>
-
-									{/* Images Tab */}
-									<TabsContent value="images" className="space-y-4">
-										<FormField
-											control={form.control}
-											name="images"
-											render={({ field }) => (
-												<FormItem>
-													<FormLabel>Images</FormLabel>
-													<FormControl>
-														<ImageUpload
-															value={field.value}
-															onChange={field.onChange}
-															maxFiles={10}
-														/>
-													</FormControl>
-													<FormMessage />
-												</FormItem>
-											)}
-										/>
-										<div className="flex justify-between">
-											<Button
-												type="button"
-												variant="outline"
-												onClick={handlePreviousTab}
+									<AnimatePresence mode="wait">
+										{/* General Tab */}
+										{activeTab === "general" && (
+											<motion.div
+												key="general"
+												initial={{ opacity: 0, x: -20, height: 0 }}
+												animate={{ opacity: 1, x: 0, height: "auto" }}
+												exit={{ opacity: 0, x: 20, height: 0 }}
+												transition={{ duration: 0.3, ease: "easeInOut" }}
+												className="space-y-4"
 											>
-												Back
-											</Button>
-											<Button type="button" onClick={handleNextTab}>
-												Next
-											</Button>
-										</div>
-									</TabsContent>
+												<FormField
+													control={form.control}
+													name="name"
+													render={({ field }) => (
+														<FormItem>
+															<FormLabel>Name</FormLabel>
+															<FormControl>
+																<Input
+																	placeholder="Hurulu Eco Park Safari"
+																	{...field}
+																/>
+															</FormControl>
+															<FormMessage />
+														</FormItem>
+													)}
+												/>
+												<FormField
+													control={form.control}
+													name="description"
+													render={({ field }) => (
+														<FormItem>
+															<FormLabel>Description</FormLabel>
+															<FormControl>
+																<Textarea
+																	placeholder="Embark on a thrilling jeep safari through Hurulu Eco Park..."
+																	rows={4}
+																	{...field}
+																/>
+															</FormControl>
+															<FormMessage />
+														</FormItem>
+													)}
+												/>
+												<FormField
+													control={form.control}
+													name="duration"
+													render={({ field }) => (
+														<FormItem>
+															<FormLabel>Duration</FormLabel>
+															<FormControl>
+																<Input placeholder="3 hours" {...field} />
+															</FormControl>
+															<FormMessage />
+														</FormItem>
+													)}
+												/>
+												<div className="flex justify-end">
+													<Button type="button" onClick={handleNextTab}>
+														Next
+													</Button>
+												</div>
+											</motion.div>
+										)}
 
-									{/* Included Items Tab */}
-									<TabsContent value="included" className="space-y-4">
-										<FormField
-											control={form.control}
-											name="included"
-											render={({ field }) => (
-												<FormItem>
-													<FormLabel>Included Items</FormLabel>
-													<FormControl>
-														<TagInput
-															value={field.value}
-															onChange={field.onChange}
-															placeholder="Add an included item and press Enter..."
-														/>
-													</FormControl>
-													<FormMessage />
-												</FormItem>
-											)}
-										/>
-										<DialogFooter className="flex !justify-between">
-											<Button
-												type="button"
-												variant="outline"
-												onClick={handlePreviousTab}
+										{/* Images Tab */}
+										{activeTab === "images" && (
+											<motion.div
+												key="images"
+												initial={{ opacity: 0, x: -20, height: 0 }}
+												animate={{ opacity: 1, x: 0, height: "auto" }}
+												exit={{ opacity: 0, x: 20, height: 0 }}
+												transition={{ duration: 0.3, ease: "easeInOut" }}
+												className="space-y-4"
 											>
-												Back
-											</Button>
-											<Button type="submit" disabled={isSubmitting}>
-												{isSubmitting
-													? "Saving..."
-													: editingPackage
-													? "Update Package"
-													: "Create Package"}
-											</Button>
-										</DialogFooter>
-									</TabsContent>
+												<FormField
+													control={form.control}
+													name="images"
+													render={({ field }) => (
+														<FormItem>
+															<FormLabel>Images</FormLabel>
+															<FormControl>
+																<ImageUpload
+																	value={field.value}
+																	onChange={field.onChange}
+																	maxFiles={10}
+																/>
+															</FormControl>
+															<FormMessage />
+														</FormItem>
+													)}
+												/>
+												<div className="flex justify-between">
+													<Button
+														type="button"
+														variant="outline"
+														onClick={handlePreviousTab}
+													>
+														Back
+													</Button>
+													<Button type="button" onClick={handleNextTab}>
+														Next
+													</Button>
+												</div>
+											</motion.div>
+										)}
+
+										{/* Included Items Tab */}
+										{activeTab === "included" && (
+											<motion.div
+												key="included"
+												initial={{ opacity: 0, x: -20, height: 0 }}
+												animate={{ opacity: 1, x: 0, height: "auto" }}
+												exit={{ opacity: 0, x: 20, height: 0 }}
+												transition={{ duration: 0.3, ease: "easeInOut" }}
+												className="space-y-4"
+											>
+												<FormField
+													control={form.control}
+													name="included"
+													render={({ field }) => (
+														<FormItem>
+															<FormLabel>Included Items</FormLabel>
+															<FormControl>
+																<TagInput
+																	value={field.value}
+																	onChange={field.onChange}
+																	placeholder="Add an included item and press Enter..."
+																/>
+															</FormControl>
+															<FormMessage />
+														</FormItem>
+													)}
+												/>
+												<DialogFooter className="flex !justify-between">
+													<Button
+														type="button"
+														variant="outline"
+														onClick={handlePreviousTab}
+													>
+														Back
+													</Button>
+													<Button type="submit" disabled={isSubmitting}>
+														{isSubmitting
+															? "Saving..."
+															: editingPackage
+															? "Update Package"
+															: "Create Package"}
+													</Button>
+												</DialogFooter>
+											</motion.div>
+										)}
+									</AnimatePresence>
 								</Tabs>
 							</form>
 						</Form>
@@ -416,47 +455,96 @@ export default function PackagesPage() {
 			) : (
 				<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
 					{packages.map((pkg) => (
-						<Card key={pkg._id}>
-							<CardHeader className="pb-2">
+						<Card
+							key={pkg._id}
+							className="overflow-hidden hover:shadow-lg pt-0 trasition-shadow duration-200"
+						>
+							{/* Package Image */}
+							<div className="relative h-48 w-full bg-gray-100">
+								{pkg.images && pkg.images.length > 0 ? (
+									<Image
+										src={pkg.images[0] || "/placeholder.svg"}
+										alt={pkg.name}
+										fill
+										className="object-cover"
+									/>
+								) : (
+									<div className="flex h-full items-center justify-center text-gray-400">
+										<ImageIcon size={48} />
+									</div>
+								)}
+							</div>
+
+							<CardHeader>
 								<CardTitle className="text-xl">{pkg.name}</CardTitle>
 								<CardDescription>{pkg.duration}</CardDescription>
 							</CardHeader>
+
 							<CardContent>
-								<p className="text-sm text-muted-foreground line-clamp-3 mb-2">
+								<p className="text-sm text-muted-foreground line-clamp-3 mb-4">
 									{pkg.description}
 								</p>
 								<div className="text-sm">
 									<strong>Includes:</strong>
-									<ul className="list-disc list-inside">
+									<div className="flex flex-wrap gap-1.5 mt-1">
 										{pkg.included.slice(0, 3).map((item, i) => (
-											<li key={i}>{item}</li>
+											<span
+												key={i}
+												className="bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full"
+											>
+												{item}
+											</span>
 										))}
 										{pkg.included.length > 3 && (
-											<li>+ {pkg.included.length - 3} more</li>
+											<span className="bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">
+												+{pkg.included.length - 3} more
+											</span>
 										)}
-									</ul>
+									</div>
 								</div>
 							</CardContent>
+
 							<CardFooter className="flex justify-between">
 								<Button
 									variant="outline"
 									size="sm"
 									onClick={() => {
 										setEditingPackage(pkg);
+										setActiveTab("general");
 										setIsDialogOpen(true);
 									}}
 								>
 									<PencilSimpleLine className="mr-2 h-4 w-4" />
 									Edit
 								</Button>
-								<Button
-									variant="destructive"
-									size="sm"
-									onClick={() => handleDelete(pkg._id)}
-								>
-									<Trash className="mr-2 h-4 w-4" />
-									Delete
-								</Button>
+								<AlertDialog>
+									<AlertDialogTrigger asChild>
+										<Button variant="destructive" size="sm">
+											<Trash className="mr-2 h-4 w-4" />
+											Delete
+										</Button>
+									</AlertDialogTrigger>
+									<AlertDialogContent>
+										<AlertDialogHeader>
+											<AlertDialogTitle>
+												Are you absolutely sure?
+											</AlertDialogTitle>
+											<AlertDialogDescription>
+												This action cannot be undone. This will permanently
+												delete the package and remove it from our servers.
+											</AlertDialogDescription>
+										</AlertDialogHeader>
+										<AlertDialogFooter>
+											<AlertDialogCancel>Cancel</AlertDialogCancel>
+											<AlertDialogAction
+												onClick={() => handleDelete(pkg._id)}
+												className="bg-destructive hover:bg-destructive/90"
+											>
+												Delete
+											</AlertDialogAction>
+										</AlertDialogFooter>
+									</AlertDialogContent>
+								</AlertDialog>
 							</CardFooter>
 						</Card>
 					))}

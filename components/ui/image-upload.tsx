@@ -11,8 +11,10 @@ import {
 	ArrowDown,
 	CircleNotch,
 	CloudWarning,
+	ImageSquare,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
+import { motion, AnimatePresence, Reorder } from "framer-motion";
 
 interface ImageUploadProps {
 	value: string[];
@@ -21,13 +23,18 @@ interface ImageUploadProps {
 }
 
 interface UploadingFile {
+	id: string;
 	file: File;
 	progress: number;
 	uploading: boolean;
 	error: boolean;
 	url?: string;
-	isExisting?: boolean; // Flag to track if this is a pre-existing image
+	isExisting?: boolean;
 }
+
+// Helper function to generate unique IDs
+const generateId = () =>
+	`${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
 export function ImageUpload({
 	value = [],
@@ -49,12 +56,13 @@ export function ImageUpload({
 		if (!isInitializedRef.current || valueChanged) {
 			if (value.length > 0) {
 				const existingUrls = value.map((url, index) => ({
+					id: `existing-${index}-${Date.now()}`, // Generate unique ID
 					file: new File([], `existing-file-${index}`),
 					progress: 100,
 					uploading: false,
 					error: false,
 					url,
-					isExisting: true, // Mark as existing image
+					isExisting: true,
 				}));
 				setUploadingFiles(existingUrls);
 			} else {
@@ -106,19 +114,20 @@ export function ImageUpload({
 
 				console.log("Received signature data:", signatureData);
 
-				// Add files to our state with 0 progress
+				// Add files to our state with 0 progress and unique IDs
 				const newFiles = acceptedFiles.map((file) => ({
+					id: generateId(), // Generate unique ID for each new file
 					file,
 					progress: 0,
 					uploading: true,
 					error: false,
-					isExisting: false, // Mark as newly uploaded image
+					isExisting: false,
 				}));
 
 				setUploadingFiles((prev) => [...prev, ...newFiles]);
 
 				// Upload each file
-				const uploadPromises = acceptedFiles.map(async (file) => {
+				const uploadPromises = acceptedFiles.map(async (file, fileIndex) => {
 					const formData = new FormData();
 					formData.append("file", file);
 					formData.append("api_key", signatureData.apiKey);
@@ -137,6 +146,7 @@ export function ImageUpload({
 					try {
 						// Use XMLHttpRequest for progress tracking
 						const xhr = new XMLHttpRequest();
+						const fileId = newFiles[fileIndex].id;
 
 						// Track upload progress
 						xhr.upload.onprogress = (event) => {
@@ -145,7 +155,7 @@ export function ImageUpload({
 
 								setUploadingFiles((prev) =>
 									prev.map((item) => {
-										if (item.file === file) {
+										if (item.id === fileId) {
 											return { ...item, progress };
 										}
 										return item;
@@ -198,7 +208,7 @@ export function ImageUpload({
 						// Update our state with the completed upload
 						setUploadingFiles((prev) =>
 							prev.map((item) => {
-								if (item.file === file) {
+								if (item.id === fileId) {
 									return {
 										...item,
 										uploading: false,
@@ -218,7 +228,7 @@ export function ImageUpload({
 						// Mark this file as errored
 						setUploadingFiles((prev) =>
 							prev.map((item) => {
-								if (item.file === file) {
+								if (item.id === newFiles[fileIndex].id) {
 									return { ...item, uploading: false, error: true };
 								}
 								return item;
@@ -262,7 +272,7 @@ export function ImageUpload({
 		[uploadingFiles, maxFiles]
 	);
 
-	const { getRootProps, getInputProps, isDragActive } = useDropzone({
+	const { getInputProps, isDragActive } = useDropzone({
 		onDrop,
 		accept: {
 			"image/*": [".png", ".jpg", ".jpeg", ".webp"],
@@ -293,132 +303,276 @@ export function ImageUpload({
 		setUploadingFiles(newFiles);
 	};
 
+	// Fixed reorder handler
+	const handleReorder = (newOrder: UploadingFile[]) => {
+		setUploadingFiles(newOrder);
+	};
+
 	return (
-		<div className="space-y-4">
-			<div
-				{...getRootProps()}
-				className={`border-2 border-dashed rounded-lg p-6 cursor-pointer flex flex-col items-center justify-center transition-colors ${
+		<motion.div
+			className="space-y-4"
+			initial={{ opacity: 0, y: 20 }}
+			animate={{ opacity: 1, y: 0 }}
+			transition={{ duration: 0.3 }}
+		>
+			{/* Dropzone */}
+			<motion.div
+				className={`border-2 border-dashed rounded-lg p-8 cursor-pointer flex flex-col items-center justify-center transition-all duration-300 ${
 					isDragActive
-						? "border-primary bg-primary/5"
-						: "border-gray-300 hover:border-primary"
-				} ${
-					isLoading || uploadingFiles.filter((f) => !f.error).length >= maxFiles
-						? "opacity-50 cursor-not-allowed"
-						: ""
+						? "border-primary bg-primary/5 scale-105"
+						: "border-gray-300 hover:border-primary hover:bg-gray-50"
 				}`}
+				whileHover={{ scale: isDragActive ? 1.05 : 1 }}
+				whileTap={{ scale: 0.98 }}
+				animate={{
+					borderColor: isDragActive ? "rgb(59 130 246)" : "rgb(209 213 219)",
+					backgroundColor: isDragActive
+						? "rgb(59 130 246 / 0.05)"
+						: "transparent",
+				}}
+				transition={{ duration: 0.2 }}
+				onAnimationStart={undefined}
 			>
 				<input {...getInputProps()} />
-				<UploadSimple className="h-10 w-10 text-gray-400 mb-2" />
-				<p className="text-sm text-center text-gray-600">
+				<motion.div
+					animate={{
+						y: isDragActive ? -5 : 0,
+						scale: isDragActive ? 1.1 : 1,
+					}}
+					transition={{ duration: 0.2 }}
+				>
+					<UploadSimple className="h-12 w-12 text-gray-400 mb-3" />
+				</motion.div>
+				<motion.p
+					className="text-base font-medium text-center"
+					animate={{
+						color: isDragActive ? "rgb(59 130 246)" : "rgb(75 85 99)",
+					}}
+				>
 					{isDragActive
 						? "Drop the images here..."
-						: uploadingFiles.filter((f) => !f.error).length >= maxFiles
-						? `Maximum ${maxFiles} files reached`
 						: "Drag & drop images here, or click to select files"}
-				</p>
-				<p className="text-xs text-gray-400 mt-1">
+				</motion.p>
+				<p className="text-sm text-gray-500 mt-2">
 					PNG, JPG, JPEG or WebP (max {maxFiles} files, up to 5MB each)
 				</p>
-			</div>
+			</motion.div>
 
-			{uploadingFiles.length > 0 && (
-				<div className="grid grid-cols-1 gap-4">
-					{uploadingFiles.map((file, index) => (
-						<div
-							key={`${file.file.name}-${index}`}
-							className="flex items-center gap-3 p-2 border rounded-md bg-gray-50"
+			{/* Uploaded Images */}
+			<AnimatePresence>
+				{uploadingFiles.length > 0 && (
+					<div className="grid grid-cols-1 gap-4">
+						<motion.div
+							className="space-y-4"
+							initial={{ opacity: 0, height: 0 }}
+							animate={{ opacity: 1, height: "auto" }}
+							exit={{ opacity: 0, height: 0 }}
+							transition={{ duration: 0.3 }}
 						>
-							{/* Image preview */}
-							<div className="relative h-16 w-16 rounded-md overflow-hidden bg-gray-100">
-								{file.url ? (
-									<Image
-										src={file.url}
-										alt="Preview"
-										fill
-										className="object-cover"
-									/>
-								) : (
-									<div className="flex h-full items-center justify-center">
-										{file.error && (
-											<CloudWarning className="h-8 w-8 text-red-500" />
-										)}
-										{file.uploading && (
-											<CircleNotch className="h-8 w-8 text-gray-400 animate-spin" />
-										)}
-									</div>
-								)}
-							</div>
-
-							{/* File info and progress */}
-							<div className="flex-1 min-w-0">
-								<p className="text-sm font-medium truncate">
-									{file.file.name.startsWith("existing-file")
-										? `Image ${index + 1}`
-										: file.file.name}
+							<div className="flex items-center justify-between">
+								<h4 className="text-sm font-medium text-gray-900">
+									Uploaded Images
+								</h4>
+								<p className="text-xs text-gray-500">
+									{uploadingFiles.filter((f) => !f.error).length} of {maxFiles}{" "}
+									images
 								</p>
-								{file.uploading && (
-									<div className="w-full h-1.5 bg-gray-200 rounded-full mt-1">
-										<div
-											className="h-full bg-primary rounded-full transition-all duration-300"
-											style={{ width: `${file.progress}%` }}
-										/>
-									</div>
-								)}
-								{file.error && (
-									<p className="text-xs text-red-500">Upload failed</p>
-								)}
-								{file.progress === 100 &&
-									!file.error &&
-									!file.uploading &&
-									!file.isExisting && (
-										<p className="text-xs text-green-500">Upload complete</p>
-									)}
 							</div>
 
-							{/* Actions */}
-							<div className="flex gap-1">
-								{/* Move up button */}
-								<Button
-									type="button"
-									variant="ghost"
-									size="icon"
-									className="h-8 w-8"
-									onClick={() => moveImage(index, "up")}
-									disabled={index === 0 || file.uploading}
-								>
-									<ArrowUp className="h-4 w-4" />
-								</Button>
+							<Reorder.Group
+								axis="y"
+								values={uploadingFiles}
+								onReorder={handleReorder}
+								className="space-y-3"
+								layoutScroll
+								as="div" // Explicitly set as div
+							>
+								<AnimatePresence mode="popLayout">
+									{uploadingFiles.map((file, index) => (
+										<Reorder.Item
+											key={file.id} // Use the unique ID as key
+											value={file}
+											dragListener={!file.uploading && !file.error} // Only allow drag when not uploading/error
+											className={`cursor-grab active:cursor-grabbing ${
+												file.uploading || file.error ? "cursor-not-allowed" : ""
+											}`}
+											whileDrag={{
+												scale: 1.02,
+												zIndex: 1000,
+												boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.25)",
+											}}
+											initial={{ opacity: 0, y: 20 }}
+											animate={{ opacity: 1, y: 0 }}
+											exit={{
+												opacity: 0,
+												y: -20,
+												scale: 0.95,
+											}}
+											transition={{
+												duration: 0.2,
+												layout: { duration: 0.2 },
+											}}
+											dragTransition={{
+												bounceStiffness: 600,
+											}}
+											as="div" // Explicitly set as div
+										>
+											<motion.div
+												className={`flex items-center gap-4 p-4 border rounded-lg bg-white ${
+													index === 0 && "ring-2 ring-blue-500 bg-blue-50"
+												}`}
+												transition={{ duration: 0.2 }}
+												layout
+											>
+												{/* Drag handle indicator */}
+												{!file.uploading && !file.error && (
+													<div className="flex flex-col gap-1 opacity-40 hover:opacity-70 transition-opacity">
+														<div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+														<div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+														<div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+														<div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+													</div>
+												)}
 
-								{/* Move down button */}
-								<Button
-									type="button"
-									variant="ghost"
-									size="icon"
-									className="h-8 w-8"
-									onClick={() => moveImage(index, "down")}
-									disabled={
-										index === uploadingFiles.length - 1 || file.uploading
-									}
-								>
-									<ArrowDown className="h-4 w-4" />
-								</Button>
+												{/* Image preview */}
+												<div className="relative h-16 w-16 rounded-md overflow-hidden bg-gray-100">
+													{file.url ? (
+														<Image
+															src={file.url}
+															alt="Preview"
+															fill
+															className="object-cover"
+														/>
+													) : (
+														<div className="flex h-full items-center justify-center">
+															{file.error && (
+																<CloudWarning className="h-8 w-8 text-red-500" />
+															)}
+															{file.uploading && (
+																<CircleNotch className="h-8 w-8 text-gray-400 animate-spin" />
+															)}
+														</div>
+													)}
+												</div>
 
-								{/* Remove button */}
-								<Button
-									type="button"
-									variant="ghost"
-									size="icon"
-									className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
-									onClick={() => removeImage(index)}
-									disabled={file.uploading}
-								>
-									<X className="h-4 w-4" />
-								</Button>
-							</div>
-						</div>
-					))}
-				</div>
-			)}
-		</div>
+												{/* File info and progress */}
+												<div className="flex-1 min-w-0">
+													<p className="text-sm font-medium truncate">
+														{file.file.name.startsWith("existing-file")
+															? `Image ${index + 1}`
+															: file.file.name}
+													</p>
+													{file.uploading && (
+														<div className="w-full h-1.5 bg-gray-200 rounded-full mt-1">
+															<motion.div
+																className="h-full bg-blue-500 rounded-full"
+																initial={{ width: 0 }}
+																animate={{ width: `${file.progress}%` }}
+																transition={{ duration: 0.3 }}
+															/>
+														</div>
+													)}
+													{file.error && (
+														<motion.p
+															className="text-xs text-red-500 mt-1"
+															initial={{ opacity: 0 }}
+															animate={{ opacity: 1 }}
+														>
+															Upload failed
+														</motion.p>
+													)}
+													{file.progress === 100 &&
+														!file.error &&
+														!file.uploading &&
+														!file.isExisting && (
+															<>
+																<motion.p
+																	className="text-xs text-green-500 mt-1"
+																	initial={{ opacity: 0 }}
+																	animate={{ opacity: 1 }}
+																>
+																	Upload complete
+																</motion.p>
+																{index === 0 && (
+																	<motion.p
+																		className="text-xs text-primary mt-1 flex items-center gap-1"
+																		initial={{ opacity: 0 }}
+																		animate={{ opacity: 1 }}
+																		transition={{ delay: 0.2 }}
+																	>
+																		<ImageSquare className="h-3 w-3" />
+																		This will be your cover photo
+																	</motion.p>
+																)}
+															</>
+														)}
+												</div>
+
+												{/* Actions */}
+												<div className="flex gap-1">
+													{/* Move up button */}
+													<motion.div
+														whileHover={{ scale: 1.1 }}
+														whileTap={{ scale: 0.9 }}
+													>
+														<Button
+															type="button"
+															variant="ghost"
+															size="icon"
+															className="h-8 w-8 text-gray-900 hover:text-gray-600 hover:bg-gray-200"
+															onClick={() => moveImage(index, "up")}
+															disabled={index === 0 || file.uploading}
+														>
+															<ArrowUp className="h-4 w-4" />
+														</Button>
+													</motion.div>
+
+													{/* Move down button */}
+													<motion.div
+														whileHover={{ scale: 1.1 }}
+														whileTap={{ scale: 0.9 }}
+													>
+														<Button
+															type="button"
+															variant={"ghost"}
+															size="icon"
+															className="h-8 w-8 text-gray-900 hover:text-gray-600 hover:bg-gray-200"
+															onClick={() => moveImage(index, "down")}
+															disabled={
+																index === uploadingFiles.length - 1 ||
+																file.uploading
+															}
+														>
+															<ArrowDown className="h-4 w-4" />
+														</Button>
+													</motion.div>
+
+													{/* Remove button */}
+													<motion.div
+														whileHover={{ scale: 1.1 }}
+														whileTap={{ scale: 0.9 }}
+													>
+														<Button
+															type="button"
+															variant="ghost"
+															size="icon"
+															className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
+															onClick={() => removeImage(index)}
+															disabled={file.uploading}
+														>
+															<X className="h-4 w-4" />
+														</Button>
+													</motion.div>
+												</div>
+											</motion.div>
+										</Reorder.Item>
+									))}
+								</AnimatePresence>
+							</Reorder.Group>
+						</motion.div>
+					</div>
+				)}
+			</AnimatePresence>
+		</motion.div>
 	);
 }
