@@ -5,6 +5,25 @@ import Package from "@/models/Package";
 import { inquirySchema } from "@/lib/types";
 import { NotFoundError } from "@/lib/errors";
 import { withErrorHandler, withAdminAuth } from "@/middleware/error-handler";
+import {
+	newInquiryAdminTemplate,
+	newInquiryCustomerTemplate,
+} from "@/lib/email-templates";
+import nodemailer from "nodemailer";
+
+// Configure nodemailer transporter
+const getEmailTransporter = () => {
+	return nodemailer.createTransport({
+		service: "gmail",
+		auth: {
+			user: process.env.EMAIL_USER,
+			pass: process.env.EMAIL_PASSWORD,
+		},
+		tls: {
+			rejectUnauthorized: false,
+		},
+	});
+};
 
 export async function GET(req: NextRequest) {
 	return withErrorHandler(req, async (req) => {
@@ -78,12 +97,37 @@ export async function POST(request: NextRequest) {
 		await connectMongoDB();
 
 		// Check if package exists
-		const packageExists = await Package.findById(inquiry.data.packageId);
-		if (!packageExists) {
+		const packageDetails = await Package.findById(inquiry.data.packageId);
+		if (!packageDetails) {
 			throw new NotFoundError("Package not found");
 		}
 
-		const newInquiry = Inquiry.create(inquiry.data);
+		const newInquiry = await Inquiry.create(inquiry.data);
+
+		// Send email notification
+		try {
+			const transporter = getEmailTransporter();
+
+			// Send notification to admin
+			await transporter.sendMail({
+				from: `"Travel Habarana Booking" <${process.env.EMAIL_USER}>`,
+				to: process.env.EMAIL_USER, // Admin email
+				subject: `New Booking Inquiry: ${packageDetails.name}`,
+				html: newInquiryAdminTemplate(newInquiry, packageDetails),
+				replyTo: newInquiry.email, // Set reply-to as the customer's email
+			});
+
+			// Send confirmation to customer
+			await transporter.sendMail({
+				from: `"Travel Habarana" <${process.env.EMAIL_USER}>`,
+				to: newInquiry.email,
+				subject: "Your Booking Inquiry - Travel Habarana",
+				html: newInquiryCustomerTemplate(newInquiry, packageDetails),
+			});
+		} catch (error) {
+			console.error("Failed to send email:", error);
+		}
+
 		return NextResponse.json({ newInquiry, status: 201 });
 	});
 }
