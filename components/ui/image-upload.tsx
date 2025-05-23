@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useDropzone } from "react-dropzone";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ interface UploadingFile {
 	uploading: boolean;
 	error: boolean;
 	url?: string;
+	isExisting?: boolean; // Flag to track if this is a pre-existing image
 }
 
 export function ImageUpload({
@@ -35,34 +36,52 @@ export function ImageUpload({
 }: ImageUploadProps) {
 	const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
+	const lastValueRef = useRef<string[]>([]);
+	const isInitializedRef = useRef(false);
 
-	// Initialize with existing URLs
+	// Initialize with existing URLs (only once or when value changes significantly)
 	useEffect(() => {
-		if (value.length > 0) {
-			const existingUrls = value.map((url, index) => ({
-				file: new File([], `existing-file-${index}`),
-				progress: 100,
-				uploading: false,
-				error: false,
-				url,
-			}));
-			setUploadingFiles(existingUrls);
-		} else {
-			setUploadingFiles([]);
+		// Check if this is a significant change (not just reordering)
+		const valueChanged =
+			JSON.stringify(value.sort()) !==
+			JSON.stringify(lastValueRef.current.sort());
+
+		if (!isInitializedRef.current || valueChanged) {
+			if (value.length > 0) {
+				const existingUrls = value.map((url, index) => ({
+					file: new File([], `existing-file-${index}`),
+					progress: 100,
+					uploading: false,
+					error: false,
+					url,
+					isExisting: true, // Mark as existing image
+				}));
+				setUploadingFiles(existingUrls);
+			} else {
+				setUploadingFiles([]);
+			}
+			lastValueRef.current = [...value];
+			isInitializedRef.current = true;
 		}
 	}, [value]);
 
 	// Update parent component when our internal state changes
 	useEffect(() => {
+		if (!isInitializedRef.current) return;
+
 		const urls = uploadingFiles
 			.filter((file) => file.progress === 100 && !file.error && file.url)
 			.map((file) => file.url as string);
 
 		// Only call onChange if the URLs have actually changed
-		if (JSON.stringify(urls) !== JSON.stringify(value)) {
+		const urlsChanged =
+			JSON.stringify(urls) !== JSON.stringify(lastValueRef.current);
+
+		if (urlsChanged) {
+			lastValueRef.current = [...urls];
 			onChange(urls);
 		}
-	}, [uploadingFiles, onChange, value]);
+	}, [uploadingFiles, onChange]);
 
 	const onDrop = useCallback(
 		async (acceptedFiles: File[]) => {
@@ -93,6 +112,7 @@ export function ImageUpload({
 					progress: 0,
 					uploading: true,
 					error: false,
+					isExisting: false, // Mark as newly uploaded image
 				}));
 
 				setUploadingFiles((prev) => [...prev, ...newFiles]);
@@ -179,7 +199,13 @@ export function ImageUpload({
 						setUploadingFiles((prev) =>
 							prev.map((item) => {
 								if (item.file === file) {
-									return { ...item, uploading: false, progress: 100, url };
+									return {
+										...item,
+										uploading: false,
+										progress: 100,
+										url,
+										isExisting: false,
+									};
 								}
 								return item;
 							})
@@ -341,9 +367,12 @@ export function ImageUpload({
 								{file.error && (
 									<p className="text-xs text-red-500">Upload failed</p>
 								)}
-								{file.progress === 100 && !file.error && !file.uploading && (
-									<p className="text-xs text-green-500">Upload complete</p>
-								)}
+								{file.progress === 100 &&
+									!file.error &&
+									!file.uploading &&
+									!file.isExisting && (
+										<p className="text-xs text-green-500">Upload complete</p>
+									)}
 							</div>
 
 							{/* Actions */}
