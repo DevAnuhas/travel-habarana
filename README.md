@@ -25,6 +25,7 @@ Travel Habarana is a Next.js 15 web application designed to promote and manage s
 - Node.js (v18 or later)
 - MongoDB Atlas account (for cloud database)
 - Cloudinary account (for cloud image storage)
+- Gmail account (for email notifications)
 - Vercel account (for deployment)
 
 ## Installation
@@ -50,6 +51,8 @@ Travel Habarana is a Next.js 15 web application designed to promote and manage s
    MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/travelHabaranaDB?retryWrites=true&w=majority
    CLOUDINARY_URL=CLOUDINARY_URL=cloudinary://<your_api_key>:<your_api_secret>@<your_cloud_name>
    NEXTAUTH_SECRET=<your-nextauth-secret>
+   EMAIL_USER=<your-email@example.com>
+   EMAIL_PASSWORD=<your-email-password>
    ```
 
    - Update `MONGODB_URI` with your MongoDB Atlas connection string.
