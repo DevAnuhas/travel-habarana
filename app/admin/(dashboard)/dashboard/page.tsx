@@ -156,13 +156,13 @@ export default function DashboardPage() {
 							<table className="min-w-full divide-y divide-gray-200">
 								<thead>
 									<tr>
-										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+										<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 											Name
 										</th>
-										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+										<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 											Package
 										</th>
-										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+										<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 											Date
 										</th>
 									</tr>
@@ -170,13 +170,13 @@ export default function DashboardPage() {
 								<tbody className="divide-y divide-gray-200">
 									{stats.recentInquiries.map((inquiry) => (
 										<tr key={inquiry._id}>
-											<td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+											<td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
 												{inquiry.name}
 											</td>
-											<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+											<td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
 												{inquiry.packageId?.name || "Unknown Package"}
 											</td>
-											<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+											<td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
 												{new Date(inquiry.date).toLocaleDateString()}
 											</td>
 										</tr>
