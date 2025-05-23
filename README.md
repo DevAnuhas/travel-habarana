@@ -15,16 +15,16 @@ Travel Habarana is a Next.js 15 web application designed to promote and manage s
 
 - **Framework**: Next.js 15
 - **Database**: MongoDB (via Mongoose)
+- **Image Storage**: Cloudinary
 - **Authentication**: Auth.js (NextAuth.js)
-- **Styling**: Tailwind CSS, Shadcn UI
-- **Dependencies**: `bcryptjs`, `nodemailer`, `nanoid`, `zod`
+- **Styling**: Tailwind CSS, Shadcn UI, Framer Motion
 - **Hosting**: Recommended deployment on Vercel
 
 ## Prerequisites
 
 - Node.js (v18 or later)
 - MongoDB Atlas account (for cloud database)
-- Gmail account or SendGrid for email sending
+- Cloudinary account (for cloud image storage)
 - Vercel account (for deployment)
 
 ## Installation
@@ -48,14 +48,13 @@ Travel Habarana is a Next.js 15 web application designed to promote and manage s
 
    ```env
    MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/travelHabaranaDB?retryWrites=true&w=majority
+   CLOUDINARY_URL=CLOUDINARY_URL=cloudinary://<your_api_key>:<your_api_secret>@<your_cloud_name>
    NEXTAUTH_SECRET=<your-nextauth-secret>
-   EMAIL_USER=<your-email@gmail.com>
-   EMAIL_PASS=<your-email-password>
    ```
 
-   - Generate a `NEXTAUTH_SECRET` using `openssl rand -base64 32` or an online generator.
    - Update `MONGODB_URI` with your MongoDB Atlas connection string.
-   - Use a Gmail account or SendGrid for `EMAIL_USER` and `EMAIL_PASS`.
+   - Update `CLOUDINARY_URL` with your Cloudinary connection string.
+   - Generate a `NEXTAUTH_SECRET` using `openssl rand -base64 32` or an online generator.
 
 4. **Set Up MongoDB Atlas**:
 
@@ -130,11 +129,15 @@ Travel Habarana is a Next.js 15 web application designed to promote and manage s
 - `PATCH /api/auth/users/[id]`: Change password (admin-only).
 - `DELETE /api/auth/users/[id]`: Delete user (admin-only).
 
+### Cloudinary
+
+- `GET /api/cloudinary`: Get a signed URL for an image upload (admin-only).
+
 ## Deployment
 
 This application can be easily deployed to Vercel:
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FDevAnuhas%2Fclean-ease)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FDevAnuhas%2Ftravel-habarana.git)
 
 ## License
 
