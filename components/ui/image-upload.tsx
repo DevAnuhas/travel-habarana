@@ -272,7 +272,7 @@ export function ImageUpload({
 		[uploadingFiles, maxFiles]
 	);
 
-	const { getInputProps, isDragActive } = useDropzone({
+	const { getRootProps, getInputProps, isDragActive } = useDropzone({
 		onDrop,
 		accept: {
 			"image/*": [".png", ".jpg", ".jpeg", ".webp"],
@@ -308,30 +308,24 @@ export function ImageUpload({
 		setUploadingFiles(newOrder);
 	};
 
+	const isDisabled =
+		isLoading || uploadingFiles.filter((f) => !f.error).length >= maxFiles;
+
 	return (
-		<motion.div
-			className="space-y-4"
-			initial={{ opacity: 0, y: 20 }}
-			animate={{ opacity: 1, y: 0 }}
-			transition={{ duration: 0.3 }}
-		>
+		<div className="space-y-4">
 			{/* Dropzone */}
-			<motion.div
+			<div
+				{...getRootProps()}
 				className={`border-2 border-dashed rounded-lg p-8 cursor-pointer flex flex-col items-center justify-center transition-all duration-300 ${
 					isDragActive
-						? "border-primary bg-primary/5 scale-105"
+						? "border-primary bg-primary/5"
+						: isDisabled
+						? "border-gray-200 bg-gray-50 cursor-not-allowed"
 						: "border-gray-300 hover:border-primary hover:bg-gray-50"
 				}`}
-				whileHover={{ scale: isDragActive ? 1.05 : 1 }}
-				whileTap={{ scale: 0.98 }}
-				animate={{
-					borderColor: isDragActive ? "rgb(59 130 246)" : "rgb(209 213 219)",
-					backgroundColor: isDragActive
-						? "rgb(59 130 246 / 0.05)"
-						: "transparent",
+				style={{
+					outline: "none",
 				}}
-				transition={{ duration: 0.2 }}
-				onAnimationStart={undefined}
 			>
 				<input {...getInputProps()} />
 				<motion.div
@@ -340,23 +334,40 @@ export function ImageUpload({
 						scale: isDragActive ? 1.1 : 1,
 					}}
 					transition={{ duration: 0.2 }}
+					style={{ pointerEvents: "none" }}
 				>
-					<UploadSimple className="h-12 w-12 text-gray-400 mb-3" />
+					<UploadSimple
+						className={`h-12 w-12 mb-3 ${
+							isDisabled ? "text-gray-300" : "text-gray-400"
+						}`}
+					/>
 				</motion.div>
 				<motion.p
 					className="text-base font-medium text-center"
 					animate={{
-						color: isDragActive ? "rgb(59 130 246)" : "rgb(75 85 99)",
+						color: isDragActive
+							? "rgb(59 130 246)"
+							: isDisabled
+							? "rgb(156 163 175)"
+							: "rgb(75 85 99)",
 					}}
+					style={{ pointerEvents: "none" }} // Prevent motion div from blocking clicks
 				>
 					{isDragActive
 						? "Drop the images here..."
+						: isDisabled
+						? `Maximum ${maxFiles} files reached`
 						: "Drag & drop images here, or click to select files"}
 				</motion.p>
-				<p className="text-sm text-gray-500 mt-2">
+				<p
+					className={`text-sm mt-2 ${
+						isDisabled ? "text-gray-400" : "text-gray-500"
+					}`}
+					style={{ pointerEvents: "none" }}
+				>
 					PNG, JPG, JPEG or WebP (max {maxFiles} files, up to 5MB each)
 				</p>
-			</motion.div>
+			</div>
 
 			{/* Uploaded Images */}
 			<AnimatePresence>
@@ -573,6 +584,6 @@ export function ImageUpload({
 					</div>
 				)}
 			</AnimatePresence>
-		</motion.div>
+		</div>
 	);
 }
