@@ -11,7 +11,7 @@ import {
 	ArrowDown,
 	CircleNotch,
 	CloudWarning,
-	ImageSquare,
+	StarFour,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
@@ -493,19 +493,19 @@ export function ImageUpload({
 																>
 																	Upload complete
 																</motion.p>
-																{index === 0 && (
-																	<motion.p
-																		className="text-xs text-primary mt-1 flex items-center gap-1"
-																		initial={{ opacity: 0 }}
-																		animate={{ opacity: 1 }}
-																		transition={{ delay: 0.2 }}
-																	>
-																		<ImageSquare className="h-3 w-3" />
-																		This will be your cover photo
-																	</motion.p>
-																)}
 															</>
 														)}
+													{index === 0 && !file.error && !file.uploading && (
+														<motion.p
+															className="text-xs text-primary mt-1.5 flex items-center gap-1"
+															initial={{ opacity: 0 }}
+															animate={{ opacity: 1 }}
+															transition={{ delay: 0.2 }}
+														>
+															<StarFour className="h-3 w-3" />
+															This will be your cover photo
+														</motion.p>
+													)}
 												</div>
 
 												{/* Actions */}
