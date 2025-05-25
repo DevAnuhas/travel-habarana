@@ -2,7 +2,12 @@
 
 import type React from "react";
 import { useState, useEffect } from "react";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { adminSchema } from "@/lib/types";
 import { toast } from "sonner";
+import { useSession } from "next-auth/react";
 import {
 	UserPlus,
 	MagnifyingGlass,
@@ -10,10 +15,10 @@ import {
 	Shield,
 	ShieldWarning,
 	UserCheck,
-	UserMinus,
+	WarningCircle,
 	EnvelopeOpen,
 	Key,
-	Calendar,
+	CalendarBlank,
 	Trash,
 	PencilSimpleLine,
 } from "@phosphor-icons/react";
@@ -34,15 +39,14 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+	Form,
+	FormControl,
+	FormField,
+	FormItem,
+	FormLabel,
+	FormMessage,
+} from "@/components/ui/form";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -63,6 +67,7 @@ import {
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import LoadingSpinner from "@/components/ui/spinner";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 interface User {
 	_id: string;
@@ -72,18 +77,27 @@ interface User {
 	updatedAt: string;
 }
 
+type AdminFormValues = z.infer<typeof adminSchema>;
+
 export default function AdminUsersPage() {
+	const { data: session } = useSession() || { data: null };
 	const [users, setUsers] = useState<User[]>([]);
 	const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [isAddUserDialogOpen, setIsAddUserDialogOpen] = useState(false);
-	const [newUserEmail, setNewUserEmail] = useState("");
-	const [newUserPassword, setNewUserPassword] = useState("");
-	const [newUserRole, setNewUserRole] = useState("admin");
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [selectedUser, setSelectedUser] = useState<User | null>(null);
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+	const form = useForm<AdminFormValues>({
+		resolver: zodResolver(adminSchema),
+		defaultValues: {
+			email: "",
+			password: "",
+			confirmPassword: "",
+		},
+	});
 
 	// Fetch users
 	const fetchUsers = async () => {
@@ -121,27 +135,19 @@ export default function AdminUsersPage() {
 		setFilteredUsers(result);
 	}, [users, searchQuery]);
 
-	// Handle add user
-	const handleAddUser = async (e: React.FormEvent) => {
-		e.preventDefault();
-
-		if (!newUserEmail || !newUserPassword) {
-			toast.error("Please fill in all required fields");
-			return;
-		}
-
+	// Handle user form submission
+	const onSubmit = async (data: AdminFormValues) => {
 		try {
 			setIsSubmitting(true);
-
 			const response = await fetch("/api/auth/register", {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
 				},
 				body: JSON.stringify({
-					email: newUserEmail,
-					password: newUserPassword,
-					role: newUserRole,
+					email: data.email,
+					password: data.password,
+					role: "admin",
 				}),
 			});
 
@@ -151,14 +157,12 @@ export default function AdminUsersPage() {
 			}
 
 			toast.success("User created successfully");
-			setNewUserEmail("");
-			setNewUserPassword("");
-			setNewUserRole("admin");
+			form.reset();
 			setIsAddUserDialogOpen(false);
 			fetchUsers();
 		} catch (error: unknown) {
 			if (error instanceof Error) {
-				toast.error(error.message || "Failed to create user");
+				toast.error(error.message || "An error occurred");
 			} else {
 				toast.error("An unexpected error occurred");
 			}
@@ -236,20 +240,18 @@ export default function AdminUsersPage() {
 
 	return (
 		<div className="space-y-6">
-			<div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-				<div>
-					<h1 className="text-2xl font-bold tracking-tight">User Management</h1>
-					<p className="text-muted-foreground">
-						Manage admin users and their access permissions
-					</p>
+			<div className="flex gap-2">
+				<SidebarTrigger className="md:hidden" />
+				<div className="flex justify-between items-center w-full">
+					<h1 className="text-3xl font-bold">User Management</h1>
+					<Button
+						onClick={() => setIsAddUserDialogOpen(true)}
+						className="flex items-center gap-2"
+					>
+						<UserPlus className="h-4 w-4" />
+						Add New User
+					</Button>
 				</div>
-				<Button
-					onClick={() => setIsAddUserDialogOpen(true)}
-					className="flex items-center gap-2"
-				>
-					<UserPlus className="h-4 w-4" />
-					Add New User
-				</Button>
 			</div>
 
 			<div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
@@ -275,17 +277,13 @@ export default function AdminUsersPage() {
 					{filteredUsers.length === 0 ? (
 						<Card className="border-dashed">
 							<CardContent className="flex flex-col items-center justify-center py-10 text-center">
-								<UserMinus className="h-10 w-10 text-muted-foreground mb-4" />
+								<WarningCircle className="h-10 w-10 text-muted-foreground mb-4" />
 								<CardTitle className="text-xl mb-2">No users found</CardTitle>
 								<CardDescription className="mb-6">
 									{searchQuery !== "all"
-										? "Try adjusting your search or filter criteria"
+										? "Try adjusting your search"
 										: "Start by adding a new admin user"}
 								</CardDescription>
-								<Button onClick={() => setIsAddUserDialogOpen(true)}>
-									<UserPlus className="h-4 w-4 mr-2" />
-									Add New User
-								</Button>
 							</CardContent>
 						</Card>
 					) : (
@@ -309,6 +307,11 @@ export default function AdminUsersPage() {
 															variant="ghost"
 															size="icon"
 															className="h-8 w-8"
+															disabled={
+																session?.user &&
+																(session.user as { id?: string }).id ===
+																	user._id
+															}
 														>
 															<DotsThreeOutline
 																className="h-4 w-4"
@@ -346,7 +349,7 @@ export default function AdminUsersPage() {
 										<CardContent className="pb-2">
 											<div className="space-y-2 text-sm">
 												<div className="flex items-center text-muted-foreground">
-													<Calendar className="h-3.5 w-3.5 mr-2" />
+													<CalendarBlank className="h-3.5 w-3.5 mr-2" />
 													<span>Created: {formatDate(user.createdAt)}</span>
 												</div>
 												<div className="flex items-center text-muted-foreground">
@@ -374,74 +377,70 @@ export default function AdminUsersPage() {
 							Create a new user with admin access to the dashboard.
 						</DialogDescription>
 					</DialogHeader>
-					<form onSubmit={handleAddUser}>
-						<Tabs defaultValue="basic" className="w-full">
-							<TabsList className="grid w-full grid-cols-2">
-								<TabsTrigger value="basic">Basic Info</TabsTrigger>
-								<TabsTrigger value="permissions">Permissions</TabsTrigger>
-							</TabsList>
-							<TabsContent value="basic" className="space-y-4 pt-4">
-								<div className="space-y-4">
-									<div className="space-y-2">
-										<Label htmlFor="email">Email</Label>
-										<Input
-											id="email"
-											type="email"
-											placeholder="admin@example.com"
-											value={newUserEmail}
-											onChange={(e) => setNewUserEmail(e.target.value)}
-											required
-										/>
-									</div>
-									<div className="space-y-2">
-										<Label htmlFor="password">Password</Label>
-										<Input
-											id="password"
-											type="password"
-											placeholder="Create a strong password"
-											value={newUserPassword}
-											onChange={(e) => setNewUserPassword(e.target.value)}
-											required
-										/>
-										<p className="text-xs text-muted-foreground">
-											Password must be at least 8 characters long.
-										</p>
-									</div>
-								</div>
-							</TabsContent>
-							<TabsContent value="permissions" className="space-y-4 pt-4">
-								<div className="space-y-2">
-									<Label htmlFor="role">User Role</Label>
-									<Select value={newUserRole} onValueChange={setNewUserRole}>
-										<SelectTrigger>
-											<SelectValue placeholder="Select role" />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value="admin">Admin</SelectItem>
-										</SelectContent>
-									</Select>
-									<p className="text-xs text-muted-foreground mt-1">
-										{newUserRole === "superadmin"
-											? "Super Admins have full access to all features including user management."
-											: "Admins can manage content but cannot manage other users."}
-									</p>
-								</div>
-							</TabsContent>
-						</Tabs>
-						<DialogFooter className="mt-6">
-							<Button
-								type="button"
-								variant="outline"
-								onClick={() => setIsAddUserDialogOpen(false)}
-								disabled={isSubmitting}
-							>
-								Cancel
-							</Button>
-							<Button type="submit" disabled={isSubmitting}>
-								{isSubmitting ? "Creating..." : "Create User"}
-							</Button>
-						</DialogFooter>
-					</form>
+					<Form {...form}>
+						<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+							<FormField
+								control={form.control}
+								name="email"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>Email</FormLabel>
+										<FormControl>
+											<Input placeholder="admin@example.com" {...field} />
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+							<FormField
+								control={form.control}
+								name="password"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>Password</FormLabel>
+										<FormControl>
+											<Input
+												type="password"
+												placeholder="••••••••"
+												{...field}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+							<FormField
+								control={form.control}
+								name="confirmPassword"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel>Confirm Password</FormLabel>
+										<FormControl>
+											<Input
+												type="password"
+												placeholder="••••••••"
+												{...field}
+											/>
+										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+							<DialogFooter className="!justify-between mt-6">
+								<Button
+									type="button"
+									variant="outline"
+									onClick={() => setIsAddUserDialogOpen(false)}
+									disabled={isSubmitting}
+								>
+									Cancel
+								</Button>
+								<Button type="submit" disabled={isSubmitting}>
+									{isSubmitting ? "Creating..." : "Create User"}
+								</Button>
+							</DialogFooter>
+						</form>
+					</Form>
 				</DialogContent>
 			</Dialog>
 
@@ -469,7 +468,7 @@ export default function AdminUsersPage() {
 								handleDeleteUser();
 							}}
 							disabled={isSubmitting}
-							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+							className="bg-destructive text-background hover:bg-destructive/90"
 						>
 							{isSubmitting ? "Deleting..." : "Delete User"}
 						</AlertDialogAction>

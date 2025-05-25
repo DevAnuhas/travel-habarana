@@ -14,7 +14,7 @@ export const packageSchema = z.object({
 // Inquiry Schema
 export const inquirySchema = z.object({
 	name: z.string().min(2, "Name must be at least 2 characters"),
-	email: z.string().email("Invalid email address"),
+	email: z.string().email("Please enter a valid email address"),
 	phone: z.string().min(5, "Phone number is required"),
 	packageId: z.string().min(1, "Please select a package"),
 	date: z.date({
@@ -30,12 +30,26 @@ export const inquirySchema = z.object({
 
 // User Schema
 export const userSchema = z.object({
-	email: z.string().email({ message: "Please enter a valid email address" }),
+	email: z.string().email("Please enter a valid email address"),
 	password: z
 		.string()
-		.min(6, { message: "Password must be at least 6 characters" }),
+		.min(8, { message: "Password must be at least 8 characters" }),
 	role: z.enum(["admin", "user"]).optional(),
 });
+
+// Admin Schema (for registration)
+export const adminSchema = z
+	.object({
+		email: z.string().email("Please enter a valid email address"),
+		password: z.string().min(8, "Password must be at least 8 characters"),
+		confirmPassword: z
+			.string()
+			.min(8, "Confirm password must be at least 8 characters"),
+	})
+	.refine((data) => data.password === data.confirmPassword, {
+		message: "Passwords do not match",
+		path: ["confirmPassword"],
+	});
 
 // Password Change Schema
 export const passwordChangeSchema = z
@@ -43,10 +57,10 @@ export const passwordChangeSchema = z
 		currentPassword: z.string().min(1, "Current password is required"),
 		newPassword: z
 			.string()
-			.min(6, "New password must be at least 6 characters"),
+			.min(8, "New password must be at least 8 characters"),
 		confirmPassword: z
 			.string()
-			.min(6, "Confirm password must be at least 6 characters"),
+			.min(8, "Confirm password must be at least 8 characters"),
 	})
 	.refine((data) => data.newPassword === data.confirmPassword, {
 		message: "Passwords do not match",
