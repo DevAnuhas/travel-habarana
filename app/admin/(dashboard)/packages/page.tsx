@@ -164,6 +164,7 @@ export default function PackagesPage() {
 					? "Package updated successfully"
 					: "Package created successfully"
 			);
+			form.reset();
 			setIsDialogOpen(false);
 			fetchPackages();
 		} catch (error: unknown) {
@@ -292,9 +293,9 @@ export default function PackagesPage() {
 											{activeTab === "general" && (
 												<motion.div
 													key="general"
-													initial={{ opacity: 0, x: -20, height: 0 }}
-													animate={{ opacity: 1, x: 0, height: "auto" }}
-													exit={{ opacity: 0, x: 20, height: 0 }}
+													initial={{ opacity: 0, height: "fit-content" }}
+													animate={{ opacity: 1, height: "fit-content" }}
+													exit={{ opacity: 0, height: "fit-content" }}
 													transition={{ duration: 0.3, ease: "easeInOut" }}
 													className="space-y-4"
 												>
@@ -356,9 +357,9 @@ export default function PackagesPage() {
 											{activeTab === "images" && (
 												<motion.div
 													key="images"
-													initial={{ opacity: 0, x: -20, height: 0 }}
-													animate={{ opacity: 1, x: 0, height: "auto" }}
-													exit={{ opacity: 0, x: 20, height: 0 }}
+													initial={{ opacity: 0, height: "min-content" }}
+													animate={{ opacity: 1, height: "fit-content" }}
+													exit={{ opacity: 0, height: "fit-content" }}
 													transition={{ duration: 0.3, ease: "easeInOut" }}
 													className="space-y-4"
 												>
@@ -398,9 +399,9 @@ export default function PackagesPage() {
 											{activeTab === "included" && (
 												<motion.div
 													key="included"
-													initial={{ opacity: 0, x: -20, height: 0 }}
-													animate={{ opacity: 1, x: 0, height: "auto" }}
-													exit={{ opacity: 0, x: 20, height: 0 }}
+													initial={{ opacity: 0, height: "fit-content" }}
+													animate={{ opacity: 1, height: "fit-content" }}
+													exit={{ opacity: 0, height: "fit-content" }}
 													transition={{ duration: 0.3, ease: "easeInOut" }}
 													className="space-y-4"
 												>
