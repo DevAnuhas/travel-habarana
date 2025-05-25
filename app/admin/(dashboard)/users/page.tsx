@@ -21,6 +21,11 @@ import {
 	CalendarBlank,
 	Trash,
 	PencilSimpleLine,
+	EnvelopeSimple,
+	Lock,
+	Eye,
+	EyeSlash,
+	CircleNotch,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,6 +73,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import LoadingSpinner from "@/components/ui/spinner";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import PasswordStrengthIndicator from "@/components/ui/password-strength-indicator";
 
 interface User {
 	_id: string;
@@ -89,6 +95,8 @@ export default function AdminUsersPage() {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [selectedUser, setSelectedUser] = useState<User | null>(null);
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+	const [showPassword, setShowPassword] = useState(false);
+	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
 	const form = useForm<AdminFormValues>({
 		resolver: zodResolver(adminSchema),
@@ -98,6 +106,8 @@ export default function AdminUsersPage() {
 			confirmPassword: "",
 		},
 	});
+
+	const newPassword = form.watch("password");
 
 	// Fetch users
 	const fetchUsers = async () => {
@@ -260,7 +270,7 @@ export default function AdminUsersPage() {
 						<MagnifyingGlass className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
 						<Input
 							placeholder="Search by email..."
-							className="pl-8"
+							className="pl-8 bg-input"
 							value={searchQuery}
 							onChange={(e) => setSearchQuery(e.target.value)}
 						/>
@@ -290,7 +300,7 @@ export default function AdminUsersPage() {
 						<div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
 							{filteredUsers.map((user) => (
 								<div key={user._id}>
-									<Card className="overflow-hidden">
+									<Card className="overflow-hidden hover:shadow-lg trasition-shadow duration-200">
 										<CardHeader className="pb-2">
 											<div className="flex justify-between items-start">
 												<div className="space-y-1">
@@ -386,7 +396,14 @@ export default function AdminUsersPage() {
 									<FormItem>
 										<FormLabel>Email</FormLabel>
 										<FormControl>
-											<Input placeholder="admin@example.com" {...field} />
+											<div className="relative">
+												<EnvelopeSimple className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+												<Input
+													placeholder="admin@example.com"
+													className="pl-10 h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+													{...field}
+												/>
+											</div>
 										</FormControl>
 										<FormMessage />
 									</FormItem>
@@ -399,12 +416,35 @@ export default function AdminUsersPage() {
 									<FormItem>
 										<FormLabel>Password</FormLabel>
 										<FormControl>
-											<Input
-												type="password"
-												placeholder="••••••••"
-												{...field}
-											/>
+											<div className="relative">
+												<Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+												<Input
+													type={showPassword ? "text" : "password"}
+													placeholder="Enter your password"
+													className="pl-10 pr-10 h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+													{...field}
+												/>
+												<Button
+													type="button"
+													variant="ghost"
+													size="sm"
+													className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+													onClick={() => setShowPassword(!showPassword)}
+												>
+													{showPassword ? (
+														<EyeSlash className="h-4 w-4 text-muted-foreground" />
+													) : (
+														<Eye className="h-4 w-4 text-muted-foreground" />
+													)}
+													<span className="sr-only">
+														{showPassword ? "Hide password" : "Show password"}
+													</span>
+												</Button>
+											</div>
 										</FormControl>
+										{newPassword && (
+											<PasswordStrengthIndicator password={newPassword} />
+										)}
 										<FormMessage />
 									</FormItem>
 								)}
@@ -416,11 +456,35 @@ export default function AdminUsersPage() {
 									<FormItem>
 										<FormLabel>Confirm Password</FormLabel>
 										<FormControl>
-											<Input
-												type="password"
-												placeholder="••••••••"
-												{...field}
-											/>
+											<div className="relative">
+												<Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+												<Input
+													type={showConfirmPassword ? "text" : "password"}
+													placeholder="Enter your password"
+													className="pl-10 pr-10 h-11 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+													{...field}
+												/>
+												<Button
+													type="button"
+													variant="ghost"
+													size="sm"
+													className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+													onClick={() =>
+														setShowConfirmPassword(!showConfirmPassword)
+													}
+												>
+													{showConfirmPassword ? (
+														<EyeSlash className="h-4 w-4 text-muted-foreground" />
+													) : (
+														<Eye className="h-4 w-4 text-muted-foreground" />
+													)}
+													<span className="sr-only">
+														{showConfirmPassword
+															? "Hide password"
+															: "Show password"}
+													</span>
+												</Button>
+											</div>
 										</FormControl>
 										<FormMessage />
 									</FormItem>
@@ -436,7 +500,14 @@ export default function AdminUsersPage() {
 									Cancel
 								</Button>
 								<Button type="submit" disabled={isSubmitting}>
-									{isSubmitting ? "Creating..." : "Create User"}
+									{isSubmitting ? (
+										<>
+											<CircleNotch className="mr-1 h-4 w-4 animate-spin" />
+											Creating...
+										</>
+									) : (
+										<>Create User</>
+									)}
 								</Button>
 							</DialogFooter>
 						</form>
@@ -470,7 +541,14 @@ export default function AdminUsersPage() {
 							disabled={isSubmitting}
 							className="bg-destructive text-background hover:bg-destructive/90"
 						>
-							{isSubmitting ? "Deleting..." : "Delete User"}
+							{isSubmitting ? (
+								<>
+									<CircleNotch className="mr-1 h-4 w-4 animate-spin" />
+									Deleting...
+								</>
+							) : (
+								<>Delete User</>
+							)}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</AlertDialogContent>

@@ -25,6 +25,8 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import PasswordStrengthIndicator from "@/components/ui/password-strength-indicator";
+import { Eye, EyeSlash, CircleNotch } from "@phosphor-icons/react";
 
 type PasswordFormValues = z.infer<typeof passwordChangeSchema>;
 
@@ -32,6 +34,9 @@ export default function ChangePasswordPage() {
 	const { data: session } = useSession();
 	const user = session?.user;
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+	const [showNewPassword, setShowNewPassword] = useState(false);
+	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
 	const form = useForm<PasswordFormValues>({
 		resolver: zodResolver(passwordChangeSchema),
@@ -41,6 +46,8 @@ export default function ChangePasswordPage() {
 			confirmPassword: "",
 		},
 	});
+
+	const newPassword = form.watch("newPassword");
 
 	const onSubmit = async (data: PasswordFormValues) => {
 		setIsSubmitting(true);
@@ -78,22 +85,13 @@ export default function ChangePasswordPage() {
 
 	return (
 		<>
-			<div className="max-w-md mx-auto">
-				<div className="flex gap-2">
-					<SidebarTrigger className="md:hidden" />
-					<div>
-						<h1 className="text-2xl md:text-3xl font-bold mb-6">
-							Change Password
-						</h1>
-					</div>
-				</div>
-
+			<div className="max-w-md mx-auto h-full flex flex-col justify-center">
+				<SidebarTrigger className="absolute top-4 left-4 md:hidden" />
 				<Card>
 					<CardHeader>
 						<CardTitle>Update Your Password</CardTitle>
 						<CardDescription>
-							Enter your current password and a new password to update your
-							credentials.
+							Choose a strong password to protect your account
 						</CardDescription>
 					</CardHeader>
 					<CardContent>
@@ -109,11 +107,29 @@ export default function ChangePasswordPage() {
 										<FormItem>
 											<FormLabel>Current Password</FormLabel>
 											<FormControl>
-												<Input
-													type="password"
-													placeholder="••••••••"
-													{...field}
-												/>
+												<div className="relative">
+													<Input
+														type={showCurrentPassword ? "text" : "password"}
+														placeholder="Enter your current password"
+														className="pr-10 h-11"
+														{...field}
+													/>
+													<Button
+														type="button"
+														variant="ghost"
+														size="sm"
+														className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+														onClick={() =>
+															setShowCurrentPassword(!showCurrentPassword)
+														}
+													>
+														{showCurrentPassword ? (
+															<EyeSlash className="h-4 w-4 text-muted-foreground" />
+														) : (
+															<Eye className="h-4 w-4 text-muted-foreground" />
+														)}
+													</Button>
+												</div>
 											</FormControl>
 											<FormMessage />
 										</FormItem>
@@ -126,12 +142,31 @@ export default function ChangePasswordPage() {
 										<FormItem>
 											<FormLabel>New Password</FormLabel>
 											<FormControl>
-												<Input
-													type="password"
-													placeholder="••••••••"
-													{...field}
-												/>
+												<div className="relative">
+													<Input
+														type={showNewPassword ? "text" : "password"}
+														placeholder="Create a strong new password"
+														className="pr-10 h-11"
+														{...field}
+													/>
+													<Button
+														type="button"
+														variant="ghost"
+														size="sm"
+														className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+														onClick={() => setShowNewPassword(!showNewPassword)}
+													>
+														{showNewPassword ? (
+															<EyeSlash className="h-4 w-4 text-muted-foreground" />
+														) : (
+															<Eye className="h-4 w-4 text-muted-foreground" />
+														)}
+													</Button>
+												</div>
 											</FormControl>
+											{newPassword && (
+												<PasswordStrengthIndicator password={newPassword} />
+											)}
 											<FormMessage />
 										</FormItem>
 									)}
@@ -143,11 +178,29 @@ export default function ChangePasswordPage() {
 										<FormItem>
 											<FormLabel>Confirm New Password</FormLabel>
 											<FormControl>
-												<Input
-													type="password"
-													placeholder="••••••••"
-													{...field}
-												/>
+												<div className="relative">
+													<Input
+														type={showConfirmPassword ? "text" : "password"}
+														placeholder="Confirm your new password"
+														className="pr-10 h-11"
+														{...field}
+													/>
+													<Button
+														type="button"
+														variant="ghost"
+														size="sm"
+														className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+														onClick={() =>
+															setShowConfirmPassword(!showConfirmPassword)
+														}
+													>
+														{showConfirmPassword ? (
+															<EyeSlash className="h-4 w-4 text-muted-foreground" />
+														) : (
+															<Eye className="h-4 w-4 text-muted-foreground" />
+														)}
+													</Button>
+												</div>
 											</FormControl>
 											<FormMessage />
 										</FormItem>
@@ -158,7 +211,14 @@ export default function ChangePasswordPage() {
 									className="w-full"
 									disabled={isSubmitting}
 								>
-									{isSubmitting ? "Updating..." : "Update Password"}
+									{isSubmitting ? (
+										<>
+											<CircleNotch className="mr-1 h-4 w-4 animate-spin" />
+											Updating Password...
+										</>
+									) : (
+										<>Update Password</>
+									)}
 								</Button>
 							</form>
 						</Form>
