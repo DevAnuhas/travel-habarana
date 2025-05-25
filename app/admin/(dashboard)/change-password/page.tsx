@@ -24,6 +24,7 @@ import {
 	FormLabel,
 	FormMessage,
 } from "@/components/ui/form";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 type PasswordFormValues = z.infer<typeof passwordChangeSchema>;
 
@@ -78,7 +79,12 @@ export default function ChangePasswordPage() {
 	return (
 		<>
 			<div className="max-w-md mx-auto">
-				<h1 className="text-3xl font-bold mb-6">Change Password</h1>
+				<div className="flex gap-2">
+					<SidebarTrigger className="md:hidden" />
+					<div>
+						<h1 className="text-3xl font-bold mb-6">Change Password</h1>
+					</div>
+				</div>
 
 				<Card>
 					<CardHeader>

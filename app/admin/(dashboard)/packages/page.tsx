@@ -57,6 +57,7 @@ import {
 	ListChecks,
 	Info,
 } from "@phosphor-icons/react";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { packageSchema } from "@/lib/types";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -232,210 +233,219 @@ export default function PackagesPage() {
 
 	return (
 		<div className="space-y-6">
-			<div className="flex justify-between items-center">
-				<h1 className="text-3xl font-bold">Packages</h1>
-				<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-					<DialogTrigger asChild>
-						<Button
-							onClick={() => {
-								setEditingPackage(null);
-								setActiveTab("general");
-							}}
-						>
-							<Plus className="mr-2 h-4 w-4" />
-							Add Package
-						</Button>
-					</DialogTrigger>
-					<DialogContent className="sm:max-w-[600px] max-h-[700px] overflow-y-auto">
-						<DialogHeader>
-							<DialogTitle>
-								{editingPackage ? "Edit Package" : "Add New Package"}
-							</DialogTitle>
-							<DialogDescription>
-								{editingPackage
-									? "Update the details of the existing package."
-									: "Create a new safari or village tour package."}
-							</DialogDescription>
-						</DialogHeader>
-						<Form {...form}>
-							<form
-								onSubmit={form.handleSubmit(onSubmit)}
-								className="space-y-4"
+			<div className="flex gap-2">
+				<SidebarTrigger className="md:hidden" />
+				<div className="flex justify-between items-center w-full">
+					<h1 className="text-3xl font-bold">Packages</h1>
+					<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+						<DialogTrigger asChild>
+							<Button
+								onClick={() => {
+									setEditingPackage(null);
+									setActiveTab("general");
+								}}
 							>
-								<Tabs value={activeTab} onValueChange={handleTabChange}>
-									<TabsList className="grid grid-cols-3 mb-4 bg-primary/10">
-										<TabsTrigger value="general" className="flex items-center">
-											<Info className="mr-2 h-4 w-4" />
-											General
-										</TabsTrigger>
-										<TabsTrigger value="images" className="flex items-center">
-											<ImageIcon className="mr-2 h-4 w-4" />
-											Images
-										</TabsTrigger>
-										<TabsTrigger value="included" className="flex items-center">
-											<ListChecks className="mr-2 h-4 w-4" />
-											Included Items
-										</TabsTrigger>
-									</TabsList>
-
-									<AnimatePresence mode="wait">
-										{/* General Tab */}
-										{activeTab === "general" && (
-											<motion.div
-												key="general"
-												initial={{ opacity: 0, x: -20, height: 0 }}
-												animate={{ opacity: 1, x: 0, height: "auto" }}
-												exit={{ opacity: 0, x: 20, height: 0 }}
-												transition={{ duration: 0.3, ease: "easeInOut" }}
-												className="space-y-4"
+								<Plus className="mr-2 h-4 w-4" />
+								Add Package
+							</Button>
+						</DialogTrigger>
+						<DialogContent className="sm:max-w-[600px] max-h-[700px] overflow-y-auto">
+							<DialogHeader>
+								<DialogTitle>
+									{editingPackage ? "Edit Package" : "Add New Package"}
+								</DialogTitle>
+								<DialogDescription>
+									{editingPackage
+										? "Update the details of the existing package."
+										: "Create a new safari or village tour package."}
+								</DialogDescription>
+							</DialogHeader>
+							<Form {...form}>
+								<form
+									onSubmit={form.handleSubmit(onSubmit)}
+									className="space-y-4"
+								>
+									<Tabs value={activeTab} onValueChange={handleTabChange}>
+										<TabsList className="grid grid-cols-3 mb-4 bg-primary/10">
+											<TabsTrigger
+												value="general"
+												className="flex items-center"
 											>
-												<FormField
-													control={form.control}
-													name="name"
-													render={({ field }) => (
-														<FormItem>
-															<FormLabel>Name</FormLabel>
-															<FormControl>
-																<Input
-																	placeholder="Hurulu Eco Park Safari"
-																	{...field}
-																/>
-															</FormControl>
-															<FormMessage />
-														</FormItem>
-													)}
-												/>
-												<FormField
-													control={form.control}
-													name="description"
-													render={({ field }) => (
-														<FormItem>
-															<FormLabel>Description</FormLabel>
-															<FormControl>
-																<Textarea
-																	placeholder="Embark on a thrilling jeep safari through Hurulu Eco Park..."
-																	rows={4}
-																	{...field}
-																/>
-															</FormControl>
-															<FormMessage />
-														</FormItem>
-													)}
-												/>
-												<FormField
-													control={form.control}
-													name="duration"
-													render={({ field }) => (
-														<FormItem>
-															<FormLabel>Duration</FormLabel>
-															<FormControl>
-																<Input placeholder="3 hours" {...field} />
-															</FormControl>
-															<FormMessage />
-														</FormItem>
-													)}
-												/>
-												<div className="flex justify-end">
-													<Button type="button" onClick={handleNextTab}>
-														Next
-													</Button>
-												</div>
-											</motion.div>
-										)}
-
-										{/* Images Tab */}
-										{activeTab === "images" && (
-											<motion.div
-												key="images"
-												initial={{ opacity: 0, x: -20, height: 0 }}
-												animate={{ opacity: 1, x: 0, height: "auto" }}
-												exit={{ opacity: 0, x: 20, height: 0 }}
-												transition={{ duration: 0.3, ease: "easeInOut" }}
-												className="space-y-4"
+												<Info className="mr-2 h-4 w-4" />
+												General
+											</TabsTrigger>
+											<TabsTrigger value="images" className="flex items-center">
+												<ImageIcon className="mr-2 h-4 w-4" />
+												Images
+											</TabsTrigger>
+											<TabsTrigger
+												value="included"
+												className="flex items-center"
 											>
-												<FormField
-													control={form.control}
-													name="images"
-													render={({ field }) => (
-														<FormItem>
-															<FormLabel>Images</FormLabel>
-															<FormControl>
-																<ImageUpload
-																	value={field.value}
-																	onChange={field.onChange}
-																	maxFiles={10}
-																/>
-															</FormControl>
-															<FormMessage />
-														</FormItem>
-													)}
-												/>
-												<div className="flex justify-between">
-													<Button
-														type="button"
-														variant="outline"
-														onClick={handlePreviousTab}
-													>
-														Back
-													</Button>
-													<Button type="button" onClick={handleNextTab}>
-														Next
-													</Button>
-												</div>
-											</motion.div>
-										)}
+												<ListChecks className="mr-2 h-4 w-4" />
+												Included Items
+											</TabsTrigger>
+										</TabsList>
 
-										{/* Included Items Tab */}
-										{activeTab === "included" && (
-											<motion.div
-												key="included"
-												initial={{ opacity: 0, x: -20, height: 0 }}
-												animate={{ opacity: 1, x: 0, height: "auto" }}
-												exit={{ opacity: 0, x: 20, height: 0 }}
-												transition={{ duration: 0.3, ease: "easeInOut" }}
-												className="space-y-4"
-											>
-												<FormField
-													control={form.control}
-													name="included"
-													render={({ field }) => (
-														<FormItem>
-															<FormLabel>Included Items</FormLabel>
-															<FormControl>
-																<TagInput
-																	value={field.value}
-																	onChange={field.onChange}
-																	placeholder="Add an included item and press Enter..."
-																/>
-															</FormControl>
-															<FormMessage />
-														</FormItem>
-													)}
-												/>
-												<DialogFooter className="flex !justify-between">
-													<Button
-														type="button"
-														variant="outline"
-														onClick={handlePreviousTab}
-													>
-														Back
-													</Button>
-													<Button type="submit" disabled={isSubmitting}>
-														{isSubmitting
-															? "Saving..."
-															: editingPackage
-															? "Update Package"
-															: "Create Package"}
-													</Button>
-												</DialogFooter>
-											</motion.div>
-										)}
-									</AnimatePresence>
-								</Tabs>
-							</form>
-						</Form>
-					</DialogContent>
-				</Dialog>
+										<AnimatePresence mode="wait">
+											{/* General Tab */}
+											{activeTab === "general" && (
+												<motion.div
+													key="general"
+													initial={{ opacity: 0, x: -20, height: 0 }}
+													animate={{ opacity: 1, x: 0, height: "auto" }}
+													exit={{ opacity: 0, x: 20, height: 0 }}
+													transition={{ duration: 0.3, ease: "easeInOut" }}
+													className="space-y-4"
+												>
+													<FormField
+														control={form.control}
+														name="name"
+														render={({ field }) => (
+															<FormItem>
+																<FormLabel>Name</FormLabel>
+																<FormControl>
+																	<Input
+																		placeholder="Hurulu Eco Park Safari"
+																		{...field}
+																	/>
+																</FormControl>
+																<FormMessage />
+															</FormItem>
+														)}
+													/>
+													<FormField
+														control={form.control}
+														name="description"
+														render={({ field }) => (
+															<FormItem>
+																<FormLabel>Description</FormLabel>
+																<FormControl>
+																	<Textarea
+																		placeholder="Embark on a thrilling jeep safari through Hurulu Eco Park..."
+																		rows={4}
+																		{...field}
+																	/>
+																</FormControl>
+																<FormMessage />
+															</FormItem>
+														)}
+													/>
+													<FormField
+														control={form.control}
+														name="duration"
+														render={({ field }) => (
+															<FormItem>
+																<FormLabel>Duration</FormLabel>
+																<FormControl>
+																	<Input placeholder="3 hours" {...field} />
+																</FormControl>
+																<FormMessage />
+															</FormItem>
+														)}
+													/>
+													<div className="flex justify-end">
+														<Button type="button" onClick={handleNextTab}>
+															Next
+														</Button>
+													</div>
+												</motion.div>
+											)}
+
+											{/* Images Tab */}
+											{activeTab === "images" && (
+												<motion.div
+													key="images"
+													initial={{ opacity: 0, x: -20, height: 0 }}
+													animate={{ opacity: 1, x: 0, height: "auto" }}
+													exit={{ opacity: 0, x: 20, height: 0 }}
+													transition={{ duration: 0.3, ease: "easeInOut" }}
+													className="space-y-4"
+												>
+													<FormField
+														control={form.control}
+														name="images"
+														render={({ field }) => (
+															<FormItem>
+																<FormLabel>Images</FormLabel>
+																<FormControl>
+																	<ImageUpload
+																		value={field.value}
+																		onChange={field.onChange}
+																		maxFiles={10}
+																	/>
+																</FormControl>
+																<FormMessage />
+															</FormItem>
+														)}
+													/>
+													<div className="flex justify-between">
+														<Button
+															type="button"
+															variant="outline"
+															onClick={handlePreviousTab}
+														>
+															Back
+														</Button>
+														<Button type="button" onClick={handleNextTab}>
+															Next
+														</Button>
+													</div>
+												</motion.div>
+											)}
+
+											{/* Included Items Tab */}
+											{activeTab === "included" && (
+												<motion.div
+													key="included"
+													initial={{ opacity: 0, x: -20, height: 0 }}
+													animate={{ opacity: 1, x: 0, height: "auto" }}
+													exit={{ opacity: 0, x: 20, height: 0 }}
+													transition={{ duration: 0.3, ease: "easeInOut" }}
+													className="space-y-4"
+												>
+													<FormField
+														control={form.control}
+														name="included"
+														render={({ field }) => (
+															<FormItem>
+																<FormLabel>Included Items</FormLabel>
+																<FormControl>
+																	<TagInput
+																		value={field.value}
+																		onChange={field.onChange}
+																		placeholder="Add an included item and press Enter..."
+																	/>
+																</FormControl>
+																<FormMessage />
+															</FormItem>
+														)}
+													/>
+													<DialogFooter className="flex !justify-between">
+														<Button
+															type="button"
+															variant="outline"
+															onClick={handlePreviousTab}
+														>
+															Back
+														</Button>
+														<Button type="submit" disabled={isSubmitting}>
+															{isSubmitting
+																? "Saving..."
+																: editingPackage
+																? "Update Package"
+																: "Create Package"}
+														</Button>
+													</DialogFooter>
+												</motion.div>
+											)}
+										</AnimatePresence>
+									</Tabs>
+								</form>
+							</Form>
+						</DialogContent>
+					</Dialog>
+				</div>
 			</div>
 
 			{isLoading ? (

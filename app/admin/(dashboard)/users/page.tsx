@@ -27,6 +27,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import LoadingSpinner from "@/components/ui/spinner";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Plus, Trash, User } from "@phosphor-icons/react";
 
 // Schema for admin registration
@@ -146,86 +147,89 @@ export default function AdminsPage() {
 
 	return (
 		<div className="space-y-6">
-			<div className="flex justify-between items-center">
-				<h1 className="text-3xl font-bold">Admin Users</h1>
-				<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-					<DialogTrigger asChild>
-						<Button>
-							<Plus className="mr-2 h-4 w-4" />
-							Add Admin
-						</Button>
-					</DialogTrigger>
-					<DialogContent className="sm:max-w-[425px]">
-						<DialogHeader>
-							<DialogTitle>Add New Admin</DialogTitle>
-							<DialogDescription>
-								Create a new admin user with access to the admin panel.
-							</DialogDescription>
-						</DialogHeader>
-						<Form {...form}>
-							<form
-								onSubmit={form.handleSubmit(onSubmit)}
-								className="space-y-4"
-							>
-								<FormField
-									control={form.control}
-									name="email"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>Email</FormLabel>
-											<FormControl>
-												<Input
-													placeholder="admin@travelhabarana.com"
-													{...field}
-												/>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-								<FormField
-									control={form.control}
-									name="password"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>Password</FormLabel>
-											<FormControl>
-												<Input
-													type="password"
-													placeholder="••••••••"
-													{...field}
-												/>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-								<FormField
-									control={form.control}
-									name="confirmPassword"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>Confirm Password</FormLabel>
-											<FormControl>
-												<Input
-													type="password"
-													placeholder="••••••••"
-													{...field}
-												/>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-								<DialogFooter>
-									<Button type="submit" disabled={isSubmitting}>
-										{isSubmitting ? "Creating..." : "Create Admin"}
-									</Button>
-								</DialogFooter>
-							</form>
-						</Form>
-					</DialogContent>
-				</Dialog>
+			<div className="flex gap-2">
+				<SidebarTrigger className="md:hidden" />
+				<div className="flex justify-between items-center w-full">
+					<h1 className="text-3xl font-bold">Admin Users</h1>
+					<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+						<DialogTrigger asChild>
+							<Button>
+								<Plus className="mr-2 h-4 w-4" />
+								Add Admin
+							</Button>
+						</DialogTrigger>
+						<DialogContent className="sm:max-w-[425px]">
+							<DialogHeader>
+								<DialogTitle>Add New Admin</DialogTitle>
+								<DialogDescription>
+									Create a new admin user with access to the admin panel.
+								</DialogDescription>
+							</DialogHeader>
+							<Form {...form}>
+								<form
+									onSubmit={form.handleSubmit(onSubmit)}
+									className="space-y-4"
+								>
+									<FormField
+										control={form.control}
+										name="email"
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel>Email</FormLabel>
+												<FormControl>
+													<Input
+														placeholder="admin@travelhabarana.com"
+														{...field}
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+									<FormField
+										control={form.control}
+										name="password"
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel>Password</FormLabel>
+												<FormControl>
+													<Input
+														type="password"
+														placeholder="••••••••"
+														{...field}
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+									<FormField
+										control={form.control}
+										name="confirmPassword"
+										render={({ field }) => (
+											<FormItem>
+												<FormLabel>Confirm Password</FormLabel>
+												<FormControl>
+													<Input
+														type="password"
+														placeholder="••••••••"
+														{...field}
+													/>
+												</FormControl>
+												<FormMessage />
+											</FormItem>
+										)}
+									/>
+									<DialogFooter>
+										<Button type="submit" disabled={isSubmitting}>
+											{isSubmitting ? "Creating..." : "Create Admin"}
+										</Button>
+									</DialogFooter>
+								</form>
+							</Form>
+						</DialogContent>
+					</Dialog>
+				</div>
 			</div>
 
 			{isLoading ? (

@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import LoadingSpinner from "@/components/ui/spinner";
-import { MapPinArea, ChatText } from "@phosphor-icons/react";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Tag, ChatText } from "@phosphor-icons/react";
 import Link from "next/link";
 import Image from "next/image";
 import { toast } from "sonner";
@@ -83,11 +84,14 @@ export default function DashboardPage() {
 
 	return (
 		<div className="space-y-6">
-			<div>
-				<h1 className="text-3xl">Dashboard</h1>
-				<p className="text-muted-foreground">
-					Welcome to the Travel Habarana admin dashboard.
-				</p>
+			<div className="flex gap-2">
+				<SidebarTrigger className="md:hidden" />
+				<div>
+					<h1 className="text-3xl">Dashboard</h1>
+					<p className="text-muted-foreground">
+						Welcome to the Travel Habarana admin dashboard.
+					</p>
+				</div>
 			</div>
 
 			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -96,7 +100,7 @@ export default function DashboardPage() {
 						<CardTitle className="text-lg font-medium">
 							Total Packages
 						</CardTitle>
-						<MapPinArea className="h-6 w-6 text-muted-foreground" />
+						<Tag className="h-6 w-6 text-muted-foreground" />
 					</CardHeader>
 					<CardContent>
 						<p className="text-xs text-muted-foreground">

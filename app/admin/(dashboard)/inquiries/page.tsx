@@ -36,6 +36,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 type Inquiry = {
 	_id: string;
@@ -449,14 +450,17 @@ export default function InquiriesPage() {
 	return (
 		<>
 			<div className="space-y-6">
-				<div className="flex justify-between items-center">
+				<div className="flex gap-2">
+					<SidebarTrigger className="md:hidden" />
 					<div>
 						<h1 className="text-3xl">Inquiries</h1>
 						<p className="text-muted-foreground">
 							Manage booking inquiries from customers
 						</p>
 					</div>
+				</div>
 
+				<div className="flex justify-between items-center">
 					{selectedInquiryIds.length > 0 && (
 						<div className="flex items-center gap-2">
 							<span className="text-sm text-muted-foreground">
