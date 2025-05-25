@@ -56,6 +56,7 @@ import {
 	Image as ImageIcon,
 	ListChecks,
 	Info,
+	CircleNotch,
 } from "@phosphor-icons/react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { packageSchema } from "@/lib/types";
@@ -179,6 +180,7 @@ export default function PackagesPage() {
 	};
 
 	const handleDelete = async (id: string) => {
+		setIsSubmitting(true);
 		try {
 			const res = await fetch(`/api/packages/${id}`, {
 				method: "DELETE",
@@ -197,6 +199,8 @@ export default function PackagesPage() {
 			} else {
 				toast.error("An unexpected error occurred");
 			}
+		} finally {
+			setIsSubmitting(false);
 		}
 	};
 
@@ -431,11 +435,16 @@ export default function PackagesPage() {
 															Back
 														</Button>
 														<Button type="submit" disabled={isSubmitting}>
-															{isSubmitting
-																? "Saving..."
-																: editingPackage
-																? "Update Package"
-																: "Create Package"}
+															{isSubmitting ? (
+																<>
+																	<CircleNotch className="mr-1 h-4 w-4 animate-spin" />
+																	Saving...
+																</>
+															) : editingPackage ? (
+																"Update Package"
+															) : (
+																"Create Package"
+															)}
 														</Button>
 													</DialogFooter>
 												</motion.div>
@@ -549,9 +558,17 @@ export default function PackagesPage() {
 											<AlertDialogCancel>Cancel</AlertDialogCancel>
 											<AlertDialogAction
 												onClick={() => handleDelete(pkg._id)}
+												disabled={isSubmitting}
 												className="bg-destructive hover:bg-destructive/90"
 											>
-												Delete
+												{isSubmitting ? (
+													<>
+														<CircleNotch className="mr-1 h-4 w-4 animate-spin" />
+														Deleting...
+													</>
+												) : (
+													<>Delete</>
+												)}
 											</AlertDialogAction>
 										</AlertDialogFooter>
 									</AlertDialogContent>
