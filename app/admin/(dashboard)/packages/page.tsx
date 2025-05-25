@@ -236,7 +236,7 @@ export default function PackagesPage() {
 			<div className="flex gap-2">
 				<SidebarTrigger className="md:hidden" />
 				<div className="flex justify-between items-center w-full">
-					<h1 className="text-3xl font-bold">Packages</h1>
+					<h1 className="text-2xl md:text-3xl font-bold">Packages</h1>
 					<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
 						<DialogTrigger asChild>
 							<Button

@@ -82,7 +82,9 @@ export default function ChangePasswordPage() {
 				<div className="flex gap-2">
 					<SidebarTrigger className="md:hidden" />
 					<div>
-						<h1 className="text-3xl font-bold mb-6">Change Password</h1>
+						<h1 className="text-2xl md:text-3xl font-bold mb-6">
+							Change Password
+						</h1>
 					</div>
 				</div>
 

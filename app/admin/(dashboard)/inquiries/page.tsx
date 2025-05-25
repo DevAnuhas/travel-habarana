@@ -453,7 +453,7 @@ export default function InquiriesPage() {
 				<div className="flex gap-2">
 					<SidebarTrigger className="md:hidden" />
 					<div>
-						<h1 className="text-3xl">Inquiries</h1>
+						<h1 className="text-2xl md:text-3xl font-bold">Inquiries</h1>
 						<p className="text-muted-foreground">
 							Manage booking inquiries from customers
 						</p>

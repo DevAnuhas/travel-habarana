@@ -87,7 +87,7 @@ export default function DashboardPage() {
 			<div className="flex gap-2">
 				<SidebarTrigger className="md:hidden" />
 				<div>
-					<h1 className="text-3xl">Dashboard</h1>
+					<h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
 					<p className="text-muted-foreground">
 						Welcome to the Travel Habarana admin dashboard.
 					</p>

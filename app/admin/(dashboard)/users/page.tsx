@@ -243,7 +243,7 @@ export default function AdminUsersPage() {
 			<div className="flex gap-2">
 				<SidebarTrigger className="md:hidden" />
 				<div className="flex justify-between items-center w-full">
-					<h1 className="text-3xl font-bold">User Management</h1>
+					<h1 className="text-2xl md:text-3xl font-bold">User Management</h1>
 					<Button
 						onClick={() => setIsAddUserDialogOpen(true)}
 						className="flex items-center gap-2"
@@ -287,7 +287,7 @@ export default function AdminUsersPage() {
 							</CardContent>
 						</Card>
 					) : (
-						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+						<div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
 							{filteredUsers.map((user) => (
 								<div key={user._id}>
 									<Card className="overflow-hidden">
