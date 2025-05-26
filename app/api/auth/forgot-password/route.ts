@@ -4,22 +4,10 @@ import crypto from "crypto";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import PasswordResetToken from "@/models/PasswordResetToken";
-import { passwordResetAdminTemplate } from "@/lib/email-templates";
-import nodemailer from "nodemailer";
-
-// Configure nodemailer transporter
-const getEmailTransporter = () => {
-	return nodemailer.createTransport({
-		service: "gmail",
-		auth: {
-			user: process.env.EMAIL_USER,
-			pass: process.env.EMAIL_PASSWORD,
-		},
-		tls: {
-			rejectUnauthorized: false,
-		},
-	});
-};
+import {
+	getEmailTransporter,
+	passwordResetAdminTemplate,
+} from "@/lib/email-service";
 
 const forgotPasswordSchema = z.object({
 	email: z.string().email("Invalid email address"),

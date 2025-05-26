@@ -6,24 +6,10 @@ import { inquirySchema } from "@/lib/types";
 import { NotFoundError } from "@/lib/errors";
 import { withErrorHandler, withAdminAuth } from "@/middleware/error-handler";
 import {
+	getEmailTransporter,
 	newInquiryAdminTemplate,
 	newInquiryCustomerTemplate,
-} from "@/lib/email-templates";
-import nodemailer from "nodemailer";
-
-// Configure nodemailer transporter
-const getEmailTransporter = () => {
-	return nodemailer.createTransport({
-		service: "gmail",
-		auth: {
-			user: process.env.EMAIL_USER,
-			pass: process.env.EMAIL_PASSWORD,
-		},
-		tls: {
-			rejectUnauthorized: false,
-		},
-	});
-};
+} from "@/lib/email-service";
 
 export async function GET(req: NextRequest) {
 	return withErrorHandler(req, async (req) => {

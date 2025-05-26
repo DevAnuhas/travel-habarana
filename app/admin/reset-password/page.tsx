@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { z } from "zod";
@@ -48,7 +48,7 @@ const resetPasswordSchema = z
 
 type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const token = searchParams.get("token");
@@ -359,5 +359,24 @@ export default function ResetPasswordPage() {
 				</div>
 			</div>
 		</div>
+	);
+}
+
+function LoadingFallback() {
+	return (
+		<div className="min-h-screen flex items-center justify-center p-4">
+			<div className="text-center">
+				<CircleNotch className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-600" />
+				<p className="text-muted-foreground">Loading...</p>
+			</div>
+		</div>
+	);
+}
+
+export default function ResetPasswordPage() {
+	return (
+		<Suspense fallback={<LoadingFallback />}>
+			<ResetPasswordForm />
+		</Suspense>
 	);
 }

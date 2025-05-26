@@ -27,10 +27,10 @@ export default function WhatsAppButton() {
 					href="https://wa.me/+94766675883"
 					target="_blank"
 					rel="noopener noreferrer"
-					className="fixed bottom-6 right-6 z-50 bg-green-500 text-white px-4 py-3 rounded-full shadow-lg hover:bg-green-600 transition-all duration-300 flex items-center"
-					initial={{ opacity: 0, scale: 0.8 }}
+					className="fixed bottom-6 right-6 z-50 bg-green-500 text-white px-4 py-3 rounded-full shadow-lg hover:bg-green-600 transition-all ease-in-out duration-300 flex items-center"
+					initial={{ opacity: 0, scale: 0 }}
 					animate={{ opacity: 1, scale: 1 }}
-					exit={{ opacity: 0, scale: 0.8 }}
+					exit={{ opacity: 0, scale: 0 }}
 					whileHover={{ scale: 1.05 }}
 					aria-label="Chat on WhatsApp"
 				>

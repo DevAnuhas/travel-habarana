@@ -1,3 +1,19 @@
+import nodemailer from "nodemailer";
+
+// Configure nodemailer transporter
+export const getEmailTransporter = () => {
+	return nodemailer.createTransport({
+		service: "gmail",
+		auth: {
+			user: process.env.EMAIL_USER,
+			pass: process.env.EMAIL_PASSWORD,
+		},
+		tls: {
+			rejectUnauthorized: false,
+		},
+	});
+};
+
 /**
  * Email templates for various notifications
  */
