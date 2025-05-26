@@ -76,7 +76,7 @@ const LoginForm = () => {
 	}
 
 	return (
-		<Card>
+		<Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
 			<CardHeader className="text-center">
 				<CardTitle className="text-2xl tracking-tight">Welcome Back</CardTitle>
 				<CardDescription>

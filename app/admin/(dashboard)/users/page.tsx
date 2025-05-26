@@ -12,15 +12,11 @@ import {
 	UserPlus,
 	MagnifyingGlass,
 	DotsThreeOutline,
-	Shield,
-	ShieldWarning,
-	UserCheck,
+	Crown,
 	WarningCircle,
-	EnvelopeOpen,
 	Key,
 	CalendarBlank,
 	Trash,
-	PencilSimpleLine,
 	EnvelopeSimple,
 	Lock,
 	Eye,
@@ -95,6 +91,7 @@ export default function AdminUsersPage() {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [selectedUser, setSelectedUser] = useState<User | null>(null);
 	const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+	const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
 	const [showPassword, setShowPassword] = useState(false);
 	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -181,6 +178,43 @@ export default function AdminUsersPage() {
 		}
 	};
 
+	// Handle send password reset
+	const handleSendPasswordReset = async () => {
+		if (!selectedUser) return;
+
+		try {
+			setIsSubmitting(true);
+
+			const response = await fetch(`/api/auth/forgot-password`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					email: selectedUser.email,
+				}),
+			});
+
+			if (!response.ok) {
+				const errorData = await response.json();
+				throw new Error(
+					errorData.message || "Failed to send password reset email"
+				);
+			}
+
+			toast.success("Password reset link sent successfully");
+			setIsPasswordDialogOpen(false);
+		} catch (error: unknown) {
+			if (error instanceof Error) {
+				toast.error(error.message || "An error occurred");
+			} else {
+				toast.error("An unexpected error occurred");
+			}
+		} finally {
+			setIsSubmitting(false);
+		}
+	};
+
 	// Handle delete user
 	const handleDeleteUser = async () => {
 		if (!selectedUser) return;
@@ -224,30 +258,6 @@ export default function AdminUsersPage() {
 		}).format(date);
 	};
 
-	// Get role badge
-	const getRoleBadge = (role: string) => {
-		switch (role) {
-			case "superadmin":
-				return (
-					<Badge variant="destructive" className="flex items-center gap-1">
-						<ShieldWarning className="h-3 w-3" /> Super Admin
-					</Badge>
-				);
-			case "admin":
-				return (
-					<Badge variant="default" className="flex items-center gap-1">
-						<Shield className="h-3 w-3" /> Admin
-					</Badge>
-				);
-			default:
-				return (
-					<Badge variant="outline" className="flex items-center gap-1">
-						<UserCheck className="h-3 w-3" /> {role}
-					</Badge>
-				);
-		}
-	};
-
 	return (
 		<div className="space-y-6">
 			<div className="flex gap-2">
@@ -285,7 +295,7 @@ export default function AdminUsersPage() {
 			) : (
 				<>
 					{filteredUsers.length === 0 ? (
-						<Card className="border-dashed">
+						<Card className="border-dashed border-0 shadow-md bg-white/80 backdrop-blur-sm">
 							<CardContent className="flex flex-col items-center justify-center py-10 text-center">
 								<WarningCircle className="h-10 w-10 text-muted-foreground mb-4" />
 								<CardTitle className="text-xl mb-2">No users found</CardTitle>
@@ -300,15 +310,24 @@ export default function AdminUsersPage() {
 						<div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
 							{filteredUsers.map((user) => (
 								<div key={user._id}>
-									<Card className="overflow-hidden hover:shadow-lg trasition-shadow duration-200">
-										<CardHeader className="pb-2">
+									<Card className="overflow-hidden hover:shadow-lg trasition-shadow duration-200 border-0 shadow-md bg-white/80 backdrop-blur-sm">
+										<CardHeader>
 											<div className="flex justify-between items-start">
 												<div className="space-y-1">
 													<CardTitle className="text-base font-medium">
 														{user.email}
 													</CardTitle>
 													<CardDescription>
-														{getRoleBadge(user.role)}
+														{user.role === "admin" ? (
+															<Badge className="flex items-center gap-1 rounded-full">
+																<Crown className="h-3 w-3 mr-1" />
+																Admin
+															</Badge>
+														) : (
+															<Badge className="flex items-center gap-1 rounded-full">
+																User
+															</Badge>
+														)}
 													</CardDescription>
 												</div>
 												<DropdownMenu>
@@ -333,13 +352,15 @@ export default function AdminUsersPage() {
 													<DropdownMenuContent align="end">
 														<DropdownMenuLabel>Actions</DropdownMenuLabel>
 														<DropdownMenuSeparator />
-														<DropdownMenuItem className="cursor-pointer">
-															<EnvelopeOpen className="mr-2 h-4 w-4 focus:text-background" />
+														<DropdownMenuItem
+															className="cursor-pointer"
+															onClick={() => {
+																setSelectedUser(user);
+																setIsPasswordDialogOpen(true);
+															}}
+														>
+															<Key className="mr-2 h-4 w-4 focus:text-background" />
 															<span>Send Reset Link</span>
-														</DropdownMenuItem>
-														<DropdownMenuItem className="cursor-pointer">
-															<PencilSimpleLine className="mr-2 h-4 w-4 focus:text-background" />
-															<span>Edit User</span>
 														</DropdownMenuItem>
 														<DropdownMenuSeparator />
 														<DropdownMenuItem
@@ -349,14 +370,14 @@ export default function AdminUsersPage() {
 																setIsDeleteDialogOpen(true);
 															}}
 														>
-															<Trash className="mr-2 h-4 w-4 text-destructive focus:text-background" />
+															<Trash className="mr-2 h-4 w-4 focus:text-background" />
 															<span>Delete User</span>
 														</DropdownMenuItem>
 													</DropdownMenuContent>
 												</DropdownMenu>
 											</div>
 										</CardHeader>
-										<CardContent className="pb-2">
+										<CardContent>
 											<div className="space-y-2 text-sm">
 												<div className="flex items-center text-muted-foreground">
 													<CalendarBlank className="h-3.5 w-3.5 mr-2" />
@@ -548,6 +569,39 @@ export default function AdminUsersPage() {
 								</>
 							) : (
 								<>Delete User</>
+							)}
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
+
+			{/* Send Password Reset Dialog */}
+			<AlertDialog
+				open={isPasswordDialogOpen}
+				onOpenChange={setIsPasswordDialogOpen}
+			>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Send Password Reset Link</AlertDialogTitle>
+						<AlertDialogDescription>
+							Are you sure you want to send a password reset link to{" "}
+							<span className="font-medium">{selectedUser?.email}</span>?
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel>Cancel</AlertDialogCancel>
+						<AlertDialogAction
+							onClick={() => handleSendPasswordReset()}
+							disabled={isSubmitting}
+							className="bg-primary text-background hover:bg-primary/90"
+						>
+							{isSubmitting ? (
+								<>
+									<CircleNotch className="mr-1 h-4 w-4 animate-spin" />
+									Sending...
+								</>
+							) : (
+								<>Send Reset Link</>
 							)}
 						</AlertDialogAction>
 					</AlertDialogFooter>

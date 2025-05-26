@@ -195,7 +195,7 @@ export function ForgotPasswordModal({
 										>
 											{isLoading ? (
 												<>
-													<CircleNotch className="mr-2 h-4 w-4 animate-spin" />
+													<CircleNotch className="mr-1 h-4 w-4 animate-spin" />
 													Sending...
 												</>
 											) : countdown > 0 ? (
