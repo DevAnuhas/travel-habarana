@@ -39,7 +39,7 @@ export default function PackageCard({
 			<Link href={`/packages/${id}`} passHref>
 				<div className="relative h-64 w-full overflow-hidden">
 					<Image
-						src={image || "/placeholder.svg?height=400&width=600"}
+						src={image || "/images/placeholder.svg?height=400&width=600"}
 						alt={name}
 						fill
 						className="object-cover transition-transform duration-700 hover:scale-105"

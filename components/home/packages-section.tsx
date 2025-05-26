@@ -61,7 +61,7 @@ function PackagesSection() {
 								"Water bottles",
 								"Park entrance fees",
 							]}
-							image="/placeholder.svg?height=400&width=600"
+							image="/images/placeholder.svg?height=400&width=600"
 						/>
 						<PackageCard
 							id="minneriya"
@@ -74,7 +74,7 @@ function PackagesSection() {
 								"Water bottles",
 								"Park entrance fees",
 							]}
-							image="/placeholder.svg?height=400&width=600"
+							image="/images/placeholder.svg?height=400&width=600"
 						/>
 						<PackageCard
 							id="kaudulla"
@@ -87,7 +87,7 @@ function PackagesSection() {
 								"Water bottles",
 								"Park entrance fees",
 							]}
-							image="/placeholder.svg?height=400&width=600"
+							image="/images/placeholder.svg?height=400&width=600"
 						/>
 						<PackageCard
 							id="village"
@@ -100,7 +100,7 @@ function PackagesSection() {
 								"9-curry lunch",
 								"Farming experience",
 							]}
-							image="/placeholder.svg?height=400&width=600"
+							image="/images/placeholder.svg?height=400&width=600"
 						/>
 					</div>
 				) : (

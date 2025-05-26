@@ -50,7 +50,9 @@ export function ImageGallery({ images }: { images: string[] }) {
 
 	// Ensure we have at least one image
 	const displayImages =
-		images.length > 0 ? images : ["/placeholder.svg?height=500&width=800"];
+		images.length > 0
+			? images
+			: ["/images/placeholder.svg?height=500&width=800"];
 
 	return (
 		<div className="relative">
@@ -66,7 +68,7 @@ export function ImageGallery({ images }: { images: string[] }) {
 						className="absolute inset-0"
 					>
 						<Image
-							src={displayImages[currentIndex] || "/placeholder.svg"}
+							src={displayImages[currentIndex] || "/images/placeholder.svg"}
 							alt={`Package image ${currentIndex + 1}`}
 							fill
 							className="object-cover"
@@ -124,7 +126,7 @@ export function ImageGallery({ images }: { images: string[] }) {
 							}`}
 						>
 							<Image
-								src={image || "/placeholder.svg"}
+								src={image || "/images/placeholder.svg"}
 								alt={`Thumbnail ${index + 1}`}
 								fill
 								className="object-cover"
@@ -150,7 +152,7 @@ export function ImageGallery({ images }: { images: string[] }) {
 
 					<div className="relative w-full max-w-4xl h-[80vh]">
 						<Image
-							src={displayImages[currentIndex] || "/placeholder.svg"}
+							src={displayImages[currentIndex] || "/images/placeholder.svg"}
 							alt={`Full size image ${currentIndex + 1}`}
 							fill
 							className="object-contain"

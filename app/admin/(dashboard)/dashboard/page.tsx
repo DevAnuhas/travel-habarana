@@ -207,7 +207,7 @@ export default function DashboardPage() {
 									<div className="flex items-center space-x-4">
 										<div className="flex-shrink-0 h-10 w-10 rounded-md overflow-hidden">
 											<Image
-												src={pkg.images[0] || "https://via.placeholder.com/40"}
+												src={pkg.images[0] || "/images/placeholder.svg"}
 												alt={pkg.name}
 												width={40}
 												height={40}

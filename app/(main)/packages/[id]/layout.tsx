@@ -64,7 +64,8 @@ export async function generateMetadata({
 				title: `${packageData.name} - Travel Habarana`,
 				description: packageData.description.substring(0, 160),
 				images: [
-					packageData.images[0] || "https://travelhabarana.com/placeholder.jpg",
+					packageData.images[0] ||
+						"https://travelhabarana.com/assets/placeholder.jpg",
 				],
 			},
 		};

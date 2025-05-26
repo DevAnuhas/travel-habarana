@@ -131,7 +131,7 @@ function FeatureItem({ feature, index }: { feature: Feature; index: number }) {
 				}`}
 			>
 				<Image
-					src={feature.image || "/placeholder.svg"}
+					src={feature.image || "/images/placeholder.svg"}
 					alt={feature.title}
 					fill
 					className="object-cover"

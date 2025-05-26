@@ -385,7 +385,8 @@ export function PackageDetails({ id }: { id: string }) {
 								<div className="relative h-48 bg-gray-200">
 									<Image
 										src={
-											pkg.images?.[0] || "/placeholder.svg?height=400&width=600"
+											pkg.images?.[0] ||
+											"/images/placeholder.svg?height=400&width=600"
 										}
 										alt={pkg.name}
 										fill
