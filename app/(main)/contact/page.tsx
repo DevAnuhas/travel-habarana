@@ -68,7 +68,7 @@ export default function ContactPage() {
 							<div className="grid grid-cols-1 md:grid-cols-2">
 								<div className="h-64 md:h-full bg-primary/10 relative">
 									<Image
-										src="https://res.cloudinary.com/dsq09tlrm/image/upload/v1747225191/cover_yulgqs.jpg"
+										src="https://res.cloudinary.com/travelhabarana/image/upload/v1747225191/cover_yulgqs.jpg"
 										alt="Cover Image"
 										fill
 										className="object-cover"

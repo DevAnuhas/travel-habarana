@@ -52,7 +52,7 @@ function HeroSection() {
 					transition={{ duration: 1 }}
 				>
 					<Image
-						src="https://res.cloudinary.com/dsq09tlrm/image/upload/v1747296498/hero-image_hmg1je.webp"
+						src="https://res.cloudinary.com/travelhabarana/image/upload/v1747296498/hero-image_hmg1je.webp"
 						alt="Sri Lankan Safari"
 						fill
 						priority

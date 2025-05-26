@@ -11,7 +11,7 @@ function CTABannerSection() {
 		<section className="relative py-20">
 			<div className="absolute flex inset-0 bg-gray-900">
 				<Image
-					src="https://res.cloudinary.com/dsq09tlrm/image/upload/v1747225657/2_i0j9uk.png"
+					src="https://res.cloudinary.com/travelhabarana/image/upload/v1747225657/2_i0j9uk.png"
 					alt="Sri Lankan landscape"
 					fill
 					className="object-cover object-center opacity-30"

@@ -62,7 +62,7 @@ function PlanVisitSection() {
 			<div className="absolute inset-0 w-full h-full opacity-25">
 				<Image
 					alt="Semi-transparent background"
-					src="https://res.cloudinary.com/dsq09tlrm/image/upload/v1747309472/section-bg_sxd9qc.webp"
+					src="https://res.cloudinary.com/travelhabarana/image/upload/v1747309472/section-bg_sxd9qc.webp"
 					fill
 					className="object-cover"
 				/>

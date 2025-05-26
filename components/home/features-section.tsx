@@ -19,7 +19,7 @@ const features: Array<Feature> = [
 		description:
 			"All our safari jeeps are equipped with seatbelts and fully insured for your safety and peace of mind.",
 		image:
-			"https://res.cloudinary.com/dsq09tlrm/image/upload/v1747400857/IMG_8961_ntttrb.jpg",
+			"https://res.cloudinary.com/travelhabarana/image/upload/v1747400857/IMG_8961_ntttrb.jpg",
 	},
 	{
 		icon: CalendarHeart,
@@ -27,7 +27,7 @@ const features: Array<Feature> = [
 		description:
 			"We offer year-round safari tours with special recommendations for the best wildlife viewing seasons.",
 		image:
-			"https://res.cloudinary.com/dsq09tlrm/image/upload/v1747400905/IMG_8953_rirwyz.jpg",
+			"https://res.cloudinary.com/travelhabarana/image/upload/v1747400905/IMG_8953_rirwyz.jpg",
 	},
 	{
 		icon: NavigationArrow,
@@ -35,7 +35,7 @@ const features: Array<Feature> = [
 		description:
 			"Our experienced guides are passionate about wildlife and dedicated to creating memorable experiences.",
 		image:
-			"https://res.cloudinary.com/dsq09tlrm/image/upload/v1747409645/Minneriya-National-park_nqlfvl.jpg",
+			"https://res.cloudinary.com/travelhabarana/image/upload/v1747409645/Minneriya-National-park_nqlfvl.jpg",
 	},
 	{
 		icon: FlowerLotus,
@@ -43,7 +43,7 @@ const features: Array<Feature> = [
 		description:
 			"From safari adventures to cultural village tours, we provide authentic Sri Lankan experiences.",
 		image:
-			"https://res.cloudinary.com/dsq09tlrm/image/upload/v1747400887/IMG_0422_g3orcr.jpg",
+			"https://res.cloudinary.com/travelhabarana/image/upload/v1747400887/IMG_0422_g3orcr.jpg",
 	},
 ];
 
