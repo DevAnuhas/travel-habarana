@@ -32,6 +32,7 @@ import {
 	EyeSlash,
 	CircleNotch,
 } from "@phosphor-icons/react";
+import { ForgotPasswordModal } from "./forgot-password-modal";
 
 type LoginFormValues = z.infer<typeof userSchema>;
 
@@ -39,6 +40,7 @@ const LoginForm = () => {
 	const router = useRouter();
 	const [isLoading, setIsLoading] = useState(false);
 	const [showPassword, setShowPassword] = useState(false);
+	const [showForgotPassword, setShowForgotPassword] = useState(false);
 
 	const form = useForm<LoginFormValues>({
 		resolver: zodResolver(userSchema),
@@ -146,10 +148,7 @@ const LoginForm = () => {
 									type="button"
 									variant="link"
 									className="p-0 h-auto"
-									onClick={() => {
-										// TODO: Implement forgot password
-										toast.info("Password reset feature coming soon!");
-									}}
+									onClick={() => setShowForgotPassword(true)}
 								>
 									Forgot your password?
 								</Button>
@@ -168,6 +167,10 @@ const LoginForm = () => {
 						</Button>
 					</form>
 				</Form>
+				<ForgotPasswordModal
+					open={showForgotPassword}
+					onOpenChange={setShowForgotPassword}
+				/>
 			</CardContent>
 		</Card>
 	);
