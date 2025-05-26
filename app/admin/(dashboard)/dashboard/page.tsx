@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import LoadingSpinner from "@/components/ui/spinner";
-import { MapPinArea, ChatText } from "@phosphor-icons/react";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Tag, ChatText } from "@phosphor-icons/react";
 import Link from "next/link";
 import Image from "next/image";
 import { toast } from "sonner";
@@ -83,20 +84,23 @@ export default function DashboardPage() {
 
 	return (
 		<div className="space-y-6">
-			<div>
-				<h1 className="text-3xl">Dashboard</h1>
-				<p className="text-muted-foreground">
-					Welcome to the Travel Habarana admin dashboard.
-				</p>
+			<div className="flex gap-2">
+				<SidebarTrigger className="md:hidden" />
+				<div>
+					<h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
+					<p className="text-muted-foreground">
+						Welcome to the Travel Habarana admin dashboard.
+					</p>
+				</div>
 			</div>
 
 			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-				<Card className="gap-0">
+				<Card className="gap-0 border-0 shadow-md bg-white/80 backdrop-blur-sm">
 					<CardHeader className="flex flex-row items-center justify-between space-y-0">
 						<CardTitle className="text-lg font-medium">
 							Total Packages
 						</CardTitle>
-						<MapPinArea className="h-6 w-6 text-muted-foreground" />
+						<Tag className="h-6 w-6 text-muted-foreground" />
 					</CardHeader>
 					<CardContent>
 						<p className="text-xs text-muted-foreground">
@@ -106,7 +110,7 @@ export default function DashboardPage() {
 					</CardContent>
 				</Card>
 
-				<Card className="gap-0">
+				<Card className="gap-0 border-0 shadow-md bg-white/80 backdrop-blur-sm">
 					<CardHeader className="flex flex-row items-center justify-between space-y-0">
 						<CardTitle className="text-lg font-medium">
 							Total Inquiries
@@ -123,7 +127,7 @@ export default function DashboardPage() {
 					</CardContent>
 				</Card>
 
-				<Card className="gap-0">
+				<Card className="gap-0 border-0 shadow-md bg-white/80 backdrop-blur-sm">
 					<CardHeader className="flex flex-row items-center justify-between space-y-0">
 						<CardTitle className="text-lg font-medium">
 							Inquiries This Month
@@ -142,7 +146,7 @@ export default function DashboardPage() {
 			</div>
 
 			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-				<Card>
+				<Card className="border-0 shadow-md bg-white/80 backdrop-blur-sm">
 					<CardHeader className="flex items-center justify-between border-b">
 						<CardTitle className="text-lg font-medium">
 							Recent Inquiries
@@ -156,13 +160,13 @@ export default function DashboardPage() {
 							<table className="min-w-full divide-y divide-gray-200">
 								<thead>
 									<tr>
-										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+										<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 											Name
 										</th>
-										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+										<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 											Package
 										</th>
-										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+										<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
 											Date
 										</th>
 									</tr>
@@ -170,13 +174,13 @@ export default function DashboardPage() {
 								<tbody className="divide-y divide-gray-200">
 									{stats.recentInquiries.map((inquiry) => (
 										<tr key={inquiry._id}>
-											<td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+											<td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
 												{inquiry.name}
 											</td>
-											<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+											<td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
 												{inquiry.packageId?.name || "Unknown Package"}
 											</td>
-											<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+											<td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
 												{new Date(inquiry.date).toLocaleDateString()}
 											</td>
 										</tr>
@@ -187,7 +191,7 @@ export default function DashboardPage() {
 					</CardContent>
 				</Card>
 
-				<Card>
+				<Card className="border-0 shadow-md bg-white/80 backdrop-blur-sm">
 					<CardHeader className="flex items-center justify-between border-b">
 						<CardTitle className="text-lg font-medium">
 							Popular Packages

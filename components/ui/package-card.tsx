@@ -36,47 +36,49 @@ export default function PackageCard({
 			viewport={{ once: true }}
 			whileHover={{ y: -5 }}
 		>
-			<div className="relative h-64 w-full overflow-hidden">
-				<Image
-					src={image || "/placeholder.svg?height=400&width=600"}
-					alt={name}
-					fill
-					className="object-cover transition-transform duration-700 hover:scale-105"
-				/>
-				<div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-			</div>
-
-			<div className="p-6 flex-grow flex flex-col">
-				<div className="flex items-center mb-3">
-					<Clock size={16} className="text-primary mr-2" />
-					<span className="text-sm text-gray-600">{duration}</span>
+			<Link href={`/packages/${id}`} passHref>
+				<div className="relative h-64 w-full overflow-hidden">
+					<Image
+						src={image || "/placeholder.svg?height=400&width=600"}
+						alt={name}
+						fill
+						className="object-cover transition-transform duration-700 hover:scale-105"
+					/>
+					<div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
 				</div>
 
-				<h3 className="text-xl font-bold mb-3">{name}</h3>
+				<div className="p-6 flex-grow flex flex-col">
+					<div className="flex items-center mb-3">
+						<Clock size={16} className="text-primary mr-2" />
+						<span className="text-sm text-gray-600">{duration}</span>
+					</div>
 
-				<p className="text-gray-600 mb-4 flex-grow">{description}</p>
+					<h3 className="text-xl font-bold mb-3">{name}</h3>
 
-				<div className="mb-4">
-					<h4 className="font-semibold text-sm mb-2 text-primary">Includes:</h4>
-					<ul>
-						{included.slice(0, 3).map((item, index) => (
-							<li key={index} className="flex items-start mb-1">
-								<Check
-									size={16}
-									className="text-primary mr-2 mt-1 flex-shrink-0"
-								/>
-								<span className="text-sm text-gray-600">{item}</span>
-							</li>
-						))}
-					</ul>
-				</div>
+					<p className="text-gray-600 mb-4 flex-grow">{description}</p>
 
-				<div className="flex justify-between items-center">
-					<span className="flex items-center gap-2 text-sm text-muted-foreground">
-						<ChatCircleDots size={16} />
-						Contact us for pricing & availability
-					</span>
-					<Link href={`/packages/${id}`} passHref>
+					<div className="mb-4">
+						<h4 className="font-semibold text-sm mb-2 text-primary">
+							Includes:
+						</h4>
+						<ul>
+							{included.slice(0, 4).map((item, index) => (
+								<li key={index} className="flex items-start mb-1">
+									<Check
+										size={16}
+										className="text-primary mr-2 mt-1 flex-shrink-0"
+									/>
+									<span className="text-sm text-gray-600">{item}</span>
+								</li>
+							))}
+						</ul>
+					</div>
+
+					<div className="flex justify-between items-center">
+						<span className="flex items-center gap-2 text-sm text-muted-foreground">
+							<ChatCircleDots size={16} />
+							Contact us for pricing & availability
+						</span>
 						<motion.div
 							className="inline-flex items-center justify-center mt-2 text-primary font-medium hover:text-primary group cursor-pointer"
 							whileHover={{ x: 5 }}
@@ -89,9 +91,9 @@ export default function PackageCard({
 								/>
 							</Button>
 						</motion.div>
-					</Link>
+					</div>
 				</div>
-			</div>
+			</Link>
 		</motion.div>
 	);
 }

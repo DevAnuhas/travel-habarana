@@ -25,12 +25,22 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { userSchema } from "@/lib/types";
+import {
+	EnvelopeSimple,
+	Lock,
+	Eye,
+	EyeSlash,
+	CircleNotch,
+} from "@phosphor-icons/react";
+import { ForgotPasswordModal } from "./forgot-password-modal";
 
 type LoginFormValues = z.infer<typeof userSchema>;
 
 const LoginForm = () => {
 	const router = useRouter();
 	const [isLoading, setIsLoading] = useState(false);
+	const [showPassword, setShowPassword] = useState(false);
+	const [showForgotPassword, setShowForgotPassword] = useState(false);
 
 	const form = useForm<LoginFormValues>({
 		resolver: zodResolver(userSchema),
@@ -66,16 +76,16 @@ const LoginForm = () => {
 	}
 
 	return (
-		<Card>
-			<CardHeader>
-				<CardTitle className="text-2xl tracking-tight">Login</CardTitle>
+		<Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+			<CardHeader className="text-center">
+				<CardTitle className="text-2xl tracking-tight">Welcome Back</CardTitle>
 				<CardDescription>
-					Enter your credentials to access the dashboard
+					Sign in to access your admin dashboard
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
 				<Form {...form}>
-					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
 						<FormField
 							control={form.control}
 							name="email"
@@ -83,7 +93,14 @@ const LoginForm = () => {
 								<FormItem>
 									<FormLabel>Email</FormLabel>
 									<FormControl>
-										<Input placeholder="email@example.com" {...field} />
+										<div className="relative">
+											<EnvelopeSimple className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+											<Input
+												placeholder="Enter your email"
+												className="pl-10 h-11"
+												{...field}
+											/>
+										</div>
 									</FormControl>
 									<FormMessage />
 								</FormItem>
@@ -97,27 +114,63 @@ const LoginForm = () => {
 								<FormItem>
 									<FormLabel>Password</FormLabel>
 									<FormControl>
-										<Input
-											type="password"
-											placeholder="Enter your password"
-											{...field}
-										/>
+										<div className="relative">
+											<Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+											<Input
+												type={showPassword ? "text" : "password"}
+												placeholder="Enter your password"
+												className="pl-10 pr-10 h-11"
+												{...field}
+											/>
+											<Button
+												type="button"
+												variant="ghost"
+												size="sm"
+												className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+												onClick={() => setShowPassword(!showPassword)}
+											>
+												{showPassword ? (
+													<EyeSlash className="h-4 w-4 text-muted-foreground" />
+												) : (
+													<Eye className="h-4 w-4 text-muted-foreground" />
+												)}
+											</Button>
+										</div>
 									</FormControl>
 									<FormMessage />
 								</FormItem>
 							)}
 						/>
 
-						<Button
-							type="submit"
-							size={"lg"}
-							className="w-full mt-2"
-							disabled={isLoading}
-						>
-							{isLoading ? "Logging in..." : "Login"}
+						<div className="flex items-center justify-between">
+							<div className="text-sm">
+								<Button
+									type="button"
+									variant="link"
+									className="p-0 h-auto"
+									onClick={() => setShowForgotPassword(true)}
+								>
+									Forgot your password?
+								</Button>
+							</div>
+						</div>
+
+						<Button type="submit" className="w-full" disabled={isLoading}>
+							{isLoading ? (
+								<>
+									<CircleNotch className="mr-1 h-4 w-4 animate-spin" />
+									Logging in...
+								</>
+							) : (
+								<>Login</>
+							)}
 						</Button>
 					</form>
 				</Form>
+				<ForgotPasswordModal
+					open={showForgotPassword}
+					onOpenChange={setShowForgotPassword}
+				/>
 			</CardContent>
 		</Card>
 	);

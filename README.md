@@ -49,7 +49,7 @@ Travel Habarana is a Next.js 15 web application designed to promote and manage s
 
    ```env
    MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/travelHabaranaDB?retryWrites=true&w=majority
-   CLOUDINARY_URL=CLOUDINARY_URL=cloudinary://<your_api_key>:<your_api_secret>@<your_cloud_name>
+   CLOUDINARY_URL=cloudinary://<your_api_key>:<your_api_secret>@<your_cloud_name>
    NEXTAUTH_SECRET=<your-nextauth-secret>
    EMAIL_USER=<your-email@example.com>
    EMAIL_PASSWORD=<your-email-password>
@@ -124,6 +124,7 @@ Travel Habarana is a Next.js 15 web application designed to promote and manage s
 - `GET /api/inquiries`: List inquiries (admin-only).
 - `GET /api/inquiries/[id]`: Get an inquiry by ID (admin-only).
 - `DELETE /api/inquiries/[id]`: Delete an inquiry (admin-only).
+- `POST /api/inquiries/status`: Bulk update inquiry status (admin-only).
 
 ### Auth
 
@@ -131,6 +132,9 @@ Travel Habarana is a Next.js 15 web application designed to promote and manage s
 - `GET /api/auth/users`: List all users (admin-only).
 - `PATCH /api/auth/users/[id]`: Change password (admin-only).
 - `DELETE /api/auth/users/[id]`: Delete user (admin-only).
+- `POST /api/auth/forgot-password`: Send a password reset email.
+- `POST /api/auth/reset-password`: Reset password using a token.
+- `POST /api/auth/verify-reset-token`: Verify a password reset token.
 
 ### Cloudinary
 

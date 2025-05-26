@@ -36,6 +36,7 @@ import {
 	FormLabel,
 	FormMessage,
 } from "@/components/ui/form";
+import { CircleNotch } from "@phosphor-icons/react";
 
 interface Package {
 	_id: string;
@@ -325,7 +326,14 @@ export default function BookingForm() {
 					/>
 
 					<Button type="submit" className="w-full" disabled={isSubmitting}>
-						{isSubmitting ? "Submitting..." : "Send Inquiry"}
+						{isSubmitting ? (
+							<>
+								<CircleNotch className="mr-1 h-4 w-4 animate-spin" />
+								Submitting...
+							</>
+						) : (
+							<>Send Inquiry</>
+						)}
 					</Button>
 				</form>
 			</Form>

@@ -10,7 +10,7 @@ import {
 	XCircle,
 	Clock,
 	DotsThreeOutline,
-	MapPinArea,
+	Tag,
 	CalendarDots,
 	Users,
 	Copy,
@@ -36,6 +36,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 type Inquiry = {
 	_id: string;
@@ -300,7 +301,7 @@ export default function InquiriesPage() {
 			cell: ({ row }) => {
 				return (
 					<div className="flex items-center">
-						<MapPinArea className="mr-2 h-4 w-4 text-muted-foreground" />
+						<Tag className="mr-2 h-4 w-4 text-muted-foreground" />
 						<span>{row.original.packageId?.name || "Unknown Package"}</span>
 					</div>
 				);
@@ -449,14 +450,17 @@ export default function InquiriesPage() {
 	return (
 		<>
 			<div className="space-y-6">
-				<div className="flex justify-between items-center">
+				<div className="flex gap-2">
+					<SidebarTrigger className="md:hidden" />
 					<div>
-						<h1 className="text-3xl">Inquiries</h1>
+						<h1 className="text-2xl md:text-3xl font-bold">Inquiries</h1>
 						<p className="text-muted-foreground">
 							Manage booking inquiries from customers
 						</p>
 					</div>
+				</div>
 
+				<div className="flex justify-between items-center">
 					{selectedInquiryIds.length > 0 && (
 						<div className="flex items-center gap-2">
 							<span className="text-sm text-muted-foreground">
@@ -499,7 +503,7 @@ export default function InquiriesPage() {
 					)}
 				</div>
 
-				<Card>
+				<Card className="border-0 shadow-md bg-white/80 backdrop-blur-sm">
 					<CardContent>
 						<DataTable
 							columns={columns}

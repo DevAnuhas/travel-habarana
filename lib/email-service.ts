@@ -1,3 +1,19 @@
+import nodemailer from "nodemailer";
+
+// Configure nodemailer transporter
+export const getEmailTransporter = () => {
+	return nodemailer.createTransport({
+		service: "gmail",
+		auth: {
+			user: process.env.EMAIL_USER,
+			pass: process.env.EMAIL_PASSWORD,
+		},
+		tls: {
+			rejectUnauthorized: false,
+		},
+	});
+};
+
 /**
  * Email templates for various notifications
  */
@@ -343,4 +359,127 @@ export function newInquiryCustomerTemplate(
     </body>
     </html>
   `;
+}
+
+// Password reset email template
+export function passwordResetAdminTemplate(
+	resetToken: string,
+	userName: string
+) {
+	const resetUrl = `${
+		process.env.NEXT_PUBLIC_APP_URL || "https://travelhabarana.com"
+	}/admin/reset-password?token=${resetToken}`;
+
+	return `<!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Password Reset - Travel Habarana Admin</title>
+      <style>
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          line-height: 1.6;
+          color: #333;
+          background-color: #f9f9f9;
+          margin: 0;
+          padding: 0;
+        }
+        .container {
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 20px;
+          background-color: #ffffff;
+          border-radius: 8px;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+          background-color: #4CAF50;
+          color: white;
+          padding: 20px;
+          text-align: center;
+          border-radius: 8px 8px 0 0;
+          margin: -20px -20px 20px;
+        }
+        .header h1 {
+          margin: 0;
+          font-size: 24px;
+        }
+        .content {
+          padding: 0 20px;
+        }
+        .reset-button {
+          display: inline-block;
+          background-color: #4CAF50;
+          color: white;
+          text-decoration: none;
+          padding: 15px 30px;
+          border-radius: 5px;
+          margin: 20px 0;
+          font-weight: bold;
+        }
+        .security-notice {
+          background-color: #fef3c7;
+          border-left: 4px solid #f59e0b;
+          padding: 15px;
+          margin: 20px 0;
+          border-radius: 0 5px 5px 0;
+        }
+        .footer {
+          text-align: center;
+          margin-top: 40px;
+          padding-top: 20px;
+          border-top: 1px solid #e5e7eb;
+          font-size: 14px;
+          color: #6b7280;
+        }
+        .logo {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 10px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>Travel Habarana</h1>
+        </div>
+        
+        <div class="content">
+          <h2>Password Reset Request</h2>
+          <p>Hello ${userName},</p>
+          
+          <p>We received a request to reset your password for your Travel Habarana admin account. If you made this request, click the button below to reset your password:</p>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${resetUrl}" class="reset-button">Reset My Password</a>
+          </div>
+          
+          <p>If the button doesn't work, you can copy and paste this link into your browser:</p>
+          <p style="word-break: break-all; background-color: #f3f4f6; padding: 10px; border-radius: 5px; font-family: monospace;">
+            ${resetUrl}
+          </p>
+          
+          <div class="security-notice">
+            <h3 style="margin-top: 0; color: #92400e;">Security Notice</h3>
+            <ul style="margin-bottom: 0;">
+              <li>This link will expire in <strong>1 hour</strong> for security reasons</li>
+              <li>If you didn't request this reset, please ignore this email</li>
+              <li>Never share this link with anyone</li>
+              <li>Contact your system administrator if you have concerns</li>
+            </ul>
+          </div>
+          
+          <p>Best regards,<br>Travel Habarana Security Team</p>
+        </div>
+        
+        <div class="footer">
+          <p>This is an automated security email from Travel Habarana Admin Portal.</p>
+          <p>&copy; ${new Date().getFullYear()} Travel Habarana. All rights reserved.</p>
+        </div>
+      </div>
+    </body>
+    </html>`;
 }
