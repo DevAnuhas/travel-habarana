@@ -87,7 +87,7 @@ export default function ChangePasswordPage() {
 		<>
 			<div className="max-w-md mx-auto h-full flex flex-col justify-center">
 				<SidebarTrigger className="absolute top-4 left-4 md:hidden" />
-				<Card>
+				<Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
 					<CardHeader>
 						<CardTitle>Update Your Password</CardTitle>
 						<CardDescription>

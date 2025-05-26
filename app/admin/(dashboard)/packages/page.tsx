@@ -477,7 +477,7 @@ export default function PackagesPage() {
 					{packages.map((pkg) => (
 						<Card
 							key={pkg._id}
-							className="overflow-hidden hover:shadow-lg pt-0 trasition-shadow duration-200"
+							className="overflow-hidden hover:shadow-lg pt-0 trasition-shadow duration-200 border-0 shadow-md bg-white/80 backdrop-blur-sm"
 						>
 							{/* Package Image */}
 							<div className="relative h-48 w-full bg-gray-100">

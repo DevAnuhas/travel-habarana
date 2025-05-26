@@ -95,7 +95,7 @@ export default function DashboardPage() {
 			</div>
 
 			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-				<Card className="gap-0">
+				<Card className="gap-0 border-0 shadow-md bg-white/80 backdrop-blur-sm">
 					<CardHeader className="flex flex-row items-center justify-between space-y-0">
 						<CardTitle className="text-lg font-medium">
 							Total Packages
@@ -110,7 +110,7 @@ export default function DashboardPage() {
 					</CardContent>
 				</Card>
 
-				<Card className="gap-0">
+				<Card className="gap-0 border-0 shadow-md bg-white/80 backdrop-blur-sm">
 					<CardHeader className="flex flex-row items-center justify-between space-y-0">
 						<CardTitle className="text-lg font-medium">
 							Total Inquiries
@@ -127,7 +127,7 @@ export default function DashboardPage() {
 					</CardContent>
 				</Card>
 
-				<Card className="gap-0">
+				<Card className="gap-0 border-0 shadow-md bg-white/80 backdrop-blur-sm">
 					<CardHeader className="flex flex-row items-center justify-between space-y-0">
 						<CardTitle className="text-lg font-medium">
 							Inquiries This Month
@@ -146,7 +146,7 @@ export default function DashboardPage() {
 			</div>
 
 			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-				<Card>
+				<Card className="border-0 shadow-md bg-white/80 backdrop-blur-sm">
 					<CardHeader className="flex items-center justify-between border-b">
 						<CardTitle className="text-lg font-medium">
 							Recent Inquiries
@@ -191,7 +191,7 @@ export default function DashboardPage() {
 					</CardContent>
 				</Card>
 
-				<Card>
+				<Card className="border-0 shadow-md bg-white/80 backdrop-blur-sm">
 					<CardHeader className="flex items-center justify-between border-b">
 						<CardTitle className="text-lg font-medium">
 							Popular Packages

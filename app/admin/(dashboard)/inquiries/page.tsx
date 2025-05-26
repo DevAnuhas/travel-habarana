@@ -10,7 +10,7 @@ import {
 	XCircle,
 	Clock,
 	DotsThreeOutline,
-	MapPinArea,
+	Tag,
 	CalendarDots,
 	Users,
 	Copy,
@@ -301,7 +301,7 @@ export default function InquiriesPage() {
 			cell: ({ row }) => {
 				return (
 					<div className="flex items-center">
-						<MapPinArea className="mr-2 h-4 w-4 text-muted-foreground" />
+						<Tag className="mr-2 h-4 w-4 text-muted-foreground" />
 						<span>{row.original.packageId?.name || "Unknown Package"}</span>
 					</div>
 				);
@@ -503,7 +503,7 @@ export default function InquiriesPage() {
 					)}
 				</div>
 
-				<Card>
+				<Card className="border-0 shadow-md bg-white/80 backdrop-blur-sm">
 					<CardContent>
 						<DataTable
 							columns={columns}
