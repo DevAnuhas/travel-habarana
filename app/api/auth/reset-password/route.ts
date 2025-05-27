@@ -50,15 +50,9 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		// Hash the new password
-		const salt = await bcrypt.genSalt(10);
-		const hashedPassword = await bcrypt.hash(password, salt);
-
 		// Update user password
-		await User.findByIdAndUpdate(user._id, {
-			password: hashedPassword,
-			updatedAt: new Date(),
-		});
+		const hashedPassword = await bcrypt.hash(password, 12);
+		await User.updateOne({ _id: user._id }, { password: hashedPassword });
 
 		// Mark the reset token as used
 		await PasswordResetToken.findByIdAndUpdate(resetToken._id, {
@@ -76,7 +70,7 @@ export async function POST(request: NextRequest) {
 				success: true,
 				message: "Password has been reset successfully",
 			},
-			{ status: 200 }
+			{ status: 201 }
 		);
 	} catch (error) {
 		console.error("Reset password error:", error);

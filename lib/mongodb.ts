@@ -1,7 +1,14 @@
 import mongoose from "mongoose";
+import { config as loadEnv } from "dotenv";
+import path from "path";
+
+// Load environment variables from .env.local if available
+loadEnv({ path: path.resolve(__dirname, "../.env.local") });
 
 // Store the connection promise globally to reuse it
 let connectionPromise: Promise<typeof mongoose> | null = null;
+
+export const MONGODB_URI = process.env.MONGODB_URI;
 
 const connectMongoDB = async () => {
 	// If already connected, return immediately
@@ -17,13 +24,13 @@ const connectMongoDB = async () => {
 
 	try {
 		// Start a new connection and store the promise
-		if (!process.env.MONGODB_URI) {
+		if (!MONGODB_URI) {
 			throw new Error(
 				"MONGODB_URI is not defined in the environment variables"
 			);
 		}
 
-		connectionPromise = mongoose.connect(process.env.MONGODB_URI, {
+		connectionPromise = mongoose.connect(MONGODB_URI, {
 			maxPoolSize: 10,
 			serverSelectionTimeoutMS: 5000,
 		});

@@ -8,7 +8,7 @@ Travel Habarana is a Next.js 15 web application designed to promote and manage s
 
 - **User Side**: Browse safari and village tour packages, submit booking inquiries (no sign-up required), and access contact details.
 - **Admin Panel**: Manage packages (CRUD operations), view and delete inquiries, and add/remove admin users.
-- **Authentication**: Email and password login for admins with JWT session management and password change functionality.
+- **Authentication**: Email and password login for admins with JWT session management and password change/reset functionality.
 - **Error Handling**: Centralized error handling for API routes with custom error classes.
 
 ## Tech Stack
@@ -48,22 +48,22 @@ Travel Habarana is a Next.js 15 web application designed to promote and manage s
    - Create a `.env.local` file in the root directory and add the following:
 
    ```env
-   MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/travelHabaranaDB?retryWrites=true&w=majority
-   CLOUDINARY_URL=cloudinary://<your_api_key>:<your_api_secret>@<your_cloud_name>
+   MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/<database-name>?retryWrites=true&w=majority
+   CLOUDINARY_URL=cloudinary://<your-api-key>:<your-api-secret>@<your-cloud-name>
    NEXTAUTH_SECRET=<your-nextauth-secret>
    EMAIL_USER=<your-email@example.com>
    EMAIL_PASSWORD=<your-email-password>
    ```
 
    - Update `MONGODB_URI` with your MongoDB Atlas connection string.
-   - Update `CLOUDINARY_URL` with your Cloudinary connection string.
+   - Update `CLOUDINARY_URL` with your Cloudinary API key and API secret.
    - Generate a `NEXTAUTH_SECRET` using `openssl rand -base64 32` or an online generator.
+   - Update `EMAIL_USER` and `EMAIL_PASSWORD` with your SMTP server credentials.
 
-4. **Set Up MongoDB Atlas**:
+4. **Seed the Database**:
 
-   - Create a cluster in MongoDB Atlas.
-   - Add your IP address to the network access list.
-   - Create a database user and use `travelHabaranaDB` as the database name.
+   - Run the `npm run seed` command to seed the database with sample data.
+   - Console output will show the admin user's login credentials.
 
 5. **Run the Development Server**:
 
@@ -99,11 +99,11 @@ Travel Habarana is a Next.js 15 web application designed to promote and manage s
    - Go to `/admin/login` and log in with an admin email and password.
 2. **Dashboard**:
    - View an overview of recent inquiries and packages at `/admin/dashboard`.
-3. **Packages Management**:
-   - Manage packages (create, edit, delete) at `/admin/packages`.
-4. **Inquiries Management**:
+3. **Inquiries Management**:
    - View and delete inquiries at `/admin/inquiries` with filters for package and date.
-5. **Admin Management**:
+4. **Packages Management**:
+   - Manage packages (create, edit, delete) at `/admin/packages`.
+5. **Users Management**:
    - Add or remove users at `/admin/users`.
 6. **Change Password**:
    - Update your password at `/admin/change-password`.
