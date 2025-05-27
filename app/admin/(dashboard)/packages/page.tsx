@@ -483,13 +483,13 @@ export default function PackagesPage() {
 							<div className="relative h-48 w-full bg-gray-100">
 								{pkg.images && pkg.images.length > 0 ? (
 									<Image
-										src={pkg.images[0] || "/placeholder.svg"}
+										src={pkg.images[0]}
 										alt={pkg.name}
 										fill
 										className="object-cover"
 									/>
 								) : (
-									<div className="flex h-full items-center justify-center text-gray-400">
+									<div className="flex h-full items-center justify-center text-gray-400 bg-gray-200">
 										<ImageIcon size={48} />
 									</div>
 								)}

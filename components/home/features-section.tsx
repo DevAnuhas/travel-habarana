@@ -8,6 +8,7 @@ import {
 	CalendarHeart,
 	NavigationArrow,
 	FlowerLotus,
+	Image as ImageIcon,
 	IconProps,
 } from "@phosphor-icons/react";
 import SectionHeading from "@/components/ui/section-heading";
@@ -130,13 +131,19 @@ function FeatureItem({ feature, index }: { feature: Feature; index: number }) {
 					isEven ? "md:order-2" : "md:order-1"
 				}`}
 			>
-				<Image
-					src={feature.image || "/images/placeholder.svg"}
-					alt={feature.title}
-					fill
-					className="object-cover"
-					sizes="(max-width: 768px) 100vw, 50vw"
-				/>
+				{feature.image ? (
+					<Image
+						src={feature.image}
+						alt={feature.title}
+						fill
+						className="object-cover"
+						sizes="(max-width: 768px) 100vw, 50vw"
+					/>
+				) : (
+					<div className="flex h-full items-center justify-center text-gray-400 bg-gray-200">
+						<ImageIcon size={48} />
+					</div>
+				)}
 			</motion.div>
 		</div>
 	);

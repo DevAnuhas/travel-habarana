@@ -3,7 +3,12 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { CaretRight, CaretLeft, X } from "@phosphor-icons/react/dist/ssr";
+import {
+	CaretRight,
+	CaretLeft,
+	X,
+	Image as ImageIcon,
+} from "@phosphor-icons/react/dist/ssr";
 
 export function ImageGallery({ images }: { images: string[] }) {
 	const [currentIndex, setCurrentIndex] = useState(0);
@@ -48,12 +53,6 @@ export function ImageGallery({ images }: { images: string[] }) {
 		setIsPlaying(true);
 	};
 
-	// Ensure we have at least one image
-	const displayImages =
-		images.length > 0
-			? images
-			: ["/images/placeholder.svg?height=500&width=800"];
-
 	return (
 		<div className="relative">
 			{/* Main image */}
@@ -67,13 +66,19 @@ export function ImageGallery({ images }: { images: string[] }) {
 						transition={{ duration: 0.5 }}
 						className="absolute inset-0"
 					>
-						<Image
-							src={displayImages[currentIndex] || "/images/placeholder.svg"}
-							alt={`Package image ${currentIndex + 1}`}
-							fill
-							className="object-cover"
-							priority={currentIndex === 0}
-						/>
+						{images.length > 0 ? (
+							<Image
+								src={images[currentIndex]}
+								alt={`Package image ${currentIndex + 1}`}
+								fill
+								className="object-cover"
+								priority={currentIndex === 0}
+							/>
+						) : (
+							<div className="flex h-full items-center justify-center text-gray-400 bg-gray-200">
+								<ImageIcon size={48} />
+							</div>
+						)}
 					</motion.div>
 				</AnimatePresence>
 
@@ -95,11 +100,11 @@ export function ImageGallery({ images }: { images: string[] }) {
 
 				{/* Image counter */}
 				<div className="absolute bottom-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
-					{currentIndex + 1} / {displayImages.length}
+					{images.length > 0 ? currentIndex + 1 : 0} / {images.length}
 				</div>
 
 				{/* View all button */}
-				{displayImages.length > 1 && (
+				{images.length > 1 && (
 					<button
 						onClick={() => {
 							setShowFullGallery(true);
@@ -113,9 +118,9 @@ export function ImageGallery({ images }: { images: string[] }) {
 			</div>
 
 			{/* Thumbnail strip */}
-			{displayImages.length > 1 && (
+			{images.length > 1 && (
 				<div className="flex mt-4 space-x-2 overflow-x-auto pb-2 scrollbar-hide">
-					{displayImages.map((image, index) => (
+					{images.map((image, index) => (
 						<button
 							key={index}
 							onClick={() => goToImage(index)}
@@ -126,7 +131,7 @@ export function ImageGallery({ images }: { images: string[] }) {
 							}`}
 						>
 							<Image
-								src={image || "/images/placeholder.svg"}
+								src={image}
 								alt={`Thumbnail ${index + 1}`}
 								fill
 								className="object-cover"
@@ -152,7 +157,7 @@ export function ImageGallery({ images }: { images: string[] }) {
 
 					<div className="relative w-full max-w-4xl h-[80vh]">
 						<Image
-							src={displayImages[currentIndex] || "/images/placeholder.svg"}
+							src={images[currentIndex]}
 							alt={`Full size image ${currentIndex + 1}`}
 							fill
 							className="object-contain"
@@ -175,7 +180,7 @@ export function ImageGallery({ images }: { images: string[] }) {
 						</button>
 
 						<div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-							{displayImages.map((_, index) => (
+							{images.map((_, index) => (
 								<button
 									key={index}
 									onClick={() => goToImage(index)}

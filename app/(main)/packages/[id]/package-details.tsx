@@ -11,11 +11,12 @@ import {
 	Check,
 	CalendarDots,
 	Users,
-	CaretRight,
+	ArrowRight,
 	Share,
 	Heart,
 	Info,
 	Phone,
+	Image as ImageIcon,
 } from "@phosphor-icons/react/dist/ssr";
 import { toast } from "sonner";
 import { favoritesManager } from "@/utils/favoritesManager";
@@ -382,29 +383,40 @@ export function PackageDetails({ id }: { id: string }) {
 								viewport={{ once: true }}
 								whileHover={{ y: -5 }}
 							>
-								<div className="relative h-48 bg-gray-200">
-									<Image
-										src={
-											pkg.images?.[0] ||
-											"/images/placeholder.svg?height=400&width=600"
-										}
-										alt={pkg.name}
-										fill
-										className="object-cover"
-									/>
-								</div>
-								<div className="p-4">
-									<h3 className="font-bold text-lg mb-2">{pkg.name}</h3>
-									<p className="text-sm text-gray-600 mb-3 line-clamp-2">
-										{pkg.description}
-									</p>
-									<Link href={`/packages/${pkg._id}`}>
-										<Button variant="link" className="!p-0">
-											View Details
-											<CaretRight size={16} className="ml-1" />
-										</Button>
-									</Link>
-								</div>
+								<Link href={`/packages/${pkg._id}`}>
+									<div className="relative h-48 bg-gray-200">
+										{pkg.images ? (
+											<Image
+												src={pkg.images[0]}
+												alt={pkg.name}
+												fill
+												className="object-cover transition-transform duration-700 hover:scale-105"
+											/>
+										) : (
+											<div className="flex h-full items-center justify-center text-gray-400 bg-gray-200">
+												<ImageIcon size={48} />
+											</div>
+										)}
+									</div>
+									<div className="p-4">
+										<h3 className="font-bold text-lg mb-2">{pkg.name}</h3>
+										<p className="text-sm text-gray-600 mb-3 line-clamp-2">
+											{pkg.description}
+										</p>
+										<motion.div
+											className="flex justify-end text-primary font-medium hover:text-primary group cursor-pointer"
+											whileHover={{ x: 5 }}
+										>
+											<Button variant={"link"}>
+												View Details
+												<ArrowRight
+													size={16}
+													className="ml-1 group-hover:ml-2 transition-all"
+												/>
+											</Button>
+										</motion.div>
+									</div>
+								</Link>
 							</motion.div>
 						))}
 					</div>

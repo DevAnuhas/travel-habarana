@@ -48,63 +48,12 @@ function PackagesSection() {
 						<LoadingSpinner />
 					</div>
 				) : packages.length === 0 ? (
-					// If API returns no packages, show fallback content
-					<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-						<PackageCard
-							id="hurulu"
-							name="Hurulu Eco Park Safari"
-							description="Explore a UNESCO biosphere with elephant sightings and diverse wildlife in their natural habitat."
-							duration="Half Day (3-4 hours)"
-							included={[
-								"Luxury jeep with seatbelts",
-								"Professional guide",
-								"Water bottles",
-								"Park entrance fees",
-							]}
-							image="/images/placeholder.svg?height=400&width=600"
-						/>
-						<PackageCard
-							id="minneriya"
-							name="Minneriya National Park Safari"
-							description="Witness the famous Elephant Gathering, one of Asia's greatest wildlife spectacles."
-							duration="Half Day (3-4 hours)"
-							included={[
-								"Luxury jeep with seatbelts",
-								"Professional guide",
-								"Water bottles",
-								"Park entrance fees",
-							]}
-							image="/images/placeholder.svg?height=400&width=600"
-						/>
-						<PackageCard
-							id="kaudulla"
-							name="Kaudulla National Park Safari"
-							description="Discover diverse wildlife year-round including elephants, deer, and numerous bird species."
-							duration="Half Day (3-4 hours)"
-							included={[
-								"Luxury jeep with seatbelts",
-								"Professional guide",
-								"Water bottles",
-								"Park entrance fees",
-							]}
-							image="/images/placeholder.svg?height=400&width=600"
-						/>
-						<PackageCard
-							id="village"
-							name="Cultural Village Tour"
-							description="Immerse in local life with a traditional boat ride, farming experience, and authentic 9-curry lunch."
-							duration="Full Day (6-7 hours)"
-							included={[
-								"Traditional boat ride",
-								"Local guide",
-								"9-curry lunch",
-								"Farming experience",
-							]}
-							image="/images/placeholder.svg?height=400&width=600"
-						/>
+					<div className="text-center py-12">
+						<p className="text-gray-500">
+							No packages available at the moment. Please check back later.
+						</p>
 					</div>
 				) : (
-					// Display packages from API
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
 						{packages.map((pkg) => (
 							<PackageCard

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import LoadingSpinner from "@/components/ui/spinner";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Tag, ChatText } from "@phosphor-icons/react";
+import { Tag, ChatText, Image as ImageIcon } from "@phosphor-icons/react";
 import Link from "next/link";
 import Image from "next/image";
 import { toast } from "sonner";
@@ -206,13 +206,19 @@ export default function DashboardPage() {
 								<li key={pkg._id} className="py-4">
 									<div className="flex items-center space-x-4">
 										<div className="flex-shrink-0 h-10 w-10 rounded-md overflow-hidden">
-											<Image
-												src={pkg.images[0] || "/images/placeholder.svg"}
-												alt={pkg.name}
-												width={40}
-												height={40}
-												className="h-full w-full object-cover"
-											/>
+											{pkg.images.length > 0 ? (
+												<Image
+													src={pkg.images[0]}
+													alt={pkg.name}
+													width={40}
+													height={40}
+													className="h-full w-full object-cover"
+												/>
+											) : (
+												<div className="flex h-full items-center justify-center text-gray-400 bg-gray-200">
+													<ImageIcon size={48} />
+												</div>
+											)}
 										</div>
 										<div className="flex-1 min-w-0">
 											<p className="text-sm font-medium text-gray-900 truncate">

@@ -61,7 +61,7 @@ function TestimonialsSection() {
 									<div className="relative h-12 w-12 rounded-full overflow-hidden mr-4">
 										<Image
 											src={
-												testimonial.avatar || "/images/avatar-placeholder.svg"
+												testimonial.avatar || "/assets/avatar-placeholder.svg"
 											}
 											alt={testimonial.name}
 											width={48}

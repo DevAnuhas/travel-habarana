@@ -7,6 +7,7 @@ import {
 	Clock,
 	Check,
 	ChatCircleDots,
+	Image as ImageIcon,
 } from "@phosphor-icons/react";
 import { Button } from "./button";
 
@@ -38,12 +39,18 @@ export default function PackageCard({
 		>
 			<Link href={`/packages/${id}`} passHref>
 				<div className="relative h-64 w-full overflow-hidden">
-					<Image
-						src={image || "/images/placeholder.svg?height=400&width=600"}
-						alt={name}
-						fill
-						className="object-cover transition-transform duration-700 hover:scale-105"
-					/>
+					{image ? (
+						<Image
+							src={image}
+							alt={name}
+							fill
+							className="object-cover transition-transform duration-700 hover:scale-105"
+						/>
+					) : (
+						<div className="flex h-full items-center justify-center text-gray-400 bg-gray-200">
+							<ImageIcon size={48} />
+						</div>
+					)}
 					<div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
 				</div>
 
@@ -53,15 +60,13 @@ export default function PackageCard({
 						<span className="text-sm text-gray-600">{duration}</span>
 					</div>
 
-					<h3 className="text-xl font-bold mb-3">{name}</h3>
+					<h3 className="text-xl font-bold mb-5">{name}</h3>
 
-					<p className="text-gray-600 mb-4 flex-grow">{description}</p>
-
-					<div className="mb-4">
+					<div className="mb-6">
 						<h4 className="font-semibold text-sm mb-2 text-primary">
 							Includes:
 						</h4>
-						<ul>
+						<ul className="grid grid-cols-2 gap-0.5">
 							{included.slice(0, 4).map((item, index) => (
 								<li key={index} className="flex items-start mb-1">
 									<Check
@@ -74,13 +79,17 @@ export default function PackageCard({
 						</ul>
 					</div>
 
-					<div className="flex justify-between items-center">
+					<p className="text-gray-600 mb-6 flex-grow line-clamp-3">
+						{description}
+					</p>
+
+					<div className="flex justify-between items-center gap-2">
 						<span className="flex items-center gap-2 text-sm text-muted-foreground">
 							<ChatCircleDots size={16} />
 							Contact us for pricing & availability
 						</span>
 						<motion.div
-							className="inline-flex items-center justify-center mt-2 text-primary font-medium hover:text-primary group cursor-pointer"
+							className="inline-flex items-center justify-center text-primary font-medium hover:text-primary group cursor-pointer"
 							whileHover={{ x: 5 }}
 						>
 							<Button variant={"link"}>
