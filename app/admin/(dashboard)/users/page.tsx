@@ -181,11 +181,9 @@ export default function AdminUsersPage() {
 	// Handle send password reset
 	const handleSendPasswordReset = async () => {
 		if (!selectedUser) return;
-
 		try {
 			setIsSubmitting(true);
-
-			const response = await fetch(`/api/auth/forgot-password`, {
+			const response = await fetch("/api/auth/forgot-password", {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
@@ -195,23 +193,18 @@ export default function AdminUsersPage() {
 				}),
 			});
 
-			if (!response.ok) {
-				const errorData = await response.json();
-				throw new Error(
-					errorData.message || "Failed to send password reset email"
-				);
-			}
+			const result = await response.json();
 
-			toast.success("Password reset link sent successfully");
-			setIsPasswordDialogOpen(false);
-		} catch (error: unknown) {
-			if (error instanceof Error) {
-				toast.error(error.message || "An error occurred");
+			if (result.success) {
+				toast.success("Password reset link sent successfully");
 			} else {
-				toast.error("An unexpected error occurred");
+				toast.error(result.message);
 			}
+		} catch {
+			toast.error("An unexpected error occurred. Please try again.");
 		} finally {
 			setIsSubmitting(false);
+			setIsPasswordDialogOpen(false);
 		}
 	};
 
@@ -589,9 +582,14 @@ export default function AdminUsersPage() {
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
-						<AlertDialogCancel>Cancel</AlertDialogCancel>
+						<AlertDialogCancel disabled={isSubmitting}>
+							Cancel
+						</AlertDialogCancel>
 						<AlertDialogAction
-							onClick={() => handleSendPasswordReset()}
+							onClick={(e) => {
+								e.preventDefault();
+								handleSendPasswordReset();
+							}}
 							disabled={isSubmitting}
 							className="bg-primary text-background hover:bg-primary/90"
 						>
