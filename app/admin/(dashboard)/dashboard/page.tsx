@@ -57,8 +57,8 @@ export default function DashboardPage() {
 					totalPackages: packages.length,
 					totalInquiries: inquiries.length,
 					totalInquiriesThisMonth: inquiries.length,
-					recentInquiries: inquiries.slice(0, 5),
-					popularPackages: packages.slice(0, 4),
+					recentInquiries: inquiries.slice(0, 6),
+					popularPackages: packages.slice(0, 5),
 				});
 			} catch (error) {
 				toast.error(
@@ -202,7 +202,7 @@ export default function DashboardPage() {
 					</CardHeader>
 					<CardContent>
 						<ul className="divide-y divide-gray-200">
-							{stats.popularPackages.slice(0, 4).map((pkg) => (
+							{stats.popularPackages.map((pkg) => (
 								<li key={pkg._id} className="py-4">
 									<div className="flex items-center space-x-4">
 										<div className="flex-shrink-0 h-10 w-10 rounded-md overflow-hidden">
