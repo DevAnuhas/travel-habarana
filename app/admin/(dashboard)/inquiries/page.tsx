@@ -512,50 +512,47 @@ export default function InquiriesPage() {
 					</div>
 				</div>
 
-				<div className="flex justify-between items-center h-2">
-					{selectedInquiryIds.length > 0 && (
-						<div className="flex flex-wrap items-center gap-2">
-							<span className="text-sm text-muted-foreground">
-								{selectedInquiryIds.length} selected
-							</span>
-							<Button
-								size="sm"
-								variant="outline"
-								className="flex items-center"
-								onClick={() => openStatusDialog("new")}
-							>
-								<Clock className="mr-2 h-4 w-4" />
-								Mark as New
-							</Button>
-							<Button
-								size="sm"
-								variant="outline"
-								className="flex items-center"
-								onClick={() => openStatusDialog("contacted")}
-							>
-								<PhoneCall className="mr-2 h-4 w-4" />
-								Mark as Contacted
-							</Button>
-							<Button
-								size="sm"
-								variant="outline"
-								className="flex items-center"
-								onClick={() => openStatusDialog("confirmed")}
-							>
-								<CheckCircle className="mr-2 h-4 w-4" />
-								Mark as Confirmed
-							</Button>
-							<Button
-								size="sm"
-								variant="outline"
-								className="flex items-center text-destructive"
-								onClick={() => openStatusDialog("cancelled")}
-							>
-								<XCircle className="mr-2 h-4 w-4" />
-								Mark as Cancelled
-							</Button>
-						</div>
-					)}
+				<div className="flex flex-wrap items-center justify-end gap-2">
+					<Button
+						size="sm"
+						variant="outline"
+						className="flex items-center"
+						onClick={() => openStatusDialog("new")}
+						disabled={selectedInquiryIds.length === 0}
+					>
+						<Clock className="mr-2 h-4 w-4" />
+						Mark as New
+					</Button>
+					<Button
+						size="sm"
+						variant="outline"
+						className="flex items-center"
+						onClick={() => openStatusDialog("contacted")}
+						disabled={selectedInquiryIds.length === 0}
+					>
+						<PhoneCall className="mr-2 h-4 w-4" />
+						Mark as Contacted
+					</Button>
+					<Button
+						size="sm"
+						variant="outline"
+						className="flex items-center"
+						onClick={() => openStatusDialog("confirmed")}
+						disabled={selectedInquiryIds.length === 0}
+					>
+						<CheckCircle className="mr-2 h-4 w-4" />
+						Mark as Confirmed
+					</Button>
+					<Button
+						size="sm"
+						variant="outline"
+						className="flex items-center text-destructive"
+						onClick={() => openStatusDialog("cancelled")}
+						disabled={selectedInquiryIds.length === 0}
+					>
+						<XCircle className="mr-2 h-4 w-4" />
+						Mark as Cancelled
+					</Button>
 				</div>
 
 				<Card className="border-0 shadow-md bg-white/80 backdrop-blur-sm">
