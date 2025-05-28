@@ -88,7 +88,7 @@ export default function InquiriesPage() {
 	// Update selected inquiry IDs when row selection changes
 	useEffect(() => {
 		const selectedIds = Object.entries(rowSelection)
-			.filter(([selected]) => selected)
+			.filter(([, selected]) => selected)
 			.map(([index]) => inquiries[Number.parseInt(index)]._id);
 		setSelectedInquiryIds(selectedIds);
 	}, [rowSelection, inquiries]);
@@ -103,13 +103,9 @@ export default function InquiriesPage() {
 		}
 	};
 
-	const fetchInquiries = async () => {
+	const fetchInquiries = useCallback(async () => {
 		try {
 			setIsLoading(true);
-
-			const controller = new AbortController();
-			const signal = controller.signal;
-
 			const params = new URLSearchParams();
 			params.append("page", String(pagination.pageIndex + 1));
 			params.append("pageSize", String(pagination.pageSize));
@@ -120,19 +116,17 @@ export default function InquiriesPage() {
 			if (selectedPackageId) params.append("packageId", selectedPackageId);
 			if (selectedStatus) params.append("status", selectedStatus);
 
-			const res = await fetch(`/api/inquiries?${params.toString()}`, {
-				signal,
-			});
+			const res = await fetch(`/api/inquiries?${params.toString()}`);
 			if (!res.ok) {
 				throw new Error("Network response was not ok");
 			}
 			const data = await res.json();
 
-			setPagination({
-				...pagination,
+			setPagination((prev) => ({
+				...prev,
 				pageCount: data.pagination.pageCount,
 				total: data.pagination.total,
-			});
+			}));
 
 			setInquiries(data.inquiries);
 		} catch (err) {
@@ -142,15 +136,23 @@ export default function InquiriesPage() {
 		} finally {
 			setIsLoading(false);
 		}
-	};
+	}, [
+		pagination.pageIndex,
+		pagination.pageSize,
+		searchQuery,
+		selectedDate,
+		selectedPackageId,
+		selectedStatus,
+	]);
 
+	// Debounce fetch inquiries to prevent rapid re-renders
 	useEffect(() => {
-		const controller = new AbortController();
-
-		fetchInquiries();
+		const timeoutId = setTimeout(() => {
+			fetchInquiries();
+		}, 300);
 
 		return () => {
-			controller.abort();
+			clearTimeout(timeoutId);
 		};
 	}, [
 		pagination.pageIndex,
@@ -159,6 +161,7 @@ export default function InquiriesPage() {
 		selectedDate,
 		selectedPackageId,
 		selectedStatus,
+		fetchInquiries,
 	]);
 
 	const handlePaginationChange = useCallback(
@@ -237,11 +240,11 @@ export default function InquiriesPage() {
 
 	const handleDateFilterChange = useCallback(
 		(dateStr: string | undefined) => {
-			// Only update if the date has actually changed
+			// Don't update state if the date hasn't actually changed
 			const newDate = dateStr ? new Date(dateStr) : null;
 			const currentDateStr = selectedDate
 				? format(selectedDate, "yyyy-MM-dd")
-				: undefined;
+				: null;
 
 			if (dateStr !== currentDateStr) {
 				setSelectedDate(newDate);
@@ -272,7 +275,6 @@ export default function InquiriesPage() {
 					type="checkbox"
 					checked={row.getIsSelected()}
 					onChange={() => {
-						setRowSelection({ [row.index]: true });
 						row.toggleSelected();
 					}}
 					className="h-4 w-4 rounded border-gray-300"
@@ -407,7 +409,7 @@ export default function InquiriesPage() {
 							<DropdownMenuSeparator />
 							<DropdownMenuItem
 								onClick={() => {
-									setRowSelection({ [row.index]: true });
+									setRowSelection((prev) => ({ ...prev, [row.index]: true }));
 									openStatusDialog("new");
 								}}
 							>
@@ -416,7 +418,7 @@ export default function InquiriesPage() {
 							</DropdownMenuItem>
 							<DropdownMenuItem
 								onClick={() => {
-									setRowSelection({ [row.index]: true });
+									setRowSelection((prev) => ({ ...prev, [row.index]: true }));
 									openStatusDialog("contacted");
 								}}
 							>
@@ -425,7 +427,7 @@ export default function InquiriesPage() {
 							</DropdownMenuItem>
 							<DropdownMenuItem
 								onClick={() => {
-									setRowSelection({ [row.index]: true });
+									setRowSelection((prev) => ({ ...prev, [row.index]: true }));
 									openStatusDialog("confirmed");
 								}}
 							>
@@ -434,7 +436,7 @@ export default function InquiriesPage() {
 							</DropdownMenuItem>
 							<DropdownMenuItem
 								onClick={() => {
-									setRowSelection({ [row.index]: true });
+									setRowSelection((prev) => ({ ...prev, [row.index]: true }));
 									openStatusDialog("cancelled");
 								}}
 							>
