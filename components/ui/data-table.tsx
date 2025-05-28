@@ -49,6 +49,12 @@ interface DataTableProps<TData, TValue> {
 		id: string;
 		title: string;
 	};
+	rowSelection?: Record<string, boolean>;
+	onRowSelectionChange?: (
+		updaterOrValue:
+			| ((old: Record<string, boolean>) => Record<string, boolean>)
+			| Record<string, boolean>
+	) => void;
 	onPackageFilterChange?: (packageId: string | undefined) => void;
 	onStatusFilterChange?: (status: string | undefined) => void;
 	onSearchChange?: (searchQuery: string) => void;
@@ -64,12 +70,13 @@ export function DataTable<TData, TValue>({
 	filterableColumns = [],
 	searchableColumns = [],
 	dateFilterColumn,
+	rowSelection = {},
+	onRowSelectionChange,
 	onPackageFilterChange,
 	onStatusFilterChange,
 	onSearchChange,
 	onDateChange,
 }: DataTableProps<TData, TValue>) {
-	const [rowSelection, setRowSelection] = React.useState({});
 	const [columnVisibility, setColumnVisibility] =
 		React.useState<VisibilityState>({});
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -152,6 +159,21 @@ export function DataTable<TData, TValue>({
 		};
 	}, [columnFilters, debouncedFilters]);
 
+	// Clean up stale row selections when data changes
+	React.useEffect(() => {
+		if (!onRowSelectionChange) return;
+
+		const validIndices = data.map((_, i) => i.toString());
+		const newSelection = Object.fromEntries(
+			Object.entries(rowSelection).filter(([index]) =>
+				validIndices.includes(index)
+			)
+		);
+		if (Object.keys(newSelection).length !== Object.keys(rowSelection).length) {
+			onRowSelectionChange(newSelection);
+		}
+	}, [data, rowSelection, onRowSelectionChange]);
+
 	// Create table instance
 	const table = useReactTable({
 		data,
@@ -163,8 +185,17 @@ export function DataTable<TData, TValue>({
 			columnFilters,
 			pagination,
 		},
+		pageCount,
 		enableRowSelection: true,
-		onRowSelectionChange: setRowSelection,
+		onRowSelectionChange: (updaterOrValue) => {
+			if (onRowSelectionChange) {
+				if (typeof updaterOrValue === "function") {
+					onRowSelectionChange((old) => updaterOrValue(old));
+				} else {
+					onRowSelectionChange(updaterOrValue);
+				}
+			}
+		},
 		onSortingChange: setSorting,
 		onColumnFiltersChange: setColumnFilters,
 		onColumnVisibilityChange: setColumnVisibility,
@@ -175,7 +206,6 @@ export function DataTable<TData, TValue>({
 		// Enable manual filtering and pagination since we're handling it server-side
 		manualFiltering: true,
 		manualPagination: true,
-		pageCount,
 	});
 
 	return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import type { ColumnDef } from "@tanstack/react-table";
@@ -69,7 +69,38 @@ export default function InquiriesPage() {
 		pageCount: 0,
 		total: 0,
 	});
-	const [rowSelection, setRowSelection] = useState({});
+	const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
+
+	// Clean up stale selections when inquiries change
+	useEffect(() => {
+		const validIndices = inquiries.map((_, i) => i.toString());
+		const newSelection = Object.fromEntries(
+			Object.entries(rowSelection).filter(([index]) =>
+				validIndices.includes(index)
+			)
+		);
+		if (Object.keys(newSelection).length !== Object.keys(rowSelection).length) {
+			setRowSelection(newSelection);
+		}
+	}, [inquiries, rowSelection]);
+
+	// Update selected inquiry IDs when row selection changes
+	useEffect(() => {
+		const selectedIds = Object.entries(rowSelection)
+			.filter(([, selected]) => selected)
+			.map(([index]) => {
+				const numIndex = Number(index);
+				return inquiries[numIndex]?._id;
+			})
+			.filter(Boolean) as string[];
+		setSelectedInquiryIds(selectedIds);
+	}, [rowSelection, inquiries]);
+
+	// Fetch packages on mount
+	useEffect(() => {
+		fetchPackages();
+	}, []);
+
 	const [selectedInquiryIds, setSelectedInquiryIds] = useState<string[]>([]);
 	const [statusToUpdate, setStatusToUpdate] = useState<string | null>(null);
 	const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
@@ -79,19 +110,6 @@ export default function InquiriesPage() {
 		null
 	);
 	const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
-
-	// Fetch packages on mount
-	useEffect(() => {
-		fetchPackages();
-	}, []);
-
-	// Update selected inquiry IDs when row selection changes
-	useEffect(() => {
-		const selectedIds = Object.entries(rowSelection)
-			.filter(([, selected]) => selected)
-			.map(([index]) => inquiries[Number.parseInt(index)]._id);
-		setSelectedInquiryIds(selectedIds);
-	}, [rowSelection, inquiries]);
 
 	const fetchPackages = async () => {
 		try {
@@ -254,201 +272,212 @@ export default function InquiriesPage() {
 	);
 
 	// Define columns for the data table
-	const columns: ColumnDef<Inquiry>[] = [
-		{
-			id: "select",
-			header: ({ table }) => (
-				<input
-					type="checkbox"
-					ref={(el) => {
-						if (el) {
-							el.indeterminate = table.getIsSomePageRowsSelected();
-						}
-					}}
-					checked={table.getIsAllPageRowsSelected()}
-					onChange={table.getToggleAllPageRowsSelectedHandler()}
-					className="h-4 w-4 rounded border-gray-300"
-				/>
-			),
-			cell: ({ row }) => (
-				<input
-					type="checkbox"
-					checked={row.getIsSelected()}
-					onChange={() => {
-						row.toggleSelected();
-					}}
-					className="h-4 w-4 rounded border-gray-300"
-				/>
-			),
-			enableSorting: false,
-			enableHiding: false,
-		},
-		{
-			accessorKey: "name",
-			header: "Customer",
-			cell: ({ row }) => {
-				const inquiry = row.original;
-				return (
-					<div className="flex flex-col">
-						<span className="font-medium">{inquiry.name}</span>
-						<span className="text-xs text-muted-foreground">
-							{inquiry.email}
-						</span>
-						<span className="text-xs text-muted-foreground">
-							{inquiry.phone}
-						</span>
-					</div>
-				);
+	const columns = useMemo<ColumnDef<Inquiry>[]>(
+		() => [
+			{
+				id: "select",
+				header: ({ table }) => (
+					<input
+						type="checkbox"
+						checked={table.getIsAllPageRowsSelected()}
+						onChange={table.getToggleAllPageRowsSelectedHandler()}
+						ref={(el) => {
+							if (el) {
+								el.indeterminate = table.getIsSomePageRowsSelected();
+							}
+						}}
+						className="h-4 w-4 rounded border-gray-300"
+					/>
+				),
+				cell: ({ row }) => (
+					<input
+						type="checkbox"
+						checked={row.getIsSelected()}
+						onChange={row.getToggleSelectedHandler()}
+						className="h-4 w-4 rounded border-gray-300"
+					/>
+				),
+				enableSorting: false,
+				enableHiding: false,
 			},
-			// Custom filter function for client-side search (though primarily handled server-side)
-			filterFn: (row, id, value) => {
-				const inquiry = row.original;
-				const searchTerm = value.toLowerCase();
-				return (
-					inquiry.name.toLowerCase().includes(searchTerm) ||
-					inquiry.email.toLowerCase().includes(searchTerm) ||
-					inquiry.phone.toLowerCase().includes(searchTerm)
-				);
+			{
+				accessorKey: "name",
+				header: "Customer",
+				cell: ({ row }) => {
+					const inquiry = row.original;
+					return (
+						<div className="flex flex-col">
+							<span className="font-medium">{inquiry.name}</span>
+							<span className="text-xs text-muted-foreground">
+								{inquiry.email}
+							</span>
+							<span className="text-xs text-muted-foreground">
+								{inquiry.phone}
+							</span>
+						</div>
+					);
+				},
+				// Custom filter function for client-side search (though primarily handled server-side)
+				filterFn: (row, id, value) => {
+					const inquiry = row.original;
+					const searchTerm = value.toLowerCase();
+					return (
+						inquiry.name.toLowerCase().includes(searchTerm) ||
+						inquiry.email.toLowerCase().includes(searchTerm) ||
+						inquiry.phone.toLowerCase().includes(searchTerm)
+					);
+				},
 			},
-		},
-		{
-			accessorKey: "packageId",
-			header: "Package",
-			cell: ({ row }) => {
-				return (
-					<div className="flex items-center">
-						<Tag className="mr-2 h-4 w-4 text-muted-foreground" />
-						<span>{row.original.packageId?.name || "Unknown Package"}</span>
-					</div>
-				);
+			{
+				accessorKey: "packageId",
+				header: "Package",
+				cell: ({ row }) => {
+					return (
+						<div className="flex items-center">
+							<Tag className="mr-2 h-4 w-4 text-muted-foreground" />
+							<span>{row.original.packageId?.name || "Unknown Package"}</span>
+						</div>
+					);
+				},
+				accessorFn: (row) => row.packageId?._id,
+				id: "packageId",
+				filterFn: (row, id, value) => {
+					if (!value || value.length === 0) return true;
+					return value.includes(row.original.packageId?._id || "");
+				},
 			},
-			accessorFn: (row) => row.packageId?._id,
-			id: "packageId",
-			filterFn: (row, id, value) => {
-				if (!value || value.length === 0) return true;
-				return value.includes(row.original.packageId?._id || "");
+			{
+				accessorKey: "date",
+				header: "Date",
+				cell: ({ row }) => {
+					const date = new Date(row.original.date);
+					return (
+						<div className="flex items-center">
+							<CalendarDots className="mr-2 h-4 w-4 text-muted-foreground" />
+							<span>
+								{isNaN(date.getTime())
+									? "Invalid Date"
+									: date.toLocaleDateString()}
+							</span>
+						</div>
+					);
+				},
 			},
-		},
-		{
-			accessorKey: "date",
-			header: "Date",
-			cell: ({ row }) => {
-				const date = new Date(row.original.date);
-				return (
-					<div className="flex items-center">
-						<CalendarDots className="mr-2 h-4 w-4 text-muted-foreground" />
-						<span>
-							{isNaN(date.getTime())
-								? "Invalid Date"
-								: date.toLocaleDateString()}
-						</span>
-					</div>
-				);
+			{
+				accessorKey: "numberOfPeople",
+				header: "People",
+				cell: ({ row }) => {
+					return (
+						<div className="flex items-center">
+							<Users className="mr-2 h-4 w-4 text-muted-foreground" />
+							<span>{row.original.numberOfPeople}</span>
+						</div>
+					);
+				},
 			},
-		},
-		{
-			accessorKey: "numberOfPeople",
-			header: "People",
-			cell: ({ row }) => {
-				return (
-					<div className="flex items-center">
-						<Users className="mr-2 h-4 w-4 text-muted-foreground" />
-						<span>{row.original.numberOfPeople}</span>
-					</div>
-				);
+			{
+				accessorKey: "status",
+				header: "Status",
+				cell: ({ row }) => getStatusBadge(row.original.status),
+				filterFn: (row, id, value) => {
+					return value.includes(row.getValue(id));
+				},
 			},
-		},
-		{
-			accessorKey: "status",
-			header: "Status",
-			cell: ({ row }) => getStatusBadge(row.original.status),
-			filterFn: (row, id, value) => {
-				return value.includes(row.getValue(id));
+			{
+				accessorKey: "createdAt",
+				header: "Created At",
+				cell: ({ row }) => {
+					const date = new Date(row.original.createdAt);
+					return !isNaN(date.getTime())
+						? format(date, "PPP p")
+						: "Invalid Date";
+				},
 			},
-		},
-		{
-			accessorKey: "createdAt",
-			header: "Created At",
-			cell: ({ row }) => {
-				const date = new Date(row.original.createdAt);
-				return !isNaN(date.getTime()) ? format(date, "PPP p") : "Invalid Date";
-			},
-		},
-		{
-			id: "actions",
-			cell: ({ row }) => {
-				const inquiry = row.original;
+			{
+				id: "actions",
+				cell: ({ row }) => {
+					const inquiry = row.original;
 
-				return (
-					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<Button variant="ghost" className="h-8 w-8 p-0">
-								<span className="sr-only">Open menu</span>
-								<DotsThreeOutline className="h-4 w-4" weight="fill" />
-							</Button>
-						</DropdownMenuTrigger>
-						<DropdownMenuContent align="end">
-							<DropdownMenuItem
-								onClick={() => {
-									navigator.clipboard.writeText(inquiry.email);
-									toast.success("Email copied to clipboard");
-								}}
-							>
-								<Copy className="hover:text-background" />
-								Copy email
-							</DropdownMenuItem>
-							<DropdownMenuItem
-								onClick={() => {
-									navigator.clipboard.writeText(inquiry.phone);
-									toast.success("Phone number copied to clipboard");
-								}}
-							>
-								<Copy className="hover:text-background" />
-								Copy phone
-							</DropdownMenuItem>
-							<DropdownMenuSeparator />
-							<DropdownMenuItem
-								onClick={() => {
-									setRowSelection((prev) => ({ ...prev, [row.index]: true }));
-									openStatusDialog("new");
-								}}
-							>
-								<Clock className="hover:text-background" />
-								Mark as New
-							</DropdownMenuItem>
-							<DropdownMenuItem
-								onClick={() => {
-									setRowSelection((prev) => ({ ...prev, [row.index]: true }));
-									openStatusDialog("contacted");
-								}}
-							>
-								<PhoneCall className="hover:text-background" />
-								Mark as Contacted
-							</DropdownMenuItem>
-							<DropdownMenuItem
-								onClick={() => {
-									setRowSelection((prev) => ({ ...prev, [row.index]: true }));
-									openStatusDialog("confirmed");
-								}}
-							>
-								<CheckCircle className="hover:text-background" />
-								Mark as Confirmed
-							</DropdownMenuItem>
-							<DropdownMenuItem
-								onClick={() => {
-									setRowSelection((prev) => ({ ...prev, [row.index]: true }));
-									openStatusDialog("cancelled");
-								}}
-							>
-								<XCircle className="hover:text-background" />
-								Mark as Cancelled
-							</DropdownMenuItem>
-						</DropdownMenuContent>
-					</DropdownMenu>
-				);
+					return (
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<Button variant="ghost" className="h-8 w-8 p-0">
+									<span className="sr-only">Open menu</span>
+									<DotsThreeOutline className="h-4 w-4" weight="fill" />
+								</Button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align="end">
+								<DropdownMenuItem
+									onClick={() => {
+										navigator.clipboard.writeText(inquiry.email);
+										toast.success("Email copied to clipboard");
+									}}
+								>
+									<Copy className="hover:text-background" />
+									Copy email
+								</DropdownMenuItem>
+								<DropdownMenuItem
+									onClick={() => {
+										navigator.clipboard.writeText(inquiry.phone);
+										toast.success("Phone number copied to clipboard");
+									}}
+								>
+									<Copy className="hover:text-background" />
+									Copy phone
+								</DropdownMenuItem>
+								<DropdownMenuSeparator />
+								<DropdownMenuItem
+									onClick={() => {
+										const currentSelection = { ...rowSelection };
+										currentSelection[row.index] = true;
+										setRowSelection(currentSelection);
+										openStatusDialog("new");
+									}}
+								>
+									<Clock className="hover:text-background" />
+									Mark as New
+								</DropdownMenuItem>
+								<DropdownMenuItem
+									onClick={() => {
+										const currentSelection = { ...rowSelection };
+										currentSelection[row.index] = true;
+										setRowSelection(currentSelection);
+										openStatusDialog("contacted");
+									}}
+								>
+									<PhoneCall className="hover:text-background" />
+									Mark as Contacted
+								</DropdownMenuItem>
+								<DropdownMenuItem
+									onClick={() => {
+										const currentSelection = { ...rowSelection };
+										currentSelection[row.index] = true;
+										setRowSelection(currentSelection);
+										openStatusDialog("confirmed");
+									}}
+								>
+									<CheckCircle className="hover:text-background" />
+									Mark as Confirmed
+								</DropdownMenuItem>
+								<DropdownMenuItem
+									onClick={() => {
+										const currentSelection = { ...rowSelection };
+										currentSelection[row.index] = true;
+										setRowSelection(currentSelection);
+										openStatusDialog("cancelled");
+									}}
+								>
+									<XCircle className="hover:text-background" />
+									Mark as Cancelled
+								</DropdownMenuItem>
+							</DropdownMenuContent>
+						</DropdownMenu>
+					);
+				},
 			},
-		},
-	];
+		],
+		[inquiries, rowSelection]
+	);
 
 	// Create package filter options
 	const packageFilterOptions = packages.map((pkg) => ({
@@ -553,6 +582,8 @@ export default function InquiriesPage() {
 								id: "date",
 								title: "Date",
 							}}
+							rowSelection={rowSelection}
+							onRowSelectionChange={setRowSelection}
 							onPackageFilterChange={handlePackageFilterChange}
 							onStatusFilterChange={handleStatusFilterChange}
 							onSearchChange={setSearchQuery}
