@@ -87,9 +87,9 @@ export default function InquiriesPage() {
 
 	// Update selected inquiry IDs when row selection changes
 	useEffect(() => {
-		const selectedIds = Object.keys(rowSelection).map(
-			(index) => inquiries[Number.parseInt(index)]._id
-		);
+		const selectedIds = Object.entries(rowSelection)
+			.filter(([selected]) => selected)
+			.map(([index]) => inquiries[Number.parseInt(index)]._id);
 		setSelectedInquiryIds(selectedIds);
 	}, [rowSelection, inquiries]);
 
@@ -235,9 +235,20 @@ export default function InquiriesPage() {
 		setSelectedStatus(status || null);
 	};
 
-	const handleDateFilterChange = (date: Date | undefined) => {
-		setSelectedDate(date || null);
-	};
+	const handleDateFilterChange = useCallback(
+		(dateStr: string | undefined) => {
+			// Only update if the date has actually changed
+			const newDate = dateStr ? new Date(dateStr) : null;
+			const currentDateStr = selectedDate
+				? format(selectedDate, "yyyy-MM-dd")
+				: undefined;
+
+			if (dateStr !== currentDateStr) {
+				setSelectedDate(newDate);
+			}
+		},
+		[selectedDate]
+	);
 
 	// Define columns for the data table
 	const columns: ColumnDef<Inquiry>[] = [
@@ -260,7 +271,10 @@ export default function InquiriesPage() {
 				<input
 					type="checkbox"
 					checked={row.getIsSelected()}
-					onChange={row.getToggleSelectedHandler()}
+					onChange={() => {
+						setRowSelection({ [row.index]: true });
+						row.toggleSelected();
+					}}
 					className="h-4 w-4 rounded border-gray-300"
 				/>
 			),
@@ -306,10 +320,11 @@ export default function InquiriesPage() {
 					</div>
 				);
 			},
-			accessorFn: (row) => row.packageId?._id, // Use packageId._id for filtering
-			id: "packageId", // Ensure the column ID matches the filterable column ID
+			accessorFn: (row) => row.packageId?._id,
+			id: "packageId",
 			filterFn: (row, id, value) => {
-				return value.includes(row.original.packageId?._id);
+				if (!value || value.length === 0) return true;
+				return value.includes(row.original.packageId?._id || "");
 			},
 		},
 		{
@@ -377,7 +392,7 @@ export default function InquiriesPage() {
 									toast.success("Email copied to clipboard");
 								}}
 							>
-								<Copy />
+								<Copy className="hover:text-background" />
 								Copy email
 							</DropdownMenuItem>
 							<DropdownMenuItem
@@ -386,7 +401,7 @@ export default function InquiriesPage() {
 									toast.success("Phone number copied to clipboard");
 								}}
 							>
-								<Copy />
+								<Copy className="hover:text-background" />
 								Copy phone
 							</DropdownMenuItem>
 							<DropdownMenuSeparator />
@@ -396,7 +411,7 @@ export default function InquiriesPage() {
 									openStatusDialog("new");
 								}}
 							>
-								<Clock />
+								<Clock className="hover:text-background" />
 								Mark as New
 							</DropdownMenuItem>
 							<DropdownMenuItem
@@ -405,7 +420,7 @@ export default function InquiriesPage() {
 									openStatusDialog("contacted");
 								}}
 							>
-								<PhoneCall />
+								<PhoneCall className="hover:text-background" />
 								Mark as Contacted
 							</DropdownMenuItem>
 							<DropdownMenuItem
@@ -414,7 +429,7 @@ export default function InquiriesPage() {
 									openStatusDialog("confirmed");
 								}}
 							>
-								<CheckCircle />
+								<CheckCircle className="hover:text-background" />
 								Mark as Confirmed
 							</DropdownMenuItem>
 							<DropdownMenuItem
@@ -423,7 +438,7 @@ export default function InquiriesPage() {
 									openStatusDialog("cancelled");
 								}}
 							>
-								<XCircle />
+								<XCircle className="hover:text-background" />
 								Mark as Cancelled
 							</DropdownMenuItem>
 						</DropdownMenuContent>
@@ -460,15 +475,16 @@ export default function InquiriesPage() {
 					</div>
 				</div>
 
-				<div className="flex justify-between items-center">
+				<div className="flex justify-between items-center py-4">
 					{selectedInquiryIds.length > 0 && (
-						<div className="flex items-center gap-2">
+						<div className="flex flex-wrap items-center gap-2">
 							<span className="text-sm text-muted-foreground">
 								{selectedInquiryIds.length} selected
 							</span>
 							<Button
 								size="sm"
 								variant="outline"
+								className="flex items-center"
 								onClick={() => openStatusDialog("new")}
 							>
 								<Clock className="mr-2 h-4 w-4" />
@@ -477,6 +493,7 @@ export default function InquiriesPage() {
 							<Button
 								size="sm"
 								variant="outline"
+								className="flex items-center"
 								onClick={() => openStatusDialog("contacted")}
 							>
 								<PhoneCall className="mr-2 h-4 w-4" />
@@ -485,6 +502,7 @@ export default function InquiriesPage() {
 							<Button
 								size="sm"
 								variant="outline"
+								className="flex items-center"
 								onClick={() => openStatusDialog("confirmed")}
 							>
 								<CheckCircle className="mr-2 h-4 w-4" />
@@ -493,7 +511,7 @@ export default function InquiriesPage() {
 							<Button
 								size="sm"
 								variant="outline"
-								className="text-destructive"
+								className="flex items-center text-destructive"
 								onClick={() => openStatusDialog("cancelled")}
 							>
 								<XCircle className="mr-2 h-4 w-4" />
@@ -519,7 +537,7 @@ export default function InquiriesPage() {
 							]}
 							filterableColumns={[
 								{
-									id: "packageId", // Match the column ID for package filtering
+									id: "packageId",
 									title: "Package",
 									options: packageFilterOptions,
 								},
@@ -532,11 +550,11 @@ export default function InquiriesPage() {
 							dateFilterColumn={{
 								id: "date",
 								title: "Date",
-								onDateChange: handleDateFilterChange,
 							}}
 							onPackageFilterChange={handlePackageFilterChange}
 							onStatusFilterChange={handleStatusFilterChange}
 							onSearchChange={setSearchQuery}
+							onDateChange={handleDateFilterChange}
 						/>
 					</CardContent>
 				</Card>

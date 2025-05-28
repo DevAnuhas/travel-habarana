@@ -15,24 +15,33 @@ import {
 interface DataTableDateFilterProps<TData, TValue> {
 	column?: Column<TData, TValue>;
 	title?: string;
-	onDateChange?: (date: Date | undefined) => void;
+	onDateChange?: (date: string | undefined) => void;
 }
 
 export function DataTableDateFilter<TData, TValue>({
 	column,
 	title,
+	onDateChange,
 }: DataTableDateFilterProps<TData, TValue>) {
 	const [date, setDate] = React.useState<Date | undefined>(
 		column?.getFilterValue() as Date
 	);
 
-	const handleSelect = (selectedDate: Date | undefined) => {
-		setDate(selectedDate);
-		const formattedDate = selectedDate
-			? format(selectedDate, "yyyy-MM-dd")
-			: undefined;
-		column?.setFilterValue(formattedDate);
-	};
+	const handleSelect = React.useCallback(
+		(selectedDate: Date | undefined) => {
+			const formattedDate = selectedDate
+				? format(selectedDate, "yyyy-MM-dd")
+				: undefined;
+			const currentValue = column?.getFilterValue();
+
+			if (formattedDate !== currentValue) {
+				setDate(selectedDate);
+				column?.setFilterValue(formattedDate);
+				onDateChange?.(formattedDate);
+			}
+		},
+		[column, onDateChange]
+	);
 
 	return (
 		<div className="flex items-center">

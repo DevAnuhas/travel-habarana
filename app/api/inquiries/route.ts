@@ -28,8 +28,18 @@ export async function GET(req: NextRequest) {
 
 			// Build query based on filters
 			const query: Record<string, unknown> = {};
-			if (packageId) query["packageId._id"] = packageId;
-			if (date) query.date = date;
+			if (packageId) query.packageId = packageId;
+			if (date) {
+				// Create start and end of the selected date to match all inquiries for that day
+				const selectedDate = new Date(date);
+				const startOfDay = new Date(selectedDate.setHours(0, 0, 0, 0));
+				const endOfDay = new Date(selectedDate.setHours(23, 59, 59, 999));
+
+				query.date = {
+					$gte: startOfDay,
+					$lte: endOfDay,
+				};
+			}
 			if (status) query.status = status;
 
 			// Add search functionality
@@ -96,7 +106,7 @@ export async function POST(request: NextRequest) {
 
 			// Send notification to admin
 			await transporter.sendMail({
-				from: `"Travel Habarana Booking" <${process.env.EMAIL_USER}>`,
+				from: `"Travel Habarana Booking" <no-reply@travelhabarana.com>`,
 				to: process.env.EMAIL_USER, // Admin email
 				subject: `New Booking Inquiry: ${packageDetails.name}`,
 				html: newInquiryAdminTemplate(newInquiry, packageDetails),
@@ -105,7 +115,7 @@ export async function POST(request: NextRequest) {
 
 			// Send confirmation to customer
 			await transporter.sendMail({
-				from: `"Travel Habarana" <${process.env.EMAIL_USER}>`,
+				from: `"Travel Habarana" <no-reply@travelhabarana.com>`,
 				to: newInquiry.email,
 				subject: "Your Booking Inquiry - Travel Habarana",
 				html: newInquiryCustomerTemplate(newInquiry, packageDetails),

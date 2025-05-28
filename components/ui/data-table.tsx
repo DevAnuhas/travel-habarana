@@ -8,9 +8,6 @@ import {
 	type VisibilityState,
 	flexRender,
 	getCoreRowModel,
-	getFacetedRowModel,
-	getFacetedUniqueValues,
-	getFilteredRowModel,
 	getPaginationRowModel,
 	getSortedRowModel,
 	useReactTable,
@@ -50,11 +47,11 @@ interface DataTableProps<TData, TValue> {
 	dateFilterColumn?: {
 		id: string;
 		title: string;
-		onDateChange?: (date: Date | undefined) => void;
 	};
 	onPackageFilterChange?: (packageId: string | undefined) => void;
 	onStatusFilterChange?: (status: string | undefined) => void;
 	onSearchChange?: (searchQuery: string) => void;
+	onDateChange?: (date: string | undefined) => void;
 }
 
 export function DataTable<TData, TValue>({
@@ -69,6 +66,7 @@ export function DataTable<TData, TValue>({
 	onPackageFilterChange,
 	onStatusFilterChange,
 	onSearchChange,
+	onDateChange,
 }: DataTableProps<TData, TValue>) {
 	const [rowSelection, setRowSelection] = React.useState({});
 	const [columnVisibility, setColumnVisibility] =
@@ -94,8 +92,10 @@ export function DataTable<TData, TValue>({
 		const statusFilter = columnFilters.find((f) => f.id === "status");
 
 		if (packageFilter) {
-			const value = packageFilter.value as string[];
-			onPackageFilterChange?.(value.length > 0 ? value[0] : undefined);
+			const values = packageFilter.value as string[];
+			onPackageFilterChange?.(
+				values && values.length > 0 ? values[0] : undefined
+			);
 		} else {
 			onPackageFilterChange?.(undefined);
 		}
@@ -107,6 +107,16 @@ export function DataTable<TData, TValue>({
 			onStatusFilterChange?.(undefined);
 		}
 
+		// Notify parent of date changes
+		const dateFilter = columnFilters.find((f) => f.id === "date");
+		if (dateFilter) {
+			// The value is already formatted as YYYY-MM-DD from the DataTableDateFilter
+			const dateValue = dateFilter.value as string | undefined;
+			onDateChange?.(dateValue);
+		} else {
+			onDateChange?.(undefined);
+		}
+
 		// Notify parent of search changes
 		const searchFilter = columnFilters.find((f) => f.id === "name");
 		const searchValue = searchFilter?.value as string | undefined;
@@ -116,6 +126,7 @@ export function DataTable<TData, TValue>({
 		onPackageFilterChange,
 		onStatusFilterChange,
 		onSearchChange,
+		onDateChange,
 	]);
 
 	const table = useReactTable({
@@ -135,12 +146,11 @@ export function DataTable<TData, TValue>({
 		onColumnVisibilityChange: setColumnVisibility,
 		onPaginationChange: setPagination,
 		getCoreRowModel: getCoreRowModel(),
-		getFilteredRowModel: getFilteredRowModel(),
 		getPaginationRowModel: getPaginationRowModel(),
 		getSortedRowModel: getSortedRowModel(),
-		getFacetedRowModel: getFacetedRowModel(),
-		getFacetedUniqueValues: getFacetedUniqueValues(),
-		manualPagination: Boolean(pageCount),
+		// Enable manual filtering and pagination since we're handling it server-side
+		manualFiltering: true,
+		manualPagination: true,
 		pageCount,
 	});
 
