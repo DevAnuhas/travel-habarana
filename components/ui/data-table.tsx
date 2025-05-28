@@ -55,8 +55,8 @@ interface DataTableProps<TData, TValue> {
 			| ((old: Record<string, boolean>) => Record<string, boolean>)
 			| Record<string, boolean>
 	) => void;
-	onPackageFilterChange?: (packageId: string | undefined) => void;
-	onStatusFilterChange?: (status: string | undefined) => void;
+	onPackageFilterChange?: (packageIds: string[] | undefined) => void;
+	onStatusFilterChange?: (statuses: string[] | undefined) => void;
 	onSearchChange?: (searchQuery: string) => void;
 	onDateChange?: (date: string | undefined) => void;
 }
@@ -103,7 +103,7 @@ export function DataTable<TData, TValue>({
 				if (packageFilter) {
 					const values = packageFilter.value as string[];
 					onPackageFilterChange?.(
-						values && values.length > 0 ? values[0] : undefined
+						values && values.length > 0 ? values : undefined
 					);
 				} else {
 					onPackageFilterChange?.(undefined);
@@ -112,8 +112,8 @@ export function DataTable<TData, TValue>({
 				// Handle status filter
 				const statusFilter = filters.find((f) => f.id === "status");
 				if (statusFilter) {
-					const value = statusFilter.value as string[];
-					onStatusFilterChange?.(value.length > 0 ? value[0] : undefined);
+					const values = statusFilter.value as string[];
+					onStatusFilterChange?.(values.length > 0 ? values : undefined);
 				} else {
 					onStatusFilterChange?.(undefined);
 				}

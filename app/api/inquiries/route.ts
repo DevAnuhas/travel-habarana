@@ -17,9 +17,9 @@ export async function GET(req: NextRequest) {
 			await connectMongoDB();
 
 			const url = new URL(req.url);
-			const packageId = url.searchParams.get("packageId");
+			const packageIds = url.searchParams.getAll("packageId");
 			const date = url.searchParams.get("date");
-			const status = url.searchParams.get("status");
+			const statuses = url.searchParams.getAll("status");
 			const search = url.searchParams.get("search");
 			const page = Number.parseInt(url.searchParams.get("page") || "1");
 			const pageSize = Number.parseInt(
@@ -28,7 +28,9 @@ export async function GET(req: NextRequest) {
 
 			// Build query based on filters
 			const query: Record<string, unknown> = {};
-			if (packageId) query.packageId = packageId;
+			if (packageIds.length > 0) {
+				query.packageId = { $in: packageIds };
+			}
 			if (date) {
 				// Create start and end of the selected date to match all inquiries for that day
 				const selectedDate = new Date(date);
@@ -40,7 +42,9 @@ export async function GET(req: NextRequest) {
 					$lte: endOfDay,
 				};
 			}
-			if (status) query.status = status;
+			if (statuses.length > 0) {
+				query.status = { $in: statuses };
+			}
 
 			// Add search functionality
 			if (search) {

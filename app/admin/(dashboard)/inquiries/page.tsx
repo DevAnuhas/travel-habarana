@@ -106,10 +106,12 @@ export default function InquiriesPage() {
 	const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-	const [selectedPackageId, setSelectedPackageId] = useState<string | null>(
+	const [selectedPackageIds, setSelectedPackageIds] = useState<string[] | null>(
 		null
 	);
-	const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+	const [selectedStatuses, setSelectedStatuses] = useState<string[] | null>(
+		null
+	);
 
 	const fetchPackages = async () => {
 		try {
@@ -131,8 +133,12 @@ export default function InquiriesPage() {
 			if (searchQuery) params.append("search", searchQuery);
 			if (selectedDate)
 				params.append("date", format(selectedDate, "yyyy-MM-dd"));
-			if (selectedPackageId) params.append("packageId", selectedPackageId);
-			if (selectedStatus) params.append("status", selectedStatus);
+			if (selectedPackageIds && selectedPackageIds.length > 0) {
+				selectedPackageIds.forEach((id) => params.append("packageId", id));
+			}
+			if (selectedStatuses && selectedStatuses.length > 0) {
+				selectedStatuses.forEach((status) => params.append("status", status));
+			}
 
 			const res = await fetch(`/api/inquiries?${params.toString()}`);
 			if (!res.ok) {
@@ -159,8 +165,8 @@ export default function InquiriesPage() {
 		pagination.pageSize,
 		searchQuery,
 		selectedDate,
-		selectedPackageId,
-		selectedStatus,
+		selectedPackageIds,
+		selectedStatuses,
 	]);
 
 	// Debounce fetch inquiries to prevent rapid re-renders
@@ -177,8 +183,8 @@ export default function InquiriesPage() {
 		pagination.pageSize,
 		searchQuery,
 		selectedDate,
-		selectedPackageId,
-		selectedStatus,
+		selectedPackageIds,
+		selectedStatuses,
 		fetchInquiries,
 	]);
 
@@ -248,12 +254,12 @@ export default function InquiriesPage() {
 		}
 	};
 
-	const handlePackageFilterChange = (packageId: string | undefined) => {
-		setSelectedPackageId(packageId || null);
+	const handlePackageFilterChange = (packageIds: string[] | undefined) => {
+		setSelectedPackageIds(packageIds || null);
 	};
 
-	const handleStatusFilterChange = (status: string | undefined) => {
-		setSelectedStatus(status || null);
+	const handleStatusFilterChange = (statuses: string[] | undefined) => {
+		setSelectedStatuses(statuses || null);
 	};
 
 	const handleDateFilterChange = useCallback(
@@ -506,7 +512,7 @@ export default function InquiriesPage() {
 					</div>
 				</div>
 
-				<div className="flex justify-between items-center py-4">
+				<div className="flex justify-between items-center h-2">
 					{selectedInquiryIds.length > 0 && (
 						<div className="flex flex-wrap items-center gap-2">
 							<span className="text-sm text-muted-foreground">
