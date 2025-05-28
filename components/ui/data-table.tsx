@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { debounce } from "lodash";
 import {
 	type ColumnDef,
 	type ColumnFiltersState,
@@ -8,9 +9,6 @@ import {
 	type VisibilityState,
 	flexRender,
 	getCoreRowModel,
-	getFacetedRowModel,
-	getFacetedUniqueValues,
-	getFilteredRowModel,
 	getPaginationRowModel,
 	getSortedRowModel,
 	useReactTable,
@@ -50,11 +48,17 @@ interface DataTableProps<TData, TValue> {
 	dateFilterColumn?: {
 		id: string;
 		title: string;
-		onDateChange?: (date: Date | undefined) => void;
 	};
-	onPackageFilterChange?: (packageId: string | undefined) => void;
-	onStatusFilterChange?: (status: string | undefined) => void;
+	rowSelection?: Record<string, boolean>;
+	onRowSelectionChange?: (
+		updaterOrValue:
+			| ((old: Record<string, boolean>) => Record<string, boolean>)
+			| Record<string, boolean>
+	) => void;
+	onPackageFilterChange?: (packageIds: string[] | undefined) => void;
+	onStatusFilterChange?: (statuses: string[] | undefined) => void;
 	onSearchChange?: (searchQuery: string) => void;
+	onDateChange?: (date: string | undefined) => void;
 }
 
 export function DataTable<TData, TValue>({
@@ -66,11 +70,13 @@ export function DataTable<TData, TValue>({
 	filterableColumns = [],
 	searchableColumns = [],
 	dateFilterColumn,
+	rowSelection = {},
+	onRowSelectionChange,
 	onPackageFilterChange,
 	onStatusFilterChange,
 	onSearchChange,
+	onDateChange,
 }: DataTableProps<TData, TValue>) {
-	const [rowSelection, setRowSelection] = React.useState({});
 	const [columnVisibility, setColumnVisibility] =
 		React.useState<VisibilityState>({});
 	const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
@@ -82,42 +88,93 @@ export function DataTable<TData, TValue>({
 		pageSize: 10,
 	});
 
+	// Add isMounted ref to prevent initial effect trigger
+	const isMounted = React.useRef(false);
+
+	// Create a stable reference to the debounced filter handler
+	const debouncedFilters = React.useMemo(
+		() =>
+			debounce((filters: ColumnFiltersState) => {
+				// Only process filters if component is mounted
+				if (!isMounted.current) return;
+
+				// Handle package filter
+				const packageFilter = filters.find((f) => f.id === "packageId");
+				if (packageFilter) {
+					const values = packageFilter.value as string[];
+					onPackageFilterChange?.(
+						values && values.length > 0 ? values : undefined
+					);
+				} else {
+					onPackageFilterChange?.(undefined);
+				}
+
+				// Handle status filter
+				const statusFilter = filters.find((f) => f.id === "status");
+				if (statusFilter) {
+					const values = statusFilter.value as string[];
+					onStatusFilterChange?.(values.length > 0 ? values : undefined);
+				} else {
+					onStatusFilterChange?.(undefined);
+				}
+
+				// Handle date filter
+				const dateFilter = filters.find((f) => f.id === "date");
+				if (dateFilter) {
+					const dateValue = dateFilter.value as string | undefined;
+					onDateChange?.(dateValue);
+				} else {
+					onDateChange?.(undefined);
+				}
+
+				// Handle search filter
+				const searchFilter = filters.find((f) => f.id === "name");
+				const searchValue = searchFilter?.value as string | undefined;
+				onSearchChange?.(searchValue || "");
+			}, 300),
+		[onPackageFilterChange, onStatusFilterChange, onDateChange, onSearchChange]
+	);
+
+	// Set isMounted after initial render
+	React.useEffect(() => {
+		isMounted.current = true;
+		return () => {
+			isMounted.current = false;
+			debouncedFilters.cancel();
+		};
+	}, [debouncedFilters]);
+
+	// Handle pagination changes
 	React.useEffect(() => {
 		if (onPaginationChange) {
 			onPaginationChange(pagination.pageIndex, pagination.pageSize);
 		}
 	}, [pagination, onPaginationChange]);
 
+	// Handle filter changes with debouncing
 	React.useEffect(() => {
-		// When column filters change, notify the parent about package and status filters
-		const packageFilter = columnFilters.find((f) => f.id === "packageId");
-		const statusFilter = columnFilters.find((f) => f.id === "status");
+		debouncedFilters(columnFilters);
+		return () => {
+			debouncedFilters.cancel();
+		};
+	}, [columnFilters, debouncedFilters]);
 
-		if (packageFilter) {
-			const value = packageFilter.value as string[];
-			onPackageFilterChange?.(value.length > 0 ? value[0] : undefined);
-		} else {
-			onPackageFilterChange?.(undefined);
+	// Clean up stale row selections when data changes
+	React.useEffect(() => {
+		if (!onRowSelectionChange) return;
+
+		const validIndices = data.map((_, i) => i.toString());
+		const newSelection = Object.fromEntries(
+			Object.entries(rowSelection).filter(([index]) =>
+				validIndices.includes(index)
+			)
+		);
+		if (Object.keys(newSelection).length !== Object.keys(rowSelection).length) {
+			onRowSelectionChange(newSelection);
 		}
+	}, [data, rowSelection, onRowSelectionChange]);
 
-		if (statusFilter) {
-			const value = statusFilter.value as string[];
-			onStatusFilterChange?.(value.length > 0 ? value[0] : undefined);
-		} else {
-			onStatusFilterChange?.(undefined);
-		}
-
-		// Notify parent of search changes
-		const searchFilter = columnFilters.find((f) => f.id === "name");
-		const searchValue = searchFilter?.value as string | undefined;
-		onSearchChange?.(searchValue || "");
-	}, [
-		columnFilters,
-		onPackageFilterChange,
-		onStatusFilterChange,
-		onSearchChange,
-	]);
-
+	// Create table instance
 	const table = useReactTable({
 		data,
 		columns,
@@ -128,20 +185,27 @@ export function DataTable<TData, TValue>({
 			columnFilters,
 			pagination,
 		},
+		pageCount,
 		enableRowSelection: true,
-		onRowSelectionChange: setRowSelection,
+		onRowSelectionChange: (updaterOrValue) => {
+			if (onRowSelectionChange) {
+				if (typeof updaterOrValue === "function") {
+					onRowSelectionChange((old) => updaterOrValue(old));
+				} else {
+					onRowSelectionChange(updaterOrValue);
+				}
+			}
+		},
 		onSortingChange: setSorting,
 		onColumnFiltersChange: setColumnFilters,
 		onColumnVisibilityChange: setColumnVisibility,
 		onPaginationChange: setPagination,
 		getCoreRowModel: getCoreRowModel(),
-		getFilteredRowModel: getFilteredRowModel(),
 		getPaginationRowModel: getPaginationRowModel(),
 		getSortedRowModel: getSortedRowModel(),
-		getFacetedRowModel: getFacetedRowModel(),
-		getFacetedUniqueValues: getFacetedUniqueValues(),
-		manualPagination: Boolean(pageCount),
-		pageCount,
+		// Enable manual filtering and pagination since we're handling it server-side
+		manualFiltering: true,
+		manualPagination: true,
 	});
 
 	return (

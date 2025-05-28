@@ -17,9 +17,9 @@ export async function GET(req: NextRequest) {
 			await connectMongoDB();
 
 			const url = new URL(req.url);
-			const packageId = url.searchParams.get("packageId");
+			const packageIds = url.searchParams.getAll("packageId");
 			const date = url.searchParams.get("date");
-			const status = url.searchParams.get("status");
+			const statuses = url.searchParams.getAll("status");
 			const search = url.searchParams.get("search");
 			const page = Number.parseInt(url.searchParams.get("page") || "1");
 			const pageSize = Number.parseInt(
@@ -28,9 +28,23 @@ export async function GET(req: NextRequest) {
 
 			// Build query based on filters
 			const query: Record<string, unknown> = {};
-			if (packageId) query["packageId._id"] = packageId;
-			if (date) query.date = date;
-			if (status) query.status = status;
+			if (packageIds.length > 0) {
+				query.packageId = { $in: packageIds };
+			}
+			if (date) {
+				// Create start and end of the selected date to match all inquiries for that day
+				const selectedDate = new Date(date);
+				const startOfDay = new Date(selectedDate.setHours(0, 0, 0, 0));
+				const endOfDay = new Date(selectedDate.setHours(23, 59, 59, 999));
+
+				query.date = {
+					$gte: startOfDay,
+					$lte: endOfDay,
+				};
+			}
+			if (statuses.length > 0) {
+				query.status = { $in: statuses };
+			}
 
 			// Add search functionality
 			if (search) {
@@ -96,7 +110,7 @@ export async function POST(request: NextRequest) {
 
 			// Send notification to admin
 			await transporter.sendMail({
-				from: `"Travel Habarana Booking" <${process.env.EMAIL_USER}>`,
+				from: `"Travel Habarana Booking" <no-reply@travelhabarana.com>`,
 				to: process.env.EMAIL_USER, // Admin email
 				subject: `New Booking Inquiry: ${packageDetails.name}`,
 				html: newInquiryAdminTemplate(newInquiry, packageDetails),
@@ -105,7 +119,7 @@ export async function POST(request: NextRequest) {
 
 			// Send confirmation to customer
 			await transporter.sendMail({
-				from: `"Travel Habarana" <${process.env.EMAIL_USER}>`,
+				from: `"Travel Habarana" <no-reply@travelhabarana.com>`,
 				to: newInquiry.email,
 				subject: "Your Booking Inquiry - Travel Habarana",
 				html: newInquiryCustomerTemplate(newInquiry, packageDetails),

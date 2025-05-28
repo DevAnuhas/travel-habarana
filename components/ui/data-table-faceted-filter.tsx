@@ -36,7 +36,6 @@ export function DataTableFacetedFilter<TData, TValue>({
 	title,
 	options,
 }: DataTableFacetedFilterProps<TData, TValue>) {
-	const facets = column?.getFacetedUniqueValues();
 	const selectedValues = new Set(column?.getFilterValue() as string[]);
 
 	return (
@@ -55,7 +54,7 @@ export function DataTableFacetedFilter<TData, TValue>({
 								{selectedValues.size}
 							</Badge>
 							<div className="hidden space-x-1 lg:flex">
-								{selectedValues.size > 2 ? (
+								{selectedValues.size > 1 ? (
 									<Badge
 										variant="secondary"
 										className="rounded-sm px-1 font-normal"
@@ -80,7 +79,7 @@ export function DataTableFacetedFilter<TData, TValue>({
 					)}
 				</Button>
 			</PopoverTrigger>
-			<PopoverContent className="w-[200px] p-0" align="start">
+			<PopoverContent className="w-fit p-0" align="start">
 				<Command>
 					<CommandInput placeholder={title} />
 					<CommandList>
@@ -111,17 +110,12 @@ export function DataTableFacetedFilter<TData, TValue>({
 													: "opacity-50 [&_svg]:invisible"
 											)}
 										>
-											<Check className={cn("h-4 w-4")} />
+											<Check className="h-4 w-4 text-background" />
 										</div>
 										{option.icon && (
-											<option.icon className="mr-2 h-4 w-4 text-muted-foreground" />
+											<option.icon className="hover:text-background" />
 										)}
 										<span>{option.label}</span>
-										{facets?.get(option.value) && (
-											<span className="ml-auto flex h-4 w-4 items-center justify-center font-mono text-xs">
-												{facets.get(option.value)}
-											</span>
-										)}
 									</CommandItem>
 								);
 							})}
