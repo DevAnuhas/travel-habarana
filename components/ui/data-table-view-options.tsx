@@ -15,6 +15,20 @@ interface DataTableViewOptionsProps<TData> {
 	table: Table<TData>;
 }
 
+const getFriendlyColumnName = (columnId: string): string => {
+	const columnNames: Record<string, string> = {
+		select: "Select",
+		name: "Name",
+		packageId: "Package",
+		date: "Date",
+		numberOfPeople: "People",
+		status: "Status",
+		createdAt: "Created At",
+		actions: "Actions",
+	};
+	return columnNames[columnId] || columnId;
+};
+
 export function DataTableViewOptions<TData>({
 	table,
 }: DataTableViewOptionsProps<TData>) {
@@ -47,7 +61,7 @@ export function DataTableViewOptions<TData>({
 								checked={column.getIsVisible()}
 								onCheckedChange={(value) => column.toggleVisibility(!!value)}
 							>
-								{column.id}
+								{getFriendlyColumnName(column.id)}
 							</DropdownMenuCheckboxItem>
 						);
 					})}
