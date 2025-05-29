@@ -1,42 +1,127 @@
-"use client";
-
-import { Suspense, use } from "react";
+import { Metadata } from "next";
 import { PackageDetails } from "./package-details";
-import LoadingSpinner from "@/components/ui/spinner";
 
-// Custom CSS to hide scrollbars
-const scrollbarHideStyles = `
-  .scrollbar-hide {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
-  }
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;  /* Chrome, Safari and Opera */
-  }
-`;
-
-export default function PackageDetailsPage({
-	params,
-}: {
+interface PackageDetailsPageProps {
 	params: Promise<{ id: string }>;
-}) {
-	const { id } = use(params);
+}
+
+interface Package {
+	_id: string;
+	name: string;
+	description: string;
+	duration: string;
+	included: string[];
+	images: string[];
+}
+
+// Determine the base URL based on environment
+const getBaseUrl = () => {
+	if (process.env.NEXT_PUBLIC_BASE_URL) {
+		return process.env.NEXT_PUBLIC_BASE_URL;
+	}
+	if (process.env.VERCEL_URL) {
+		return `https://${process.env.VERCEL_URL}`;
+	}
+	if (process.env.NODE_ENV === "production") {
+		return "https://travelhabarana.com";
+	}
+	return "http://localhost:3000";
+};
+
+console.log(`Base URL: ${getBaseUrl()}`);
+
+export async function generateStaticParams() {
+	try {
+		const res = await fetch(`${getBaseUrl()}/api/packages`, {
+			next: { revalidate: 3600 }, // Cache for 1 hour
+		});
+
+		if (!res.ok) {
+			console.error("Failed to fetch packages for static params");
+			return [];
+		}
+
+		const packages: Package[] = await res.json();
+		return packages.map(({ _id }) => ({
+			id: _id,
+		}));
+	} catch (error) {
+		console.error("Error generating static params:", error);
+		return [];
+	}
+}
+
+export async function generateMetadata({
+	params,
+}: PackageDetailsPageProps): Promise<Metadata> {
+	const { id } = await params;
+
+	try {
+		const res = await fetch(`${getBaseUrl()}/api/packages/${id}`, {
+			next: { revalidate: 3600 }, // Cache for 1 hour
+		});
+
+		if (!res.ok) {
+			return {
+				title: "Package Not Found - Travel Habarana",
+				description: "The requested package could not be found.",
+				robots: { index: false, follow: false },
+			};
+		}
+
+		const packageData = await res.json();
+
+		return {
+			title: `${packageData.name} - Travel Habarana`,
+			description: packageData.description.substring(0, 160), // Limit to 160 characters for SEO
+			robots: { index: true, follow: true },
+			openGraph: {
+				title: `${packageData.name} - Travel Habarana`,
+				description: packageData.description.substring(0, 160),
+				url: `https://travelhabarana.com/packages/${id}`,
+				siteName: "Travel Habarana",
+				images: [
+					{
+						url:
+							packageData.images[0] ||
+							"https://travelhabarana.com/assets/placeholder.jpg",
+						width: 800,
+						height: 600,
+						alt: `${packageData.name} Image`,
+					},
+				],
+				locale: "en_US",
+				type: "website",
+			},
+			twitter: {
+				card: "summary_large_image",
+				title: `${packageData.name} - Travel Habarana`,
+				description: packageData.description.substring(0, 160),
+				images: [
+					packageData.images[0] ||
+						"https://travelhabarana.com/assets/placeholder.jpg",
+				],
+			},
+		};
+	} catch (error) {
+		console.error("Error generating metadata:", error);
+		return {
+			title: "Travel Package - Travel Habarana",
+			description: "Discover amazing travel packages with Travel Habarana.",
+			robots: { index: true, follow: true },
+		};
+	}
+}
+
+export default async function PackageDetailsPage({
+	params,
+}: PackageDetailsPageProps) {
+	const { id } = await params;
 
 	return (
 		<main className="pt-20 bg-gray-50">
-			<style jsx global>
-				{scrollbarHideStyles}
-			</style>
 			<div className="container mx-auto px-4 py-8">
-				<Suspense
-					fallback={
-						<div className="flex justify-center items-center h-screen">
-							<LoadingSpinner />
-						</div>
-					}
-				>
-					<PackageDetails id={id} />
-				</Suspense>
+				<PackageDetails id={id} />
 			</div>
 		</main>
 	);
