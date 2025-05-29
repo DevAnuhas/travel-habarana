@@ -3,7 +3,7 @@ export async function generateMetadata({
 }: {
 	params: Promise<{ id: string }>;
 }) {
-	const resolvedParams = await params;
+	const { id } = await params;
 
 	// Determine the base URL based on environment
 	const getBaseUrl = () => {
@@ -20,12 +20,9 @@ export async function generateMetadata({
 	};
 
 	try {
-		const res = await fetch(
-			`${getBaseUrl()}/api/packages/${resolvedParams.id}`,
-			{
-				cache: "no-store", // Ensure fresh data for each request
-			}
-		);
+		const res = await fetch(`${getBaseUrl()}/api/packages/${id}`, {
+			cache: "no-store", // Ensure fresh data for each request
+		});
 
 		if (!res.ok) {
 			return {
@@ -44,7 +41,7 @@ export async function generateMetadata({
 			openGraph: {
 				title: `${packageData.name} - Travel Habarana`,
 				description: packageData.description.substring(0, 160),
-				url: `https://travelhabarana.com/packages/${resolvedParams.id}`,
+				url: `https://travelhabarana.com/packages/${id}`,
 				siteName: "Travel Habarana",
 				images: [
 					{
