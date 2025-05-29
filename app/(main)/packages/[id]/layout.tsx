@@ -1,8 +1,15 @@
+import { Metadata } from "next";
+
+interface PackagePageLayoutProps {
+	params: Promise<{ id: string }>;
+	children: React.ReactNode;
+}
+
 export async function generateMetadata({
 	params,
 }: {
 	params: Promise<{ id: string }>;
-}) {
+}): Promise<Metadata> {
 	const { id } = await params;
 
 	// Determine the base URL based on environment
@@ -14,7 +21,7 @@ export async function generateMetadata({
 			return `https://${process.env.VERCEL_URL}`;
 		}
 		if (process.env.NODE_ENV === "production") {
-			return "https://travelhabarana.com"; // Replace with your actual domain
+			return "https://travelhabarana.com";
 		}
 		return "http://localhost:3000";
 	};
@@ -79,8 +86,6 @@ export async function generateMetadata({
 
 export default function PackagePageLayout({
 	children,
-}: Readonly<{
-	children: React.ReactNode;
-}>) {
+}: Readonly<PackagePageLayoutProps>) {
 	return children;
 }
