@@ -3,6 +3,7 @@ import { z } from "zod";
 // Package Schema
 export const packageSchema = z.object({
 	name: z.string().min(3, "Name must be at least 3 characters"),
+	slug: z.string().optional(), // Optional because we'll generate it on the server
 	description: z.string().min(10, "Description must be at least 10 characters"),
 	duration: z.string().min(1, "Duration is required"),
 	included: z

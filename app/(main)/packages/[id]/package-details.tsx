@@ -41,6 +41,7 @@ import LoadingSpinner from "@/components/ui/spinner";
 
 interface Package {
 	_id: string;
+	slug: string;
 	name: string;
 	description: string;
 	duration: string;
@@ -319,7 +320,11 @@ export function PackageDetails({ id }: { id: string }) {
 							</div>
 
 							<Button asChild className="w-full bg-primary hover:bg-primary">
-								<Link href={`/book-now?packageId=${packageData._id}`}>
+								<Link
+									href={`/book-now?packageId=${packageData._id}&slug=${
+										packageData.slug || packageData._id
+									}`}
+								>
 									Book Now
 								</Link>
 							</Button>
@@ -388,7 +393,7 @@ export function PackageDetails({ id }: { id: string }) {
 								viewport={{ once: true }}
 								whileHover={{ y: -5 }}
 							>
-								<Link href={`/packages/${pkg._id}`}>
+								<Link href={`/packages/${pkg.slug || pkg._id}`}>
 									<div className="relative h-48 bg-gray-200">
 										{pkg.images.length > 0 ? (
 											<Image

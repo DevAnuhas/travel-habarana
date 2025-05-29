@@ -3,6 +3,7 @@ import connectMongoDB from "@/lib/mongodb";
 import Package from "@/models/Package";
 import { packageSchema } from "@/lib/types";
 import { withAdminAuth, withErrorHandler } from "@/middleware/error-handler";
+import { generateSlug } from "@/utils/slug";
 
 // Get all packages
 export async function GET(request: NextRequest) {
@@ -25,7 +26,23 @@ export async function POST(request: NextRequest) {
 
 			await connectMongoDB();
 
-			const newPackage = await Package.create(packageItem.data);
+			// Generate slug from name
+			let slug = generateSlug(packageItem.data.name);
+
+			// Check if the slug already exists
+			const existingWithSlug = await Package.findOne({ slug });
+
+			// If slug exists, add a timestamp suffix to make it unique
+			if (existingWithSlug) {
+				slug = `${slug}-${Date.now().toString().slice(-4)}`;
+			}
+
+			const packageWithSlug = {
+				...packageItem.data,
+				slug,
+			};
+
+			const newPackage = await Package.create(packageWithSlug);
 			return NextResponse.json(newPackage, { status: 201 });
 		});
 	});

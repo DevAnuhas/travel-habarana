@@ -7,6 +7,7 @@ interface PackageDetailsPageProps {
 
 interface Package {
 	_id: string;
+	slug: string;
 	name: string;
 	description: string;
 	duration: string;
@@ -42,8 +43,8 @@ export async function generateStaticParams() {
 		}
 
 		const packages: Package[] = await res.json();
-		return packages.map(({ _id }) => ({
-			id: _id,
+		return packages.map((pkg) => ({
+			id: pkg.slug || pkg._id, // Prefer slug, fallback to _id for backward compatibility
 		}));
 	} catch (error) {
 		console.error("Error generating static params:", error);
@@ -78,7 +79,7 @@ export async function generateMetadata({
 			openGraph: {
 				title: `${packageData.name} - Travel Habarana`,
 				description: packageData.description.substring(0, 160),
-				url: `https://travelhabarana.com/packages/${id}`,
+				url: `https://travelhabarana.com/packages/${packageData.slug || id}`,
 				siteName: "Travel Habarana",
 				images: [
 					{
