@@ -4,7 +4,7 @@ import BookingForm from "@/components/common/booking-form";
 import FAQSection from "@/components/common/faq-section";
 
 export const metadata: Metadata = {
-	title: "Book Now - Travel Habarana",
+	title: "Book Now",
 	description:
 		"Send an inquiry to book your safari or village tour with Travel Habarana",
 };

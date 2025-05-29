@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import FAQSection from "@/components/common/faq-section";
 
 export const metadata: Metadata = {
-	title: "Contact Us - Travel Habarana",
+	title: "Contact Us",
 	description:
 		"Get in touch with Travel Habarana for safari and village tour inquiries",
 };

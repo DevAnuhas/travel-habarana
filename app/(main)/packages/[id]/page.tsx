@@ -29,8 +29,6 @@ const getBaseUrl = () => {
 	return "http://localhost:3000";
 };
 
-console.log(`Base URL: ${getBaseUrl()}`);
-
 export async function generateStaticParams() {
 	try {
 		const res = await fetch(`${getBaseUrl()}/api/packages`, {
@@ -64,7 +62,7 @@ export async function generateMetadata({
 
 		if (!res.ok) {
 			return {
-				title: "Package Not Found - Travel Habarana",
+				title: "Package Not Found",
 				description: "The requested package could not be found.",
 				robots: { index: false, follow: false },
 			};
@@ -73,11 +71,11 @@ export async function generateMetadata({
 		const packageData = await res.json();
 
 		return {
-			title: `${packageData.name} - Travel Habarana`,
+			title: `${packageData.name}`,
 			description: packageData.description.substring(0, 160), // Limit to 160 characters for SEO
 			robots: { index: true, follow: true },
 			openGraph: {
-				title: `${packageData.name} - Travel Habarana`,
+				title: `${packageData.name}`,
 				description: packageData.description.substring(0, 160),
 				url: `https://travelhabarana.com/packages/${packageData.slug || id}`,
 				siteName: "Travel Habarana",
@@ -96,7 +94,7 @@ export async function generateMetadata({
 			},
 			twitter: {
 				card: "summary_large_image",
-				title: `${packageData.name} - Travel Habarana`,
+				title: `${packageData.name}`,
 				description: packageData.description.substring(0, 160),
 				images: [
 					packageData.images[0] ||
@@ -107,7 +105,7 @@ export async function generateMetadata({
 	} catch (error) {
 		console.error("Error generating metadata:", error);
 		return {
-			title: "Travel Package - Travel Habarana",
+			title: "Travel Package",
 			description: "Discover amazing travel packages with Travel Habarana.",
 			robots: { index: true, follow: true },
 		};
