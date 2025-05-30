@@ -1,6 +1,8 @@
-import type { Metadata } from "next";
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { motion } from "framer-motion";
 import {
 	EnvelopeOpen,
 	WhatsappLogo,
@@ -12,11 +14,6 @@ import {
 import { Button } from "@/components/ui/button";
 import FAQSection from "@/components/common/faq-section";
 import { siteConfig } from "@/config/site";
-
-export const metadata: Metadata = {
-	title: "Contact Us",
-	description: `Get in touch with ${siteConfig.name} for safari and village tour inquiries`,
-};
 
 // Social media link component
 function SocialLink({
@@ -64,7 +61,12 @@ export default function ContactPage() {
 				<div className="container mx-auto px-4">
 					<div className="max-w-4xl mx-auto">
 						{/* Contact Card */}
-						<div className="bg-white rounded-xl shadow-lg overflow-hidden">
+						<motion.div
+							initial={{ opacity: 0, y: 20 }}
+							animate={{ opacity: 1, y: 0 }}
+							transition={{ duration: 0.5 }}
+							className="bg-white rounded-xl shadow-lg overflow-hidden"
+						>
 							<div className="grid grid-cols-1 md:grid-cols-2">
 								<div className="h-64 md:h-full bg-primary/10 relative">
 									<Image
@@ -156,7 +158,7 @@ export default function ContactPage() {
 									</div>
 								</div>
 							</div>
-						</div>
+						</motion.div>
 					</div>
 				</div>
 			</section>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { CheckCircle } from "@phosphor-icons/react/dist/ssr";
+import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
 	title: "Thank You",
@@ -39,7 +40,7 @@ export default function ThankYouPage() {
 								<p className="text-sm font-medium">
 									WhatsApp:{" "}
 									<a
-										href="https://wa.me/+94766675883"
+										href={siteConfig.links.whatsapp}
 										target="_blank"
 										rel="noopener noreferrer"
 										aria-label="WhatsApp"
@@ -50,7 +51,7 @@ export default function ThankYouPage() {
 									<br />
 									Email:{" "}
 									<a
-										href="mailto:fernandoprashan2003@icloud.com"
+										href={siteConfig.links.email}
 										target="_blank"
 										rel="noopener noreferrer"
 										aria-label="Email"
