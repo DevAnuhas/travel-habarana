@@ -132,6 +132,12 @@ export default function Footer() {
 						&copy; {new Date().getFullYear()} Travel Habarana. All rights
 						reserved.
 					</p>
+					<Link
+						href="/privacy"
+						className="text-gray-300 hover:text-secondary transition-colors text-xs"
+					>
+						Privacy Policy
+					</Link>
 				</div>
 			</div>
 		</footer>
