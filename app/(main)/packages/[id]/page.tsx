@@ -1,50 +1,46 @@
 import { Metadata } from "next";
 import { PackageDetails } from "./package-details";
 import { siteConfig } from "@/config/site";
+import mongoose from "mongoose";
+import connectMongoDB from "@/lib/mongodb";
+import PackageModel from "@/models/Package";
 
 interface PackageDetailsPageProps {
 	params: Promise<{ id: string }>;
 }
 
+// Interface to represent package data from database
 interface Package {
-	_id: string;
+	_id: mongoose.Types.ObjectId | string;
 	slug: string;
 	name: string;
 	description: string;
 	duration: string;
 	included: string[];
 	images: string[];
+	__v?: number;
+	createdAt?: Date;
+	updatedAt?: Date;
 }
-
-// Determine the base URL based on environment
-const getBaseUrl = () => {
-	if (process.env.NEXT_PUBLIC_BASE_URL) {
-		return process.env.NEXT_PUBLIC_BASE_URL;
-	}
-	if (process.env.VERCEL_URL) {
-		return `https://${process.env.VERCEL_URL}`;
-	}
-	if (process.env.NODE_ENV === "production") {
-		return "https://travelhabarana.com";
-	}
-	return "http://localhost:3000";
-};
 
 export async function generateStaticParams() {
 	try {
-		const res = await fetch(`${getBaseUrl()}/api/packages`, {
-			next: { revalidate: 3600 }, // Cache for 1 hour
+		// Connect directly to MongoDB instead of using the API route during build
+		await connectMongoDB();
+		const packages = (await PackageModel.find({}).lean()) as Package[];
+
+		return packages.map((pkg) => {
+			// Use slug as primary identifier, or convert _id to string safely
+			const id =
+				pkg.slug ||
+				(typeof pkg._id === "object" &&
+				pkg._id !== null &&
+				"toString" in pkg._id
+					? pkg._id.toString()
+					: String(pkg._id));
+
+			return { id };
 		});
-
-		if (!res.ok) {
-			console.error("Failed to fetch packages for static params");
-			return [];
-		}
-
-		const packages: Package[] = await res.json();
-		return packages.map((pkg) => ({
-			id: pkg.slug || pkg._id, // Prefer slug, fallback to _id for backward compatibility
-		}));
 	} catch (error) {
 		console.error("Error generating static params:", error);
 		return [];
@@ -57,19 +53,31 @@ export async function generateMetadata({
 	const { id } = await params;
 
 	try {
-		const res = await fetch(`${getBaseUrl()}/api/packages/${id}`, {
-			next: { revalidate: 3600 }, // Cache for 1 hour
-		});
+		// Connect directly to MongoDB during build instead of using the API route
+		await connectMongoDB();
 
-		if (!res.ok) {
+		// Try to find by slug first (primary lookup method)
+		let packageData = (await PackageModel.findOne({
+			slug: id,
+		}).lean()) as Package | null;
+
+		// Fall back to MongoDB _id only if necessary and if it's a valid ObjectId
+		if (!packageData && id.match(/^[0-9a-fA-F]{24}$/)) {
+			const mongoose = (await import("mongoose")).default;
+			if (mongoose.Types.ObjectId.isValid(id)) {
+				packageData = (await PackageModel.findById(
+					id
+				).lean()) as Package | null;
+			}
+		}
+
+		if (!packageData) {
 			return {
 				title: "Package Not Found",
 				description: "The requested package could not be found.",
 				robots: { index: false, follow: false },
 			};
 		}
-
-		const packageData = await res.json();
 
 		return {
 			title: `${packageData.name}`,
@@ -82,7 +90,7 @@ export async function generateMetadata({
 				siteName: siteConfig.name,
 				images: [
 					{
-						url: packageData.images[0] || siteConfig.ogImage,
+						url: packageData.images?.[0] || siteConfig.ogImage,
 						width: 800,
 						height: 600,
 						alt: `${packageData.name} Image`,
@@ -95,7 +103,7 @@ export async function generateMetadata({
 				card: "summary_large_image",
 				title: `${packageData.name}`,
 				description: packageData.description.substring(0, 160),
-				images: [packageData.images[0] || siteConfig.ogImage],
+				images: [packageData.images?.[0] || siteConfig.ogImage],
 			},
 		};
 	} catch (error) {
