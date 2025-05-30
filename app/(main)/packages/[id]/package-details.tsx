@@ -20,6 +20,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { toast } from "sonner";
 import { favoritesManager } from "@/utils/favoritesManager";
+import { siteConfig } from "@/config/site";
 
 import { Button } from "@/components/ui/button";
 import SectionHeading from "@/components/ui/section-heading";
@@ -363,7 +364,7 @@ export function PackageDetails({ id }: { id: string }) {
 							</p>
 							<div className="flex items-center text-sm">
 								<Phone size={14} className="mr-2 text-primary" />
-								<span>+94 76 667 5883</span>
+								<span>{siteConfig.contact.phone}</span>
 							</div>
 						</div>
 					</div>

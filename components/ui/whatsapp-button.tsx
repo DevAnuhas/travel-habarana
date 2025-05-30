@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { siteConfig } from "@/config/site";
 
 export default function WhatsAppButton() {
 	const [isVisible, setIsVisible] = useState(false);
@@ -24,7 +25,7 @@ export default function WhatsAppButton() {
 		<AnimatePresence>
 			{isVisible && (
 				<motion.a
-					href="https://wa.me/+94766675883"
+					href={siteConfig.links.whatsapp}
 					target="_blank"
 					rel="noopener noreferrer"
 					className="fixed bottom-6 right-6 z-50 bg-green-500 text-white px-4 py-3 rounded-full shadow-lg hover:bg-green-600 transition-all ease-in-out duration-300 flex items-center"

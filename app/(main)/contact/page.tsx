@@ -11,11 +11,11 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { Button } from "@/components/ui/button";
 import FAQSection from "@/components/common/faq-section";
+import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
 	title: "Contact Us",
-	description:
-		"Get in touch with Travel Habarana for safari and village tour inquiries",
+	description: `Get in touch with ${siteConfig.name} for safari and village tour inquiries`,
 };
 
 // Social media link component
@@ -88,7 +88,9 @@ export default function ContactPage() {
 											</div>
 											<div>
 												<h3 className="font-bold text-lg">WhatsApp</h3>
-												<p className="text-gray-600">+94 76 667 5883</p>
+												<p className="text-gray-600">
+													{siteConfig.contact.phone}
+												</p>
 											</div>
 										</div>
 
@@ -99,7 +101,7 @@ export default function ContactPage() {
 											<div>
 												<h3 className="font-bold text-lg">Email</h3>
 												<p className="text-gray-600">
-													fernandoprashan2003@icloud.com
+													{siteConfig.contact.email}
 												</p>
 											</div>
 										</div>
@@ -110,9 +112,8 @@ export default function ContactPage() {
 											</div>
 											<div>
 												<h3 className="font-bold text-lg">Location</h3>
-												<p className="text-gray-600">Habarana</p>
 												<p className="text-gray-600">
-													North Central Province, Sri Lanka
+													{siteConfig.contact.address}
 												</p>
 											</div>
 										</div>
@@ -124,19 +125,19 @@ export default function ContactPage() {
 											</h3>
 											<div className="flex space-x-3">
 												<SocialLink
-													href="https://facebook.com/people/Jeep-safari-habarana/61557160063166/"
+													href={siteConfig.links.facebook}
 													icon={FacebookLogo}
 													label="Facebook"
 													color="bg-[#1877F2]"
 												/>
 												<SocialLink
-													href="https://www.instagram.com/travel_in_habarana"
+													href={siteConfig.links.instagram}
 													icon={InstagramLogo}
 													label="Instagram"
 													color="bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#FCAF45]"
 												/>
 												<SocialLink
-													href="https://www.tiktok.com/@travel.in.habaran"
+													href={siteConfig.links.tiktok}
 													icon={TiktokLogo}
 													label="TikTok"
 													color="bg-black"

@@ -14,6 +14,7 @@ import {
 	IconProps,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
+import { siteConfig } from "@/config/site";
 
 function SocialIcon({
 	href,
@@ -73,7 +74,7 @@ function HeroSection() {
 							animate={{ opacity: 1, x: 0 }}
 							transition={{ duration: 0.8, delay: 0.2 }}
 						>
-							Discover Sri Lanka’s Wildlife with Travel Habarana
+							Discover Sri Lanka’s Wildlife with {siteConfig.name}
 						</motion.h1>
 
 						<motion.p
@@ -113,27 +114,27 @@ function HeroSection() {
 							transition={{ duration: 0.8, delay: 0.8 }}
 						>
 							<SocialIcon
-								href="https://facebook.com/people/Jeep-safari-habarana/61557160063166/"
+								href={siteConfig.links.facebook}
 								icon={FacebookLogo}
 								label="Facebook"
 							/>
 							<SocialIcon
-								href="https://www.instagram.com/travel_in_habarana"
+								href={siteConfig.links.instagram}
 								icon={InstagramLogo}
 								label="Instagram"
 							/>
 							<SocialIcon
-								href="https://www.tiktok.com/@travel.in.habaran"
+								href={siteConfig.links.tiktok}
 								icon={TiktokLogo}
 								label="TikTok"
 							/>
 							<SocialIcon
-								href="https://wa.me/+94766675883"
+								href={siteConfig.links.whatsapp}
 								icon={WhatsappLogo}
 								label="WhatsApp"
 							/>
 							<SocialIcon
-								href="mailto:fernandoprashan2003@icloud.com"
+								href={`mailto:${siteConfig.contact.email}`}
 								icon={EnvelopeOpen}
 								label="Email"
 							/>

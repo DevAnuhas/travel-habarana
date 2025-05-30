@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { PackageDetails } from "./package-details";
+import { siteConfig } from "@/config/site";
 
 interface PackageDetailsPageProps {
 	params: Promise<{ id: string }>;
@@ -77,13 +78,11 @@ export async function generateMetadata({
 			openGraph: {
 				title: `${packageData.name}`,
 				description: packageData.description.substring(0, 160),
-				url: `https://travelhabarana.com/packages/${packageData.slug || id}`,
-				siteName: "Travel Habarana",
+				url: `${siteConfig.url}/packages/${packageData.slug || id}`,
+				siteName: siteConfig.name,
 				images: [
 					{
-						url:
-							packageData.images[0] ||
-							"https://travelhabarana.com/assets/placeholder.jpg",
+						url: packageData.images[0] || siteConfig.ogImage,
 						width: 800,
 						height: 600,
 						alt: `${packageData.name} Image`,
@@ -96,17 +95,14 @@ export async function generateMetadata({
 				card: "summary_large_image",
 				title: `${packageData.name}`,
 				description: packageData.description.substring(0, 160),
-				images: [
-					packageData.images[0] ||
-						"https://travelhabarana.com/assets/placeholder.jpg",
-				],
+				images: [packageData.images[0] || siteConfig.ogImage],
 			},
 		};
 	} catch (error) {
 		console.error("Error generating metadata:", error);
 		return {
 			title: "Travel Package",
-			description: "Discover amazing travel packages with Travel Habarana.",
+			description: `Discover amazing travel packages with ${siteConfig.name}.`,
 			robots: { index: true, follow: true },
 		};
 	}

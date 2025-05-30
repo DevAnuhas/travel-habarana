@@ -14,6 +14,7 @@ import {
 	SignOut,
 } from "@phosphor-icons/react/dist/ssr";
 import { cn } from "@/lib/utils";
+import { siteConfig } from "@/config/site";
 import {
 	Sidebar,
 	SidebarContent,
@@ -77,7 +78,7 @@ export function AdminSidebar() {
 				<div className="flex justify-between items-center h-12">
 					<div className="flex flex-col group-data-[collapsible=icon]:hidden">
 						<h1 className="text-xl font-bold text-sidebar-foreground whitespace-nowrap">
-							<Link href="/">Travel Habarana</Link>
+							<Link href="/">{siteConfig.name}</Link>
 						</h1>
 						<p className="text-sm text-sidebar-foreground/70">Admin Panel</p>
 					</div>

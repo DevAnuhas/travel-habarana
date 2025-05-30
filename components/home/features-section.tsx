@@ -12,6 +12,7 @@ import {
 	IconProps,
 } from "@phosphor-icons/react";
 import SectionHeading from "@/components/ui/section-heading";
+import { siteConfig } from "@/config/site";
 
 const features: Array<Feature> = [
 	{
@@ -53,7 +54,7 @@ export default function FeaturesSection() {
 		<section className="relative overflow-hidden py-20 bg-gray-50">
 			<div className="container max-w-5xl relative mx-auto px-4">
 				<SectionHeading
-					title="Why Travel Habarana?"
+					title={`Why ${siteConfig.name}?`}
 					subtitle="We pride ourselves on providing exceptional safari experiences and cultural tours in the heart of Sri Lanka. Our commitment to safety, authenticity, and customer satisfaction sets us apart."
 				/>
 
