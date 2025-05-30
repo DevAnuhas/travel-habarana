@@ -6,6 +6,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { PaperPlaneTilt, List, X } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
+import { siteConfig } from "@/config/site";
 
 export default function Navbar() {
 	const pathname = usePathname();
@@ -44,7 +45,7 @@ export default function Navbar() {
 					{/* Logo */}
 					<Link href="/" className="flex items-center">
 						<span className="text-xl font-bold font-serif">
-							Travel Habarana
+							{siteConfig.name}
 						</span>
 					</Link>
 

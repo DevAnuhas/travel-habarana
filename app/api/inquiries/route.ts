@@ -5,6 +5,7 @@ import Package from "@/models/Package";
 import { inquirySchema } from "@/lib/types";
 import { NotFoundError } from "@/lib/errors";
 import { withErrorHandler, withAdminAuth } from "@/middleware/error-handler";
+import { siteConfig } from "@/config/site";
 import {
 	getEmailTransporter,
 	newInquiryAdminTemplate,
@@ -110,7 +111,9 @@ export async function POST(request: NextRequest) {
 
 			// Send notification to admin
 			await transporter.sendMail({
-				from: `"Travel Habarana Booking" <no-reply@travelhabarana.com>`,
+				from: `"${siteConfig.name}" <no-reply@${
+					new URL(siteConfig.url).hostname
+				}>`,
 				to: process.env.EMAIL_USER, // Admin email
 				subject: `New Booking Inquiry: ${packageDetails.name}`,
 				html: newInquiryAdminTemplate(newInquiry, packageDetails),
@@ -119,9 +122,11 @@ export async function POST(request: NextRequest) {
 
 			// Send confirmation to customer
 			await transporter.sendMail({
-				from: `"Travel Habarana" <no-reply@travelhabarana.com>`,
+				from: `"${siteConfig.name}" <no-reply@${
+					new URL(siteConfig.url).hostname
+				}>`,
 				to: newInquiry.email,
-				subject: "Your Booking Inquiry - Travel Habarana",
+				subject: `Your Booking Inquiry - ${siteConfig.name}`,
 				html: newInquiryCustomerTemplate(newInquiry, packageDetails),
 			});
 		} catch (error) {

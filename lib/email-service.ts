@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { siteConfig } from "@/config/site";
 
 // Configure nodemailer transporter
 export const getEmailTransporter = () => {
@@ -53,7 +54,7 @@ export function newInquiryAdminTemplate(
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>New Booking Inquiry - Travel Habarana</title>
+      <title>New Booking Inquiry - ${siteConfig.name}</title>
       <style>
         body {
           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -144,7 +145,9 @@ export function newInquiryAdminTemplate(
         </div>
         
         <div class="content">
-          <p>You have received a new booking inquiry from the Travel Habarana website. Please review the details below and respond to the customer as soon as possible.</p>
+          <p>You have received a new booking inquiry from the ${
+						siteConfig.name
+					} website. Please review the details below and respond to the customer as soon as possible.</p>
           
           <div class="package-info">
             <h2>Package Information</h2>
@@ -191,13 +194,17 @@ export function newInquiryAdminTemplate(
           <p>Please respond to this inquiry within 24 hours to ensure customer satisfaction.</p>
           
           <a href="${
-						process.env.NEXT_PUBLIC_APP_URL || "https://travelhabarana.com"
+						process.env.NEXT_PUBLIC_APP_URL || siteConfig.url
 					}/admin/inquiries" class="cta-button">View in Admin Dashboard</a>
         </div>
         
         <div class="footer">
-          <p>This is an automated email from Travel Habarana. Please do not reply to this email.</p>
-          <p>&copy; ${new Date().getFullYear()} Travel Habarana. All rights reserved.</p>
+          <p>This is an automated email from ${
+						siteConfig.name
+					}. Please do not reply to this email.</p>
+          <p>&copy; ${new Date().getFullYear()} ${
+		siteConfig.name
+	}. All rights reserved.</p>
         </div>
       </div>
     </body>
@@ -216,7 +223,7 @@ export function newInquiryCustomerTemplate(
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Booking Inquiry Confirmation - Travel Habarana</title>
+      <title>Booking Inquiry Confirmation - ${siteConfig.name}</title>
       <style>
         body {
           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -334,26 +341,28 @@ export function newInquiryCustomerTemplate(
             <h2>Need to Reach Us?</h2>
             <p>If you have any questions or need to update your inquiry, please don't hesitate to contact us:</p>
             <ul>
-              <li><strong>Email:</strong> fernandoprashan2003@icloud.com</li>
-              <li><strong>Phone:</strong> +94 76 667 5883</li>
-              <li><strong>WhatsApp:</strong> +94 76 667 5883</li>
+              <li><strong>Email:</strong> ${siteConfig.contact.email}</li>
+              <li><strong>Phone:</strong> ${siteConfig.contact.phone}</li>
+              <li><strong>WhatsApp:</strong> ${siteConfig.contact.phone}</li>
             </ul>
           </div>
           
           <p>We look forward to helping you plan an unforgettable experience in Habarana!</p>
           
-          <p>Best regards,<br>The Travel Habarana Team</p>
+          <p>Best regards,<br>The ${siteConfig.name} Team</p>
           
           <div class="social-links">
             <p>Follow us on social media for updates and special offers:</p>
-            <a href="https://facebook.com/people/Jeep-safari-habarana/61557160063166/">Facebook</a> |
-            <a href="https://www.instagram.com/travel_in_habarana">Instagram</a> |
-            <a href="https://www.tiktok.com/@travel.in.habaran">TikTok</a>
+            <a href="${siteConfig.links.facebook}">Facebook</a> |
+            <a href="${siteConfig.links.instagram}">Instagram</a> |
+            <a href="${siteConfig.links.tiktok}">TikTok</a>
           </div>
         </div>
         
         <div class="footer">
-          <p>&copy; ${new Date().getFullYear()} Travel Habarana. All rights reserved.</p>
+          <p>&copy; ${new Date().getFullYear()} ${
+		siteConfig.name
+	}. All rights reserved.</p>
         </div>
       </div>
     </body>
@@ -367,7 +376,7 @@ export function passwordResetAdminTemplate(
 	userName: string
 ) {
 	const resetUrl = `${
-		process.env.NEXT_PUBLIC_APP_URL || "https://travelhabarana.com"
+		process.env.NEXT_PUBLIC_APP_URL || siteConfig.url
 	}/admin/reset-password?token=${resetToken}`;
 
 	return `<!DOCTYPE html>
@@ -375,7 +384,7 @@ export function passwordResetAdminTemplate(
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Password Reset - Travel Habarana Admin</title>
+      <title>Password Reset - ${siteConfig.name} Admin</title>
       <style>
         body {
           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -444,14 +453,15 @@ export function passwordResetAdminTemplate(
     <body>
       <div class="container">
         <div class="header">
-          <h1>Travel Habarana</h1>
+          <h1>${siteConfig.name}</h1>
         </div>
         
         <div class="content">
           <h2>Password Reset Request</h2>
           <p>Hello ${userName},</p>
-          
-          <p>We received a request to reset your password for your Travel Habarana admin account. If you made this request, click the button below to reset your password:</p>
+                   <p>We received a request to reset your password for your ${
+											siteConfig.name
+										} admin account. If you made this request, click the button below to reset your password:</p>
           
           <div style="text-align: center; margin: 30px 0;">
             <a href="${resetUrl}" class="reset-button">Reset My Password</a>
@@ -472,12 +482,16 @@ export function passwordResetAdminTemplate(
             </ul>
           </div>
           
-          <p>Best regards,<br>Travel Habarana Security Team</p>
+          <p>Best regards,<br>${siteConfig.name} Security Team</p>
         </div>
         
         <div class="footer">
-          <p>This is an automated security email from Travel Habarana Admin Portal.</p>
-          <p>&copy; ${new Date().getFullYear()} Travel Habarana. All rights reserved.</p>
+          <p>This is an automated security email from ${
+						siteConfig.name
+					} Admin Portal.</p>
+          <p>&copy; ${new Date().getFullYear()} ${
+		siteConfig.name
+	}. All rights reserved.</p>
         </div>
       </div>
     </body>

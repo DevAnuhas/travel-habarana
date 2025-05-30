@@ -3,6 +3,7 @@ import { Inter, DM_Serif_Display } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/components/providers/session-provider";
+import { siteConfig } from "@/config/site";
 
 const inter = Inter({
 	variable: "--font-inter",
@@ -16,21 +17,42 @@ const dmSerifDisplay = DM_Serif_Display({
 });
 
 export const metadata: Metadata = {
-	title: "Travel Habarana - Sri Lankan Safari & Cultural Tours",
+	metadataBase: new URL(siteConfig.url),
+	title: {
+		default: `${siteConfig.name} - Sri Lankan Safari & Cultural Tours`,
+		template: `%s | ${siteConfig.name}`,
+	},
 	description:
 		"Experience the best safari tours in Sri Lanka with Travel Habarana. Book jeep safaris to Hurulu, Minneriya, and Kaudulla National Parks, plus authentic village cultural tours.",
+	keywords: [
+		"Travel Habarana",
+		"Sri Lanka Safari Tours",
+		"Hurulu Eco Park",
+		"Minneriya National Park",
+		"Kaudulla National Park",
+		"Jeep Safari Sri Lanka",
+		"Cultural Tours Sri Lanka",
+		"Village Tours Sri Lanka",
+		"Wildlife Tours Sri Lanka",
+		"Travel Packages Sri Lanka",
+		"Book Safari Tours Sri Lanka",
+		"Travel Sri Lanka",
+		"Sri Lanka Travel Guide",
+	],
 	openGraph: {
-		title: "Travel Habarana - Sri Lankan Safari & Cultural Tours",
-		description:
-			"Experience the best safari tours in Sri Lanka with Travel Habarana. Book jeep safaris to Hurulu, Minneriya, and Kaudulla National Parks, plus authentic village cultural tours.",
-		url: `https://travelhabarana.com/`,
-		siteName: "Travel Habarana",
+		title: {
+			default: `${siteConfig.name} - Sri Lankan Safari & Cultural Tours`,
+			template: `%s | ${siteConfig.name}`,
+		},
+		description: siteConfig.description,
+		url: siteConfig.url,
+		siteName: siteConfig.name,
 		images: [
 			{
-				url: "https://travelhabarana.com/assets/placeholder.jpg",
+				url: siteConfig.ogImage,
 				width: 800,
 				height: 600,
-				alt: `Placeholder Image`,
+				alt: `${siteConfig.name} - Featured Image`,
 			},
 		],
 		locale: "en_US",
@@ -38,13 +60,15 @@ export const metadata: Metadata = {
 	},
 	twitter: {
 		card: "summary_large_image",
-		title: "Travel Habarana - Sri Lankan Safari & Cultural Tours",
-		description:
-			"Experience the best safari tours in Sri Lanka with Travel Habarana. Book jeep safaris to Hurulu, Minneriya, and Kaudulla National Parks, plus authentic village cultural tours.",
+		title: {
+			default: `${siteConfig.name} - Sri Lankan Safari & Cultural Tours`,
+			template: `%s | ${siteConfig.name}`,
+		},
+		description: siteConfig.description,
 		images: [
 			{
-				url: "https://travelhabarana.com/assets/placeholder.jpg",
-				alt: `Placeholder Image`,
+				url: siteConfig.ogImage,
+				alt: `${siteConfig.name} - Featured Image`,
 			},
 		],
 	},

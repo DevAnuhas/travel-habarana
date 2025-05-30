@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -20,6 +20,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { toast } from "sonner";
 import { favoritesManager } from "@/utils/favoritesManager";
+import { siteConfig } from "@/config/site";
 
 import { Button } from "@/components/ui/button";
 import SectionHeading from "@/components/ui/section-heading";
@@ -41,6 +42,7 @@ import LoadingSpinner from "@/components/ui/spinner";
 
 interface Package {
 	_id: string;
+	slug: string;
 	name: string;
 	description: string;
 	duration: string;
@@ -64,7 +66,7 @@ export function PackageDetails({ id }: { id: string }) {
 	const [relatedPackages, setRelatedPackages] = useState<Package[]>([]);
 	const [isLoadingRelated, setIsLoadingRelated] = useState(true);
 
-	const fetchRelatedPackages = async () => {
+	const fetchRelatedPackages = useCallback(async () => {
 		try {
 			setIsLoadingRelated(true);
 			const res = await fetch("/api/packages");
@@ -86,15 +88,19 @@ export function PackageDetails({ id }: { id: string }) {
 		} finally {
 			setIsLoadingRelated(false);
 		}
-	};
+	}, [id]);
 
 	useEffect(() => {
 		const fetchPackage = async () => {
 			try {
-				const res = await fetch(`/api/packages/${id}`);
+				setIsLoading(true);
+				// Use cache: force-cache to leverage any server-side cached data
+				const res = await fetch(`/api/packages/${id}`, {
+					cache: "force-cache",
+				});
 
 				if (!res.ok) {
-					throw new Error("Package not found");
+					throw new Error(`Package not found: ${res.status}`);
 				}
 
 				const data = await res.json();
@@ -105,14 +111,15 @@ export function PackageDetails({ id }: { id: string }) {
 			} catch (error) {
 				console.error("Failed to fetch package:", error);
 				toast.error("Failed to load package details. Please try again.");
-				router.push("/packages");
 			} finally {
 				setIsLoading(false);
 			}
 		};
 
-		fetchPackage();
-	}, [id, router]);
+		if (id) {
+			fetchPackage();
+		}
+	}, [id, router, fetchRelatedPackages]);
 
 	const toggleFavorite = () => {
 		if (!packageData?._id) return;
@@ -157,7 +164,7 @@ export function PackageDetails({ id }: { id: string }) {
 
 	if (!packageData) {
 		return (
-			<div className="text-center py-16">
+			<div className="text-center py-24">
 				<h1 className="text-2xl font-bold mb-4">Package Not Found</h1>
 				<p className="mb-6 text-gray-600">
 					The package you’re looking for doesn’t exist or has been removed.
@@ -314,7 +321,11 @@ export function PackageDetails({ id }: { id: string }) {
 							</div>
 
 							<Button asChild className="w-full bg-primary hover:bg-primary">
-								<Link href={`/book-now?packageId=${packageData._id}`}>
+								<Link
+									href={`/book-now?packageId=${packageData._id}&slug=${
+										packageData.slug || packageData._id
+									}`}
+								>
 									Book Now
 								</Link>
 							</Button>
@@ -353,7 +364,7 @@ export function PackageDetails({ id }: { id: string }) {
 							</p>
 							<div className="flex items-center text-sm">
 								<Phone size={14} className="mr-2 text-primary" />
-								<span>+94 76 667 5883</span>
+								<span>{siteConfig.contact.phone}</span>
 							</div>
 						</div>
 					</div>
@@ -383,9 +394,9 @@ export function PackageDetails({ id }: { id: string }) {
 								viewport={{ once: true }}
 								whileHover={{ y: -5 }}
 							>
-								<Link href={`/packages/${pkg._id}`}>
+								<Link href={`/packages/${pkg.slug || pkg._id}`}>
 									<div className="relative h-48 bg-gray-200">
-										{pkg.images ? (
+										{pkg.images.length > 0 ? (
 											<Image
 												src={pkg.images[0]}
 												alt={pkg.name}

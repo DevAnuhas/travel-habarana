@@ -1,6 +1,8 @@
-import type { Metadata } from "next";
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { motion } from "framer-motion";
 import {
 	EnvelopeOpen,
 	WhatsappLogo,
@@ -11,12 +13,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { Button } from "@/components/ui/button";
 import FAQSection from "@/components/common/faq-section";
-
-export const metadata: Metadata = {
-	title: "Contact Us - Travel Habarana",
-	description:
-		"Get in touch with Travel Habarana for safari and village tour inquiries",
-};
+import { siteConfig } from "@/config/site";
 
 // Social media link component
 function SocialLink({
@@ -64,7 +61,12 @@ export default function ContactPage() {
 				<div className="container mx-auto px-4">
 					<div className="max-w-4xl mx-auto">
 						{/* Contact Card */}
-						<div className="bg-white rounded-xl shadow-lg overflow-hidden">
+						<motion.div
+							initial={{ opacity: 0, y: 20 }}
+							animate={{ opacity: 1, y: 0 }}
+							transition={{ duration: 0.5 }}
+							className="bg-white rounded-xl shadow-lg overflow-hidden"
+						>
 							<div className="grid grid-cols-1 md:grid-cols-2">
 								<div className="h-64 md:h-full bg-primary/10 relative">
 									<Image
@@ -88,7 +90,9 @@ export default function ContactPage() {
 											</div>
 											<div>
 												<h3 className="font-bold text-lg">WhatsApp</h3>
-												<p className="text-gray-600">+94 76 667 5883</p>
+												<p className="text-gray-600">
+													{siteConfig.contact.phone}
+												</p>
 											</div>
 										</div>
 
@@ -99,7 +103,7 @@ export default function ContactPage() {
 											<div>
 												<h3 className="font-bold text-lg">Email</h3>
 												<p className="text-gray-600">
-													fernandoprashan2003@icloud.com
+													{siteConfig.contact.email}
 												</p>
 											</div>
 										</div>
@@ -110,9 +114,8 @@ export default function ContactPage() {
 											</div>
 											<div>
 												<h3 className="font-bold text-lg">Location</h3>
-												<p className="text-gray-600">Habarana</p>
 												<p className="text-gray-600">
-													North Central Province, Sri Lanka
+													{siteConfig.contact.address}
 												</p>
 											</div>
 										</div>
@@ -124,19 +127,19 @@ export default function ContactPage() {
 											</h3>
 											<div className="flex space-x-3">
 												<SocialLink
-													href="https://facebook.com/people/Jeep-safari-habarana/61557160063166/"
+													href={siteConfig.links.facebook}
 													icon={FacebookLogo}
 													label="Facebook"
 													color="bg-[#1877F2]"
 												/>
 												<SocialLink
-													href="https://www.instagram.com/travel_in_habarana"
+													href={siteConfig.links.instagram}
 													icon={InstagramLogo}
 													label="Instagram"
 													color="bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#FCAF45]"
 												/>
 												<SocialLink
-													href="https://www.tiktok.com/@travel.in.habaran"
+													href={siteConfig.links.tiktok}
 													icon={TiktokLogo}
 													label="TikTok"
 													color="bg-black"
@@ -155,7 +158,7 @@ export default function ContactPage() {
 									</div>
 								</div>
 							</div>
-						</div>
+						</motion.div>
 					</div>
 				</div>
 			</section>

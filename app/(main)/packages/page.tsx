@@ -8,6 +8,7 @@ import FAQSection from "@/components/common/faq-section";
 
 interface Package {
 	_id: string;
+	slug: string;
 	name: string;
 	description: string;
 	duration: string;
@@ -74,6 +75,7 @@ export default function PackagesPage() {
 								<PackageCard
 									key={pkg._id}
 									id={pkg._id}
+									slug={pkg.slug}
 									name={pkg.name}
 									description={pkg.description}
 									duration={pkg.duration}

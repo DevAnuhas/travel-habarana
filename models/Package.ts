@@ -3,6 +3,12 @@ import mongoose from "mongoose";
 const packageSchema = new mongoose.Schema(
 	{
 		name: { type: String, required: true },
+		slug: {
+			type: String,
+			required: true,
+			unique: true,
+			index: true,
+		},
 		description: { type: String, required: true },
 		duration: { type: String, required: true },
 		included: { type: [String], required: true },

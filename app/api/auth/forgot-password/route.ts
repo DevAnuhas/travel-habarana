@@ -4,6 +4,7 @@ import crypto from "crypto";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import PasswordResetToken from "@/models/PasswordResetToken";
+import { siteConfig } from "@/config/site";
 import {
 	getEmailTransporter,
 	passwordResetAdminTemplate,
@@ -55,9 +56,11 @@ export async function POST(request: NextRequest) {
 			const transporter = getEmailTransporter();
 
 			await transporter.sendMail({
-				from: `"Travel Habarana Admin" <${process.env.EMAIL_USER}>`,
+				from: `"${siteConfig.name} Admin" <no-reply@${
+					new URL(siteConfig.url).hostname
+				}>`,
 				to: email,
-				subject: "Password Reset Request - Travel Habarana Admin",
+				subject: `Password Reset Request - ${siteConfig.name} Admin`,
 				html: passwordResetAdminTemplate(resetToken, user.email),
 			});
 		} catch (error) {

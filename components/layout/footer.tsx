@@ -8,6 +8,7 @@ import {
 	MapPinLine,
 	Phone,
 } from "@phosphor-icons/react/dist/ssr";
+import { siteConfig } from "@/config/site";
 
 export default function Footer() {
 	return (
@@ -16,14 +17,11 @@ export default function Footer() {
 				<div className="grid grid-cols-1 md:grid-cols-3 gap-8">
 					{/* Company Info */}
 					<div>
-						<h3 className="text-xl font-bold mb-4">Travel Habarana</h3>
-						<p className="mb-4 text-gray-300">
-							Discover the beauty of Sri Lanka&apos;s wildlife and culture with
-							our expert-guided safari and village tours.
-						</p>
+						<h3 className="text-xl font-bold mb-4">{siteConfig.name}</h3>
+						<p className="mb-4 text-gray-300">{siteConfig.description}</p>
 						<div className="flex space-x-4">
 							<a
-								href="https://facebook.com/people/Jeep-safari-habarana/61557160063166/"
+								href={siteConfig.links.facebook}
 								target="_blank"
 								rel="noopener noreferrer"
 								className="text-gray-300 hover:text-secondary transition-colors"
@@ -32,7 +30,7 @@ export default function Footer() {
 								<FacebookLogo size={20} />
 							</a>
 							<a
-								href="https://www.instagram.com/travel_in_habarana"
+								href={siteConfig.links.instagram}
 								target="_blank"
 								rel="noopener noreferrer"
 								className="text-gray-300 hover:text-secondary transition-colors"
@@ -41,7 +39,7 @@ export default function Footer() {
 								<InstagramLogo size={20} />
 							</a>
 							<a
-								href="https://www.tiktok.com/@travel.in.habaran"
+								href={siteConfig.links.tiktok}
 								target="_blank"
 								rel="noopener noreferrer"
 								className="text-gray-300 hover:text-secondary transition-colors"
@@ -50,14 +48,14 @@ export default function Footer() {
 								<TiktokLogo size={20} />
 							</a>
 							<a
-								href="https://wa.me/+94766675883"
+								href={siteConfig.links.whatsapp}
 								className="text-gray-300 hover:text-secondary transition-colors"
 								aria-label="WhatsApp"
 							>
 								<WhatsappLogo size={20} />
 							</a>
 							<a
-								href="mailto:fernandoprashan2003@icloud.com"
+								href={siteConfig.links.email}
 								className="text-gray-300 hover:text-secondary transition-colors"
 								aria-label="Email"
 							>
@@ -111,17 +109,21 @@ export default function Footer() {
 						<div className="space-y-3">
 							<div className="flex items-start">
 								<Phone size={18} className="mr-2 mt-1 flex-shrink-0" />
-								<span className="text-gray-300">+94 76 667 5883</span>
+								<span className="text-gray-300">
+									{siteConfig.contact.phone}
+								</span>
 							</div>
 							<div className="flex items-start">
 								<EnvelopeOpen size={18} className="mr-2 mt-1 flex-shrink-0" />
 								<span className="text-gray-300">
-									fernandoprashan2003@icloud.com
+									{siteConfig.contact.email}
 								</span>
 							</div>
 							<div className="flex items-start">
 								<MapPinLine size={18} className="mr-2 mt-1 flex-shrink-0" />
-								<span className="text-gray-300">Habarana, Sri Lanka</span>
+								<span className="text-gray-300">
+									{siteConfig.contact.address}
+								</span>
 							</div>
 						</div>
 					</div>
@@ -129,9 +131,15 @@ export default function Footer() {
 
 				<div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400 text-sm">
 					<p>
-						&copy; {new Date().getFullYear()} Travel Habarana. All rights
+						&copy; {new Date().getFullYear()} {siteConfig.name}. All rights
 						reserved.
 					</p>
+					<Link
+						href="/privacy"
+						className="text-gray-300 hover:text-secondary transition-colors text-xs"
+					>
+						Privacy Policy
+					</Link>
 				</div>
 			</div>
 		</footer>

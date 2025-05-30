@@ -13,6 +13,7 @@ import { Button } from "./button";
 
 interface PackageCardProps {
 	id: string;
+	slug?: string;
 	name: string;
 	description: string;
 	duration: string;
@@ -22,12 +23,15 @@ interface PackageCardProps {
 
 export default function PackageCard({
 	id,
+	slug,
 	name,
 	description,
 	duration,
 	included,
 	image,
 }: PackageCardProps) {
+	const packageIdentifier = slug || id;
+
 	return (
 		<motion.div
 			className="bg-white rounded-xl overflow-hidden shadow-lg h-full flex flex-col"
@@ -37,7 +41,7 @@ export default function PackageCard({
 			viewport={{ once: true }}
 			whileHover={{ y: -5 }}
 		>
-			<Link href={`/packages/${id}`} passHref>
+			<Link href={`/packages/${packageIdentifier}`} passHref>
 				<div className="relative h-64 w-full overflow-hidden">
 					{image ? (
 						<Image
