@@ -341,9 +341,9 @@ export function newInquiryCustomerTemplate(
             <h2>Need to Reach Us?</h2>
             <p>If you have any questions or need to update your inquiry, please don't hesitate to contact us:</p>
             <ul>
-              <li><strong>Email:</strong> {siteConfig.contact.email}</li>
-              <li><strong>Phone:</strong> {siteConfig.contact.phone}</li>
-              <li><strong>WhatsApp:</strong> {siteConfig.contact.phone}</li>
+              <li><strong>Email:</strong> ${siteConfig.contact.email}</li>
+              <li><strong>Phone:</strong> ${siteConfig.contact.phone}</li>
+              <li><strong>WhatsApp:</strong> ${siteConfig.contact.phone}</li>
             </ul>
           </div>
           
