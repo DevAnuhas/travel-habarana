@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { PaperPlaneTilt, List, X } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,17 @@ export default function Navbar() {
 				<div className="flex items-center justify-between h-20">
 					{/* Logo */}
 					<Link href="/" className="flex items-center">
+						<Image
+							src={
+								isHomePage && !isScrolled
+									? siteConfig.logoDark
+									: siteConfig.logo
+							}
+							alt={`${siteConfig.name} Logo`}
+							width={25}
+							height={25}
+							className="mr-2"
+						/>
 						<span className="text-xl font-bold font-serif">
 							{siteConfig.name}
 						</span>

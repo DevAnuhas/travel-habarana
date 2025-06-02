@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import {
 	FacebookLogo,
 	InstagramLogo,
@@ -17,7 +18,19 @@ export default function Footer() {
 				<div className="grid grid-cols-1 md:grid-cols-3 gap-8">
 					{/* Company Info */}
 					<div>
-						<h3 className="text-xl font-bold mb-4">{siteConfig.name}</h3>
+						{/* Logo */}
+						<div className="flex items-center mb-4">
+							<Image
+								src={siteConfig.logoDark}
+								alt={`${siteConfig.name} Logo`}
+								width={25}
+								height={25}
+								className="mr-2"
+							/>
+							<span className="text-xl font-bold font-serif">
+								{siteConfig.name}
+							</span>
+						</div>
 						<p className="mb-4 text-gray-300">{siteConfig.description}</p>
 						<div className="flex space-x-4">
 							<a
