@@ -3,6 +3,8 @@ export const siteConfig = {
 	description:
 		"Discover the beauty of Sri Lanka's wildlife and culture with our expert-guided safari and village tours.",
 	url: "https://travelhabarana.com",
+	logo: "/assets/travel-habarana-logo.png",
+	logoDark: "/assets/travel-habarana-logo-white.png",
 	ogImage: "https://travelhabarana.com/assets/opengraph-image.jpg",
 	links: {
 		whatsapp:
