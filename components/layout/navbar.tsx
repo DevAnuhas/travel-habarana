@@ -85,6 +85,13 @@ export default function Navbar() {
 							isScrolled={isScrolled}
 						/>
 						<NavLink
+							href="/blogs"
+							label="Blogs"
+							isActive={pathname === "/contact"}
+							isHomePage={isHomePage}
+							isScrolled={isScrolled}
+						/>
+						<NavLink
 							href="/contact"
 							label="Contact"
 							isActive={pathname === "/contact"}

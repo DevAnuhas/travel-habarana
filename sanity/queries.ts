@@ -2,7 +2,7 @@ import { defineQuery } from "next-sanity";
 import { clientFetch } from "./lib/client";
 
 const FEATURED_POSTS_QUERY =
-  defineQuery(`*[_type=='post' && isFeatured==true] | order(publishedAt desc)[0...$quantity]{
+	defineQuery(`*[_type=='post' && isFeatured==true] | order(publishedAt desc)[0...$quantity]{
     title,
     'slug':slug.current,
     publishedAt,
@@ -14,10 +14,10 @@ const FEATURED_POSTS_QUERY =
 }`);
 
 export const getFeaturedPosts = async (quantity: number) => {
-  return await clientFetch({
-    query: FEATURED_POSTS_QUERY,
-    params: { quantity },
-  });
+	return await clientFetch({
+		query: FEATURED_POSTS_QUERY,
+		params: { quantity },
+	});
 };
 
 const ALL_POSTS_QUERY = defineQuery(`*[
@@ -34,10 +34,10 @@ const ALL_POSTS_QUERY = defineQuery(`*[
 }`);
 
 export const getAllPosts = async (quantity: number) => {
-  return await clientFetch({
-    query: ALL_POSTS_QUERY,
-    params: { quantity },
-  });
+	return await clientFetch({
+		query: ALL_POSTS_QUERY,
+		params: { quantity },
+	});
 };
 
 const CATEGORIES_QUERY = defineQuery(`*[_type=='category']|order(title asc){
@@ -46,9 +46,9 @@ const CATEGORIES_QUERY = defineQuery(`*[_type=='category']|order(title asc){
 }`);
 
 export const getCategories = async () => {
-  return await clientFetch({
-    query: CATEGORIES_QUERY,
-  });
+	return await clientFetch({
+		query: CATEGORIES_QUERY,
+	});
 };
 
 const POST_QUERY = defineQuery(`*[_type=='post' && slug.current == $slug][0]{
@@ -76,10 +76,10 @@ const POST_QUERY = defineQuery(`*[_type=='post' && slug.current == $slug][0]{
 }`);
 
 export const getPost = async (slug: string) => {
-  return await clientFetch({
-    query: POST_QUERY,
-    params: { slug },
-  });
+	return await clientFetch({
+		query: POST_QUERY,
+		params: { slug },
+	});
 };
 
 const CATEGORY_POST = defineQuery(`*[
@@ -96,12 +96,12 @@ const CATEGORY_POST = defineQuery(`*[
   },
 }`);
 export const getCategoryPost = async (category?: string) => {
-  return await clientFetch({
-    query: CATEGORY_POST,
-    params: {
-      category,
-    },
-  });
+	return await clientFetch({
+		query: CATEGORY_POST,
+		params: {
+			category,
+		},
+	});
 };
 
 const GET_OTHERS_POSTS_QUERY = defineQuery(`*[
@@ -126,8 +126,8 @@ const GET_OTHERS_POSTS_QUERY = defineQuery(`*[
 }`);
 
 export const getOtherPosts = async (currentSlug: string, quantity: number) => {
-  return await clientFetch({
-    query: GET_OTHERS_POSTS_QUERY,
-    params: { currentSlug, quantity },
-  });
+	return await clientFetch({
+		query: GET_OTHERS_POSTS_QUERY,
+		params: { currentSlug, quantity },
+	});
 };
