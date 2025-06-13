@@ -8,6 +8,7 @@ import {
 	SquaresFour,
 	ChatText,
 	Tag,
+	Notebook,
 	Users,
 	Password,
 	User,
@@ -57,6 +58,11 @@ export function AdminSidebar() {
 			name: "Packages",
 			href: "/admin/packages",
 			icon: Tag,
+		},
+		{
+			name: "Blogs",
+			href: "/admin/blogs",
+			icon: Notebook,
 		},
 		{
 			name: "Users",
