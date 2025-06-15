@@ -3,11 +3,11 @@ import SectionHeading from "@/components/ui/section-heading";
 import { Button } from "@/components/ui/button";
 import { BlogCard } from "@/components/ui/blog-card";
 import { getFeaturedPosts } from "@/sanity/queries";
-import { Post } from "@/sanity/types";
+import { Post, ALL_POSTS_QUERYResult } from "@/sanity/types";
 import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 
 export default async function FeaturedBlogsSection() {
-	const featuredPosts = await getFeaturedPosts(3);
+	const featuredPosts: ALL_POSTS_QUERYResult = await getFeaturedPosts(3);
 
 	return (
 		<section className="py-20 px-4 bg-gray-50">

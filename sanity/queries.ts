@@ -26,6 +26,7 @@ const ALL_POSTS_QUERY = defineQuery(`*[
   title,
   "slug": slug.current,
   publishedAt,
+  mainImage,
   excerpt,
   author->{
     name,
@@ -89,6 +90,7 @@ const CATEGORY_POST = defineQuery(`*[
   title,
   "slug": slug.current,
   publishedAt,
+  mainImage,
   excerpt,
   author->{
     name,

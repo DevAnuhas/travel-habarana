@@ -7,7 +7,9 @@ export async function middleware(request: NextRequest) {
 
 	// Define public paths that don't require authentication
 	const isPublicPath =
-		path === "/admin/login" || path === "/admin/reset-password";
+		path === "/admin/login" ||
+		path === "/admin/reset-password" ||
+		path === "/admin/blogs";
 
 	// Check if the path is an admin path
 	const isAdminPath = path.startsWith("/admin");
