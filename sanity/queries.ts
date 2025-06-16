@@ -32,6 +32,7 @@ const ALL_POSTS_QUERY = defineQuery(`*[
     name,
     image,
   },
+  _updatedAt
 }`);
 
 export const getAllPosts = async (quantity: number) => {

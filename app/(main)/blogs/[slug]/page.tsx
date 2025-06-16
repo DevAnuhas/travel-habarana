@@ -296,7 +296,7 @@ export async function generateMetadata({
 		}
 
 		return {
-			title: `${post.title} | Travel Habarana Blog`,
+			title: `${post.title}`,
 			description: post.excerpt,
 			openGraph: {
 				title: post.title || "Travel Habarana Blog Post",

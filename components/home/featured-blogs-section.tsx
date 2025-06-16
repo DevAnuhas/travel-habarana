@@ -19,9 +19,10 @@ export default async function FeaturedBlogsSection() {
 					/>
 				</div>
 
+				{/* Fix: Text are not aligned center */}
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
 					{featuredPosts?.length === 0 ? (
-						<div className="text-center py-12">
+						<div className="col-span-3 text-center py-12">
 							<p className="text-muted-foreground">
 								No featured posts available at the moment. Please check back
 								later.
@@ -34,7 +35,7 @@ export default async function FeaturedBlogsSection() {
 					)}
 				</div>
 				<div className="text-center">
-					<Link href="/blog" className="group">
+					<Link href="/blogs" className="group">
 						<Button size={"lg"}>
 							View All Blog Posts
 							<ArrowRight
