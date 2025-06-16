@@ -296,7 +296,7 @@ export async function generateMetadata({
 		}
 
 		return {
-			title: `${post.title}`,
+			title: `${post.title} | ${siteConfig.name}`,
 			description: post.excerpt,
 			openGraph: {
 				title: post.title || "Travel Habarana Blog Post",
@@ -317,10 +317,10 @@ export async function generateMetadata({
 	} catch (error) {
 		console.error("Error generating metadata:", error);
 		return {
-			title: "Travel Habarana Blog",
+			title: "Travel Habarana Blog Post",
 			description: "Read our latest blog posts on Travel Habarana.",
 			openGraph: {
-				title: "Travel Habarana Blog",
+				title: "Travel Habarana Blog Post",
 				description: "Read our latest blog posts on Travel Habarana.",
 				images: [
 					{
