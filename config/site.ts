@@ -14,6 +14,7 @@ export const siteConfig = {
 			"https://facebook.com/people/Jeep-safari-habarana/61557160063166/",
 		instagram: "https://www.instagram.com/travel_in_habarana/",
 		tiktok: "https://www.tiktok.com/@travel.in.habaran",
+		googleReview: "https://g.page/r/CZ1tTFd1xJQtEBM/review",
 	},
 	author: "Travel Habarana",
 	contact: {
