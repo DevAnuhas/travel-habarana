@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, {
+	useState,
+	useEffect,
+	useMemo,
+	useCallback,
+	Suspense,
+} from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { BlogCard } from "@/components/ui/blog-card";
@@ -35,7 +41,17 @@ const getSlugValue = (
 // Constants for pagination
 const POSTS_PER_PAGE = 9;
 
-export default function BlogPage() {
+// Loading component for Suspense boundary
+const BlogPageLoading = () => {
+	return (
+		<div className="w-full h-screen flex justify-center items-center">
+			<LoadingSpinner />
+		</div>
+	);
+};
+
+// Main component wrapped with Suspense
+const BlogPage = () => {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const pathname = usePathname();
@@ -44,6 +60,7 @@ export default function BlogPage() {
 	const categoryParam = searchParams.get("category");
 	const searchParam = searchParams.get("search");
 
+	// State management
 	const [selectedCategory, setSelectedCategory] = useState<string>(
 		categoryParam || "all"
 	);
@@ -501,5 +518,14 @@ export default function BlogPage() {
 				)}
 			</div>
 		</main>
+	);
+};
+
+// Export the component wrapped in a Suspense boundary
+export default function Page() {
+	return (
+		<Suspense fallback={<BlogPageLoading />}>
+			<BlogPage />
+		</Suspense>
 	);
 }
