@@ -22,7 +22,7 @@ export const getFeaturedPosts = async (quantity: number) => {
 
 const ALL_POSTS_QUERY = defineQuery(`*[
   _type == "post"
-]|order(publishedAt desc)[0...$quantity]{
+]|order(publishedAt desc)[$start...$end]{
   title,
   "slug": slug.current,
   publishedAt,
@@ -35,10 +35,19 @@ const ALL_POSTS_QUERY = defineQuery(`*[
   _updatedAt
 }`);
 
-export const getAllPosts = async (quantity: number) => {
+export const getAllPosts = async (start: number = 0, end: number = 7) => {
 	return await clientFetch({
 		query: ALL_POSTS_QUERY,
-		params: { quantity },
+		params: { start, end },
+	});
+};
+
+// Query to get total number of posts
+const POST_COUNT_QUERY = defineQuery(`count(*[_type == "post"])`);
+
+export const getPostsCount = async () => {
+	return await clientFetch({
+		query: POST_COUNT_QUERY,
 	});
 };
 
@@ -87,7 +96,7 @@ export const getPost = async (slug: string) => {
 const CATEGORY_POST = defineQuery(`*[
   _type == "post"
   && select(defined($category) => $category in categories[]->slug.current, true)
-]|order(publishedAt desc){
+]|order(publishedAt desc)[$start...$end]{
   title,
   "slug": slug.current,
   publishedAt,
@@ -98,12 +107,32 @@ const CATEGORY_POST = defineQuery(`*[
     image,
   },
 }`);
-export const getCategoryPost = async (category?: string) => {
+
+export const getCategoryPost = async (
+	category?: string,
+	start: number = 0,
+	end: number = 7
+) => {
 	return await clientFetch({
 		query: CATEGORY_POST,
 		params: {
 			category,
+			start,
+			end,
 		},
+	});
+};
+
+// Query to get total number of posts in a category
+const CATEGORY_POST_COUNT_QUERY = defineQuery(`count(*[
+  _type == "post"
+  && select(defined($category) => $category in categories[]->slug.current, true)
+])`);
+
+export const getCategoryPostCount = async (category?: string) => {
+	return await clientFetch({
+		query: CATEGORY_POST_COUNT_QUERY,
+		params: { category },
 	});
 };
 

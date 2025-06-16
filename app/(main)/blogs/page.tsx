@@ -7,7 +7,13 @@ import { BlogCard } from "@/components/ui/blog-card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { MagnifyingGlass } from "@phosphor-icons/react/dist/ssr";
-import { getAllPosts, getCategories, getCategoryPost } from "@/sanity/queries";
+import {
+	getAllPosts,
+	getCategories,
+	getCategoryPost,
+	getPostsCount,
+	getCategoryPostCount,
+} from "@/sanity/queries";
 import {
 	Post,
 	Category,
@@ -16,6 +22,7 @@ import {
 	CATEGORY_POSTResult,
 } from "@/sanity/types";
 import LoadingSpinner from "@/components/ui/spinner";
+import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
 
 // Helper function to get slug value consistently
 const getSlugValue = (
@@ -24,6 +31,9 @@ const getSlugValue = (
 	if (!slug) return "";
 	return typeof slug === "string" ? slug : slug.current || "";
 };
+
+// Constants for pagination
+const POSTS_PER_PAGE = 9;
 
 export default function BlogPage() {
 	const router = useRouter();
@@ -43,6 +53,19 @@ export default function BlogPage() {
 	const [blogCategories, setBlogCategories] = useState<Category[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [isLoadingCategory, setIsLoadingCategory] = useState(false);
+
+	// New state for infinite scrolling
+	const [page, setPage] = useState(1);
+	const [hasMore, setHasMore] = useState(true);
+	const [totalPosts, setTotalPosts] = useState(0);
+	const [loadingMore, setLoadingMore] = useState(false);
+
+	// Intersection observer for infinite scrolling
+	const { ref, isIntersecting } = useIntersectionObserver({
+		threshold: 0.1,
+		rootMargin: "200px",
+		enabled: !isLoading && !loadingMore && hasMore,
+	});
 
 	// Update URL when category changes
 	const updateCategoryInURL = useCallback(
@@ -68,6 +91,10 @@ export default function BlogPage() {
 	const handleCategorySelect = (category: string) => {
 		setIsLoadingCategory(true);
 		setSelectedCategory(category);
+		setPage(1); // Reset to page 1 when changing categories
+		setAllPosts([]); // Clear existing posts
+		setCategoryPosts([]); // Clear existing category posts
+		setHasMore(true); // Reset hasMore state
 		updateCategoryInURL(category);
 	};
 
@@ -110,21 +137,18 @@ export default function BlogPage() {
 	// Separate URL update button instead of automatic update while typing
 	const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault(); // Prevent form submission default behavior
+		setPage(1); // Reset to page 1 when searching
+		setAllPosts([]); // Clear existing posts
+		setCategoryPosts([]); // Clear existing category posts
+		setHasMore(true); // Reset hasMore state
 		updateSearchInURL(searchQuery); // Only update URL when explicitly submitted
 	};
 
-	// Fetch all posts and categories on initial load
+	// Fetch categories on initial load
 	useEffect(() => {
-		const fetchData = async () => {
+		const fetchCategories = async () => {
 			try {
-				const fetchedPosts: ALL_POSTS_QUERYResult = await getAllPosts(8);
 				const fetchedCategories: CATEGORIES_QUERYResult = await getCategories();
-
-				setAllPosts(
-					fetchedPosts.map((post) => ({
-						...(post as unknown as Post),
-					}))
-				);
 
 				setBlogCategories(
 					fetchedCategories.map((category) => ({
@@ -150,49 +174,144 @@ export default function BlogPage() {
 				if (searchParam) {
 					setSearchQuery(searchParam);
 				}
-
-				console.log("Fetched categories:", fetchedCategories);
 			} catch (error) {
-				console.error("Failed to fetch blog data:", error);
-			} finally {
-				setIsLoading(false);
+				console.error("Failed to fetch categories:", error);
 			}
 		};
-		fetchData();
+
+		fetchCategories();
 	}, [categoryParam, searchParam, updateCategoryInURL]);
 
-	// Fetch category posts when selectedCategory changes
+	// Fetch total post count
 	useEffect(() => {
-		if (selectedCategory === "all") {
-			setCategoryPosts([]);
-			return;
-		}
-
-		const fetchCategoryPosts = async () => {
-			setIsLoadingCategory(true);
+		const fetchTotalPosts = async () => {
 			try {
-				const fetchedPosts: CATEGORY_POSTResult =
-					await getCategoryPost(selectedCategory);
-
-				setCategoryPosts(
-					fetchedPosts.map((post) => ({
-						...(post as unknown as Post),
-					}))
-				);
+				if (selectedCategory === "all") {
+					const count = await getPostsCount();
+					setTotalPosts(count);
+				} else {
+					const count = await getCategoryPostCount(selectedCategory);
+					setTotalPosts(count);
+				}
 			} catch (error) {
-				console.error(
-					`Failed to fetch posts for category ${selectedCategory}:`,
-					error
-				);
-				// Reset to prevent showing stale data
-				setCategoryPosts([]);
+				console.error("Failed to fetch post counts:", error);
+				setTotalPosts(0);
+			}
+		};
+
+		fetchTotalPosts();
+	}, [selectedCategory]);
+
+	// Load initial posts
+	useEffect(() => {
+		const fetchInitialPosts = async () => {
+			setIsLoading(true);
+			try {
+				const start = 0;
+				const end = POSTS_PER_PAGE - 1;
+
+				if (selectedCategory === "all") {
+					const fetchedPosts: ALL_POSTS_QUERYResult = await getAllPosts(
+						start,
+						end
+					);
+					setAllPosts(
+						fetchedPosts.map((post) => ({
+							...(post as unknown as Post),
+						}))
+					);
+				} else {
+					const fetchedPosts: CATEGORY_POSTResult = await getCategoryPost(
+						selectedCategory,
+						start,
+						end
+					);
+					setCategoryPosts(
+						fetchedPosts.map((post) => ({
+							...(post as unknown as Post),
+						}))
+					);
+				}
+
+				// Update hasMore based on whether we've loaded all posts
+				const currentLoadedCount = POSTS_PER_PAGE;
+				setHasMore(currentLoadedCount < totalPosts);
+			} catch (error) {
+				console.error("Failed to fetch blog data:", error);
+				if (selectedCategory === "all") {
+					setAllPosts([]);
+				} else {
+					setCategoryPosts([]);
+				}
 			} finally {
+				setIsLoading(false);
 				setIsLoadingCategory(false);
 			}
 		};
 
-		fetchCategoryPosts();
-	}, [selectedCategory]);
+		fetchInitialPosts();
+	}, [selectedCategory, searchParam, totalPosts]);
+
+	// Effect for loading more posts when intersection observed
+	useEffect(() => {
+		const loadMorePosts = async () => {
+			if (!isIntersecting || loadingMore || !hasMore) return;
+
+			setLoadingMore(true);
+			try {
+				const start = page * POSTS_PER_PAGE;
+				const end = start + POSTS_PER_PAGE - 1;
+
+				if (selectedCategory === "all") {
+					const morePosts: ALL_POSTS_QUERYResult = await getAllPosts(
+						start,
+						end
+					);
+
+					if (morePosts.length) {
+						setAllPosts((prev) => [
+							...prev,
+							...morePosts.map((post) => ({ ...(post as unknown as Post) })),
+						]);
+						setPage((prev) => prev + 1);
+					}
+
+					// Check if we've loaded all posts
+					setHasMore(start + morePosts.length < totalPosts);
+				} else {
+					const morePosts: CATEGORY_POSTResult = await getCategoryPost(
+						selectedCategory,
+						start,
+						end
+					);
+
+					if (morePosts.length) {
+						setCategoryPosts((prev) => [
+							...prev,
+							...morePosts.map((post) => ({ ...(post as unknown as Post) })),
+						]);
+						setPage((prev) => prev + 1);
+					}
+
+					// Check if we've loaded all posts
+					setHasMore(start + morePosts.length < totalPosts);
+				}
+			} catch (error) {
+				console.error("Failed to load more posts:", error);
+			} finally {
+				setLoadingMore(false);
+			}
+		};
+
+		loadMorePosts();
+	}, [
+		isIntersecting,
+		loadingMore,
+		hasMore,
+		page,
+		selectedCategory,
+		totalPosts,
+	]);
 
 	const filteredPosts = useMemo(() => {
 		// Use either all posts or category posts based on selection
@@ -212,7 +331,7 @@ export default function BlogPage() {
 	}, [selectedCategory, searchQuery, allPosts, categoryPosts]);
 
 	return (
-		<main className="pt-20 bg-gray-50">
+		<main className="py-20 bg-gray-50">
 			{/* Hero Section */}
 			<section className="bg-primary text-white py-16 md:py-16">
 				<div className="container mx-auto px-4 text-center">
@@ -240,19 +359,14 @@ export default function BlogPage() {
 							onKeyDown={(e) => {
 								if (e.key === "Enter") {
 									e.preventDefault();
+									setPage(1); // Reset page when searching
+									setAllPosts([]); // Clear existing posts
+									setCategoryPosts([]); // Clear existing category posts
+									setHasMore(true); // Reset hasMore state
 									updateSearchInURL(searchQuery);
 								}
 							}}
 						/>
-						<Button
-							type="submit"
-							size="sm"
-							className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8"
-							disabled={isLoading}
-							variant="ghost"
-						>
-							Search
-						</Button>
 					</form>
 				</div>
 			</section>
@@ -297,10 +411,16 @@ export default function BlogPage() {
 							<>
 								Showing {filteredPosts.length} results for &quot;{searchQuery}
 								&quot;
+								{totalPosts > filteredPosts.length && hasMore
+									? ` (Scroll for more)`
+									: ``}
 							</>
 						) : (
 							<>
 								Showing {filteredPosts.length} posts{" "}
+								{totalPosts > filteredPosts.length && hasMore
+									? ` of ${totalPosts} `
+									: ` `}
 								{selectedCategory !== "all" &&
 									`in ${blogCategories.find((c) => getSlugValue(c.slug) === selectedCategory)?.title}`}
 							</>
@@ -309,24 +429,45 @@ export default function BlogPage() {
 				</div>
 
 				{/* Blog Posts Grid */}
-				{isLoading || (selectedCategory !== "all" && isLoadingCategory) ? (
+				{isLoading && (
 					<div className="flex justify-center items-center h-64">
 						<LoadingSpinner />
 					</div>
-				) : filteredPosts.length > 0 ? (
-					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-						{filteredPosts.map((post) => (
-							<BlogCard
-								key={getSlugValue(post.slug)}
-								post={post as unknown as Post}
-							/>
-						))}
-					</div>
-				) : (
+				)}
+
+				{!isLoading && filteredPosts.length > 0 && (
+					<>
+						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+							{filteredPosts.map((post, index) => (
+								<BlogCard
+									key={getSlugValue(post.slug) + "-" + post._updatedAt}
+									post={post as unknown as Post}
+									index={index}
+								/>
+							))}
+						</div>
+
+						{/* Loading indicator for infinite scroll */}
+						{hasMore && (
+							<div
+								ref={ref}
+								className="flex justify-center items-center py-8 mt-8"
+							>
+								{loadingMore ? (
+									<LoadingSpinner />
+								) : (
+									<p className="text-gray-500">Scroll for more</p>
+								)}
+							</div>
+						)}
+					</>
+				)}
+
+				{!isLoading && filteredPosts.length === 0 && (
 					<div className="text-center py-12">
 						<p className="text-gray-500 text-lg mb-4">
 							No blog posts found matching your criteria.
-						</p>{" "}
+						</p>
 						<Button
 							onClick={() => {
 								// Reset loading state to show feedback
@@ -341,6 +482,10 @@ export default function BlogPage() {
 								// Clear category and search states
 								setSelectedCategory("all");
 								setSearchQuery("");
+								setPage(1);
+								setHasMore(true);
+								setAllPosts([]);
+								setCategoryPosts([]);
 
 								// Directly clear URL without any parameters
 								router.replace(pathname);
