@@ -30,7 +30,10 @@ export function BlogCard({ post }: BlogCardProps) {
 			viewport={{ once: true }}
 			whileHover={{ y: -5 }}
 		>
-			<Link href={`/blog/${post.slug}`}>
+			<Link
+				href={`/blogs/${post.slug?.current ? post.slug.current : post.slug}`}
+				className="flex flex-col h-full"
+			>
 				<div
 					className={`relative ${post.isFeatured ? "h-64 md:h-80" : "h-48"}`}
 				>
@@ -50,14 +53,6 @@ export function BlogCard({ post }: BlogCardProps) {
 				</div>
 
 				<div className="p-6">
-					<div className="flex flex-wrap gap-2 mb-3">
-						{post.categories?.map((category) => (
-							<Badge key={category._key} variant="outline" className="text-xs">
-								{category._ref}
-							</Badge>
-						))}
-					</div>
-
 					<h3
 						className={`font-bold text-gray-900 mb-3 group-hover:text-primary transition-colors ${
 							post.isFeatured ? "text-xl md:text-2xl" : "text-lg"

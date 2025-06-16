@@ -62,7 +62,7 @@ export default function Navbar() {
 					</Link>
 
 					{/* Desktop Navigation */}
-					<nav className="hidden md:flex items-center space-x-8">
+					<nav className="hidden lg:flex items-center gap-12">
 						<NavLink
 							href="/"
 							label="Home"
@@ -116,7 +116,7 @@ export default function Navbar() {
 
 					{/* Mobile Menu Button */}
 					<button
-						className="md:hidden text-2xl focus:outline-none"
+						className="lg:hidden text-2xl focus:outline-none"
 						onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
 						aria-label="Toggle menu"
 					>
