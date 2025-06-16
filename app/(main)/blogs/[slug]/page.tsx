@@ -10,6 +10,8 @@ import { ALL_POSTS_QUERYResult, Post } from "@/sanity/types";
 import { urlFor } from "@/sanity/lib/image";
 import { Metadata } from "next/types";
 import { siteConfig } from "@/config/site";
+import WriteComment from "@/components/ui/write-comment";
+import ShareArticle from "@/components/ui/share-article";
 
 interface BlogPostPageProps {
 	params: Promise<{ slug: string }>;
@@ -29,10 +31,10 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 	};
 
 	return (
-		<div className="min-h-screen py-20 bg-white">
+		<div className="min-h-screen bg-white">
 			{/* Article Content */}
-			<article className="container mx-auto px-4 py-12">
-				<div className="max-w-2xl mx-auto">
+			<article className="container mx-auto px-4 pt-20">
+				<div className="max-w-2xl mx-auto pt-16">
 					{/* Article Header */}
 					<header className="mb-8">
 						<div className="flex flex-wrap gap-2 mb-4">
@@ -179,7 +181,72 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 							/>
 						)}
 					</div>
+
+					<div className="flex justify-between items-center w-full mt-16 pb-8">
+						{/* Author Section */}
+						<div className="max-w-2xl flex items-center space-x-4">
+							<Image
+								src={
+									post?.author?.image
+										? urlFor(post.author.image).url()
+										: "/assets/avatar-placeholder.svg"
+								}
+								alt="Author Avatar"
+								width={48}
+								height={48}
+								className="rounded-full"
+							/>
+							<div>
+								<p className="text-sm text-gray-600 -mb-1">Author</p>
+								<h3 className="text-lg font-semibold text-gray-900">
+									{post?.author?.name || "Unknown Author"}
+								</h3>
+							</div>
+						</div>
+
+						{/* Share Article Section */}
+						<ShareArticle
+							post={{ title: post?.title ?? "Travel Habarana Blog Post" }}
+						/>
+					</div>
+					<hr />
 				</div>
+
+				{/* Comments Section */}
+				{post?.comments?.length > 0 && (
+					<div className="mt-16">
+						<div className="w-full flex flex-col p-8 sm:p-10 rounded-md max-w-2xl mx-auto border shadow space-y-2">
+							<h3 className="text-4xl font-semibold">
+								Comments ({post?.comments?.length})
+							</h3>
+							<hr className="pb-2" />
+							{post?.comments?.map((comment) => (
+								<div
+									key={comment?._id}
+									className="flex space-y-2 p-4 border bg-accent-foreground/50"
+								>
+									<Image
+										src={
+											comment?.image
+												? urlFor(comment.image).url()
+												: "/assets/avatar-placeholder.svg"
+										}
+										alt="User Avatar"
+										width={48}
+										height={48}
+										className="rounded-full mr-6 mb-0"
+									/>
+									<p>
+										<span className="font-semibold">{comment?.name}</span>
+										<br />
+										{comment?.comment}
+									</p>
+								</div>
+							))}
+						</div>
+					</div>
+				)}
+				<WriteComment _id={post?._id} />
 			</article>
 
 			{/* Related Posts */}

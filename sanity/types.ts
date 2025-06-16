@@ -400,6 +400,7 @@ export type CATEGORIES_QUERYResult = Array<{
 // Variable: POST_QUERY
 // Query: *[_type=='post' && slug.current == $slug][0]{   publishedAt,  title,  mainImage,  excerpt,  body,  _id,  author->{    name,    image,  },  categories[]->{    title,    "slug": slug.current,  },  "comments": *[_type == "comment" && post._ref == ^._id && approved == true]{    name,    email,    comment,    image,    _id  }}
 export type POST_QUERYResult = {
+	slug: string | null;
 	publishedAt: string | null;
 	title: string | null;
 	mainImage: {
