@@ -34,13 +34,11 @@ export function BlogCard({ post }: BlogCardProps) {
 				href={`/blogs/${post.slug?.current ? post.slug.current : post.slug}`}
 				className="flex flex-col h-full"
 			>
-				<div
-					className={`relative ${post.isFeatured ? "h-64 md:h-80" : "h-48"}`}
-				>
+				<div className="relative aspect-[16/9] overflow-hidden h-auto w-full">
 					{post?.mainImage && (
 						<Image
 							src={urlFor(post?.mainImage).url()}
-							className="aspect-[3/2] object-cover group-hover:scale-105 transition-transform duration-300"
+							className=" object-cover group-hover:scale-105 transition-transform duration-300"
 							alt={post.mainImage?.alt || "Blog Post Image"}
 							fill
 						/>

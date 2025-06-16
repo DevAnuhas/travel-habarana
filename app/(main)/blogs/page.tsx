@@ -16,6 +16,14 @@ import {
 } from "@/sanity/types";
 import LoadingSpinner from "@/components/ui/spinner";
 
+// Helper function to get slug value consistently
+const getSlugValue = (
+	slug: string | { current?: string } | undefined
+): string => {
+	if (!slug) return "";
+	return typeof slug === "string" ? slug : slug.current || "";
+};
+
 export default function BlogPage() {
 	const [selectedCategory, setSelectedCategory] = useState<string>("all");
 	const [searchQuery, setSearchQuery] = useState("");
@@ -43,6 +51,7 @@ export default function BlogPage() {
 						...(category as unknown as Category),
 					}))
 				);
+				console.log("Fetched categories:", fetchedCategories);
 			} catch (error) {
 				console.error("Failed to fetch blog data:", error);
 			} finally {
@@ -141,18 +150,18 @@ export default function BlogPage() {
 						>
 							All Posts
 						</Badge>
-						{blogCategories.map((category) => (
+						{blogCategories?.map((category) => (
 							<Badge
-								key={category.slug?.current || undefined}
+								key={getSlugValue(category.slug)}
 								variant={
-									selectedCategory === category.slug?.current
+									selectedCategory === getSlugValue(category.slug)
 										? "default"
 										: "outline"
 								}
 								className="cursor-pointer hover:bg-primary hover:text-white transition-colors"
-								onClick={() =>
-									setSelectedCategory(category.slug?.current ?? "")
-								}
+								onClick={() => {
+									setSelectedCategory(getSlugValue(category.slug));
+								}}
 							>
 								{category.title}
 							</Badge>
@@ -172,7 +181,7 @@ export default function BlogPage() {
 							<>
 								Showing {filteredPosts.length} posts{" "}
 								{selectedCategory !== "all" &&
-									`in ${blogCategories.find((c) => c.slug?.current === selectedCategory)?.title}`}
+									`in ${blogCategories.find((c) => getSlugValue(c.slug) === selectedCategory)?.title}`}
 							</>
 						)}
 					</p>
@@ -187,7 +196,7 @@ export default function BlogPage() {
 					<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
 						{filteredPosts.map((post) => (
 							<BlogCard
-								key={post?.slug?.current}
+								key={getSlugValue(post.slug)}
 								post={post as unknown as Post}
 							/>
 						))}
