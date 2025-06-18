@@ -9,6 +9,34 @@ import { PaperPlaneTilt, List, X } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { siteConfig } from "@/config/site";
 
+const navLinks = [
+	{
+		href: "/",
+		label: "Home",
+		isActiveFunc: (pathname: string) => pathname === "/",
+	},
+	{
+		href: "/packages",
+		label: "Packages",
+		isActiveFunc: (pathname: string) => pathname.startsWith("/packages"),
+	},
+	{
+		href: "/book-now",
+		label: "Book Now",
+		isActiveFunc: (pathname: string) => pathname === "/book-now",
+	},
+	{
+		href: "/blogs",
+		label: "Blogs",
+		isActiveFunc: (pathname: string) => pathname.startsWith("/blogs"),
+	},
+	{
+		href: "/contact",
+		label: "Contact",
+		isActiveFunc: (pathname: string) => pathname === "/contact",
+	},
+];
+
 export default function Navbar() {
 	const pathname = usePathname();
 	const [isScrolled, setIsScrolled] = useState(false);
@@ -54,7 +82,7 @@ export default function Navbar() {
 							alt={`${siteConfig.name} Logo`}
 							width={25}
 							height={25}
-							className="mr-2"
+							className="mr-1"
 						/>
 						<span className="text-xl font-bold font-serif">
 							{siteConfig.name}
@@ -62,35 +90,17 @@ export default function Navbar() {
 					</Link>
 
 					{/* Desktop Navigation */}
-					<nav className="hidden md:flex items-center space-x-8">
-						<NavLink
-							href="/"
-							label="Home"
-							isActive={pathname === "/"}
-							isHomePage={isHomePage}
-							isScrolled={isScrolled}
-						/>
-						<NavLink
-							href="/packages"
-							label="Packages"
-							isActive={pathname.startsWith("/packages")}
-							isHomePage={isHomePage}
-							isScrolled={isScrolled}
-						/>
-						<NavLink
-							href="/book-now"
-							label="Book Now"
-							isActive={pathname === "/book-now"}
-							isHomePage={isHomePage}
-							isScrolled={isScrolled}
-						/>
-						<NavLink
-							href="/contact"
-							label="Contact"
-							isActive={pathname === "/contact"}
-							isHomePage={isHomePage}
-							isScrolled={isScrolled}
-						/>
+					<nav className="hidden lg:flex items-center space-x-10">
+						{navLinks.map((link) => (
+							<NavLink
+								key={link.href}
+								href={link.href}
+								label={link.label}
+								isActive={link.isActiveFunc(pathname)}
+								isHomePage={isHomePage}
+								isScrolled={isScrolled}
+							/>
+						))}
 
 						<Button
 							asChild
@@ -109,7 +119,7 @@ export default function Navbar() {
 
 					{/* Mobile Menu Button */}
 					<button
-						className="md:hidden text-2xl focus:outline-none"
+						className="lg:hidden text-2xl focus:outline-none"
 						onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
 						aria-label="Toggle menu"
 					>
@@ -128,29 +138,17 @@ export default function Navbar() {
 					initial={{ opacity: 0, height: 0 }}
 					animate={{ opacity: 1, height: "auto" }}
 					exit={{ opacity: 0, height: 0 }}
-					className="md:hidden bg-white"
+					className="lg:hidden bg-white"
 				>
 					<div className="container mx-auto px-4 py-4 flex flex-col space-y-4">
-						<MobileNavLink
-							href="/"
-							label="Home"
-							onClick={() => setIsMobileMenuOpen(false)}
-						/>
-						<MobileNavLink
-							href="/packages"
-							label="Packages"
-							onClick={() => setIsMobileMenuOpen(false)}
-						/>
-						<MobileNavLink
-							href="/book-now"
-							label="Book Now"
-							onClick={() => setIsMobileMenuOpen(false)}
-						/>
-						<MobileNavLink
-							href="/contact"
-							label="Contact"
-							onClick={() => setIsMobileMenuOpen(false)}
-						/>
+						{navLinks.map((link) => (
+							<MobileNavLink
+								key={link.href}
+								href={link.href}
+								label={link.label}
+								onClick={() => setIsMobileMenuOpen(false)}
+							/>
+						))}
 
 						<Button asChild className="w-full bg-primary hover:bg-primary">
 							<Link href="/book-now" onClick={() => setIsMobileMenuOpen(false)}>
