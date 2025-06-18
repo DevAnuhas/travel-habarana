@@ -128,6 +128,7 @@ export async function POST(request: NextRequest) {
 				to: newInquiry.email,
 				subject: `Your Booking Inquiry - ${siteConfig.name}`,
 				html: newInquiryCustomerTemplate(newInquiry, packageDetails),
+				replyTo: siteConfig.contact.email, // Set reply-to as the contact email
 			});
 		} catch (error) {
 			console.error("Failed to send email:", error);

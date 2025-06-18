@@ -4,13 +4,12 @@ import { siteConfig } from "@/config/site";
 // Configure nodemailer transporter
 export const getEmailTransporter = () => {
 	return nodemailer.createTransport({
-		service: "gmail",
+		host: "smtp.gmail.com",
+		port: 465,
+		secure: true,
 		auth: {
 			user: process.env.EMAIL_USER,
 			pass: process.env.EMAIL_PASSWORD,
-		},
-		tls: {
-			rejectUnauthorized: false,
 		},
 	});
 };
@@ -203,8 +202,8 @@ export function newInquiryAdminTemplate(
 						siteConfig.name
 					}. Please do not reply to this email.</p>
           <p>&copy; ${new Date().getFullYear()} ${
-		siteConfig.name
-	}. All rights reserved.</p>
+						siteConfig.name
+					}. All rights reserved.</p>
         </div>
       </div>
     </body>
@@ -361,8 +360,8 @@ export function newInquiryCustomerTemplate(
         
         <div class="footer">
           <p>&copy; ${new Date().getFullYear()} ${
-		siteConfig.name
-	}. All rights reserved.</p>
+						siteConfig.name
+					}. All rights reserved.</p>
         </div>
       </div>
     </body>
@@ -490,8 +489,8 @@ export function passwordResetAdminTemplate(
 						siteConfig.name
 					} Admin Portal.</p>
           <p>&copy; ${new Date().getFullYear()} ${
-		siteConfig.name
-	}. All rights reserved.</p>
+						siteConfig.name
+					}. All rights reserved.</p>
         </div>
       </div>
     </body>

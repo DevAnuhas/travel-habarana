@@ -46,7 +46,7 @@ export default function ThankYouPage() {
 										aria-label="WhatsApp"
 										className="text-primary hover:underline"
 									>
-										+94 77 123 4567
+										{siteConfig.contact.phone}
 									</a>{" "}
 									<br />
 									Email:{" "}
@@ -57,7 +57,7 @@ export default function ThankYouPage() {
 										aria-label="Email"
 										className="text-primary hover:underline"
 									>
-										fernandoprashan2003@icloud.com
+										{siteConfig.contact.email}
 									</a>
 								</p>
 							</div>
