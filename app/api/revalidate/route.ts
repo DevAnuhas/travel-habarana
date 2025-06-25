@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
 		}
 
 		// Determine what type of content changed
-		const { _type } = body;
+		const { _type, isFeatured } = body;
 
 		// Define paths to revalidate based on content type
 		const pathsToRevalidate = ["/"];
@@ -27,6 +27,13 @@ export async function POST(request: NextRequest) {
 			// For blog posts revalidate the blog listings and sitemap
 			pathsToRevalidate.push("/blogs");
 			pathsToRevalidate.push("/sitemap.xml");
+
+			// If it's a featured post, we also need to revalidate the homepage
+			if (isFeatured) {
+				// Revalidate specific tags for featured posts
+				revalidatePath("/", "page");
+				revalidatePath("/", "layout");
+			}
 		}
 
 		if (_type === "package") {

@@ -17,6 +17,7 @@ export const getFeaturedPosts = async (quantity: number) => {
 	return await clientFetch({
 		query: FEATURED_POSTS_QUERY,
 		params: { quantity },
+		tags: ["post", "featured-post"],
 	});
 };
 
