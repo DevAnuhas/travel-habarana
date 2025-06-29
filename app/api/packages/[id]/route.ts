@@ -28,7 +28,17 @@ export async function GET(
 			throw new NotFoundError("Package not found");
 		}
 
-		return NextResponse.json(packageItem, { status: 200 });
+		// Cache-Control header for better performance
+		const headers = new Headers();
+		headers.set(
+			"Cache-Control",
+			"public, s-maxage=3600, stale-while-revalidate=86400"
+		);
+
+		return NextResponse.json(packageItem, {
+			status: 200,
+			headers,
+		});
 	});
 }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { notFound, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -94,13 +94,13 @@ export function PackageDetails({ id }: { id: string }) {
 		const fetchPackage = async () => {
 			try {
 				setIsLoading(true);
-				// Use cache: force-cache to leverage any server-side cached data
-				const res = await fetch(`/api/packages/${id}`, {
-					cache: "force-cache",
-				});
+				const res = await fetch(`/api/packages/${id}`);
 
 				if (!res.ok) {
-					throw new Error(`Package not found: ${res.status}`);
+					if (res.status === 404) {
+						notFound();
+					}
+					throw new Error(`Failed to load package: ${res.status}`);
 				}
 
 				const data = await res.json();

@@ -1,6 +1,8 @@
 import { MetadataRoute } from "next";
 import { siteConfig } from "@/config/site";
 import { getAllPosts } from "@/sanity/queries";
+import connectMongoDB from "@/lib/mongodb";
+import PackageModel from "@/models/Package";
 
 export const revalidate = 86400; // Cache for 1 day
 
@@ -17,28 +19,54 @@ export default async function Sitemap(): Promise<MetadataRoute.Sitemap> {
 	let packages: Array<{ _id: string; slug?: string; updatedAt: string }> = [];
 
 	try {
-		const packageApiUrl = `${baseUrl}/api/packages`;
+		await connectMongoDB();
+		const dbPackages = await PackageModel.find(
+			{},
+			"slug updatedAt createdAt"
+		).lean();
 
-		const res = await fetch(packageApiUrl, {
-			next: { revalidate: 3600 }, // Revalidate every hour
-		});
+		// Convert to the expected format
+		if (dbPackages && dbPackages.length > 0) {
+			packages = dbPackages.map((pkg) => ({
+				_id: String(pkg._id),
+				slug: pkg.slug,
+				updatedAt: pkg.updatedAt
+					? new Date(pkg.updatedAt).toISOString()
+					: pkg.createdAt
+						? new Date(pkg.createdAt).toISOString()
+						: new Date().toISOString(),
+			}));
+		}
 
-		if (!res.ok) {
-			console.error(
-				`Failed to fetch packages for sitemap: ${res.status} ${res.statusText}`
-			);
-		} else {
-			packages = await res.json();
-			if (packages && packages.length > 0) {
-				packages.forEach((pkg) => {
-					// Use slug if available, otherwise fall back to ID
-					const packageIdentifier = pkg.slug || pkg._id;
-					packagePaths.push(`/packages/${packageIdentifier}`);
-				});
+		// Fall back to API if direct DB connection fails
+		if (!packages || packages.length === 0) {
+			const packageApiUrl = `${baseUrl}/api/packages`;
+
+			const res = await fetch(packageApiUrl, {
+				next: { revalidate: 3600 }, // Revalidate every hour
+			});
+
+			if (!res.ok) {
+				console.error(
+					`Failed to fetch packages for sitemap: ${res.status} ${res.statusText}`
+				);
+			} else {
+				packages = await res.json();
 			}
 		}
+
+		if (packages && packages.length > 0) {
+			packages.forEach((pkg) => {
+				// Prioritize slug over ID and only include if it actually exists
+				if (pkg.slug) {
+					packagePaths.push(`/packages/${pkg.slug}`);
+				} else if (pkg._id) {
+					packagePaths.push(`/packages/${pkg._id}`);
+				}
+			});
+		}
 	} catch (error) {
-		console.error("Error generating sitemap:", error);
+		console.error("Error generating package paths for sitemap:", error);
 	}
 
 	const blogPaths: string[] = [];

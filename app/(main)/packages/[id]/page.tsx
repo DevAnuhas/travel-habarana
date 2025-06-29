@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { PackageDetails } from "./package-details";
 import { siteConfig } from "@/config/site";
 import mongoose from "mongoose";
@@ -121,11 +122,33 @@ export default async function PackageDetailsPage({
 }: PackageDetailsPageProps) {
 	const { id } = await params;
 
-	return (
-		<main className="pt-20 bg-gray-50">
-			<div className="container mx-auto px-4 py-8">
-				<PackageDetails id={id} />
-			</div>
-		</main>
-	);
+	try {
+		// Connect to the database and validate the package exists server-side
+		await connectMongoDB();
+
+		// Try to find by slug first
+		let packageData = await PackageModel.findOne({ slug: id }).lean();
+
+		// Fall back to MongoDB _id only if necessary and valid
+		if (!packageData && id.match(/^[0-9a-fA-F]{24}$/)) {
+			if (mongoose.Types.ObjectId.isValid(id)) {
+				packageData = await PackageModel.findById(id).lean();
+			}
+		}
+
+		if (!packageData) {
+			notFound();
+		}
+
+		return (
+			<main className="pt-20 bg-gray-50">
+				<div className="container mx-auto px-4 py-8">
+					<PackageDetails id={id} />
+				</div>
+			</main>
+		);
+	} catch (error) {
+		console.error("Error in package details page:", error);
+		notFound();
+	}
 }
