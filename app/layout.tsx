@@ -1,3 +1,4 @@
+import Script from "next/script";
 import type { Metadata } from "next";
 import { Inter, DM_Serif_Display } from "next/font/google";
 import "./globals.css";
@@ -72,6 +73,22 @@ export const metadata: Metadata = {
 			},
 		],
 	},
+	alternates: {
+		canonical: siteConfig.url,
+	},
+	authors: [
+		{
+			name: siteConfig.author,
+			url: siteConfig.url,
+		},
+	],
+	creator: siteConfig.author,
+	publisher: siteConfig.author,
+	formatDetection: {
+		email: false,
+		address: false,
+		telephone: false,
+	},
 };
 
 export default function RootLayout({
@@ -81,6 +98,60 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang="en" suppressHydrationWarning>
+			<head>
+				<Script
+					id="schema-org-script"
+					type="application/ld+json"
+					dangerouslySetInnerHTML={{
+						__html: JSON.stringify({
+							"@context": "https://schema.org",
+							"@type": "Organization",
+							"@id": `${siteConfig.url}/#organization`,
+							name: siteConfig.name,
+							url: siteConfig.url,
+							logo: {
+								"@type": "ImageObject",
+								url: `${siteConfig.url}${siteConfig.logo}`,
+								width: 180,
+								height: 60,
+							},
+							contactPoint: {
+								"@type": "ContactPoint",
+								telephone: siteConfig.contact.phone,
+								contactType: "customer service",
+								email: siteConfig.contact.email,
+							},
+							address: {
+								"@type": "PostalAddress",
+								addressLocality: siteConfig.contact.address,
+							},
+							sameAs: [
+								siteConfig.links.facebook,
+								siteConfig.links.instagram,
+								siteConfig.links.tiktok,
+							],
+						}),
+					}}
+				/>
+				<Script
+					id="schema-website-script"
+					type="application/ld+json"
+					dangerouslySetInnerHTML={{
+						__html: JSON.stringify({
+							"@context": "https://schema.org",
+							"@type": "WebSite",
+							"@id": `${siteConfig.url}/#website`,
+							name: siteConfig.name,
+							alternateName: "Travel in Habarana",
+							url: siteConfig.url,
+							description: siteConfig.description,
+							publisher: {
+								"@id": `${siteConfig.url}/#organization`,
+							},
+						}),
+					}}
+				/>
+			</head>
 			<body className={`${inter.variable} ${dmSerifDisplay.variable}`}>
 				<AuthProvider>
 					{children}
