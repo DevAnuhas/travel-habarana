@@ -8,7 +8,8 @@ The application is now on Next.js 16, React 19, Node.js 24, and pnpm. Public
 package and blog content is rendered into crawlable HTML, the rebrand is
 centralized on `https://www.ceylonsafari.com`, duplicate blog pages are
 consolidated, security boundaries are enforced on the server, and both the
-production and full dependency audits report zero known vulnerabilities.
+production and full dependency audits report zero known vulnerabilities. The
+audited commit is live on the canonical production domain.
 
 The remaining high-impact work is outside this repository: retain control of
 the former domain and attach it to the Vercel project, update the Google
@@ -41,7 +42,7 @@ or business confirmation.
 | Admin/API authorization and reset flows had server-boundary weaknesses. | Fixed with server-side admin gates, bounded validation, safer resets, and request limits. |
 | The inquiry endpoint lacked durable global throttling and idempotency. | Fixed with MongoDB-backed rate limits and idempotency keys. |
 | Dependency audit findings included Nodemailer and transitive build/runtime packages. | Fixed. Full and production audits are both zero. Patched transitive versions are locked with pnpm overrides. |
-| A Sanity webhook secret appeared during the audit session. | Rotate the secret in Sanity and Vercel before production rollout. The value is not tracked by Git. |
+| A Sanity webhook secret appeared during the audit session. | Rotate the secret in Sanity and Vercel immediately. The value is not tracked by Git. |
 
 ### Medium
 
@@ -127,10 +128,19 @@ is applied.
 - Security headers, duplicate-article redirects, old-host redirects, robots,
   sitemap, canonical URLs, and JSON-LD were verified against a production
   server build.
+- The live `https://www.ceylonsafari.com` deployment returns HTTP 200 for the
+  homepage, robots, sitemap, blog index, and canonical Habarana article. It
+  returns HTTP 308 for all three consolidated article slugs and HTTP 307 from
+  protected admin pages to login.
+- Live desktop and 390 px mobile checks confirm the canonical origin, one H1,
+  complete image alternative text, no horizontal overflow, the Google reviews
+  widget, and no browser console or CSP errors. The canonical Habarana article
+  exposes `TravelAgency`, `WebSite`, `BlogPosting`, and `BreadcrumbList`
+  structured data.
 
 Local browser measurements are useful for regression checks, not field Core Web
-Vitals. After deployment, use Search Console field data to judge LCP, INP, and
-CLS over the following 28 days.
+Vitals. Use Search Console field data to judge LCP, INP, and CLS over the next
+28 days.
 
 ## Human decisions and external actions
 
