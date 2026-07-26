@@ -3,13 +3,16 @@ import { Suspense } from "react";
 import BookingForm from "@/components/common/booking-form";
 import FAQSection from "@/components/common/faq-section";
 import { siteConfig } from "@/config/site";
+import { getPackages } from "@/lib/packages";
 
 export const metadata: Metadata = {
 	title: "Book Now",
 	description: `Send an inquiry to book your safari or village tour with ${siteConfig.name}`,
 };
 
-export default function BookNowPage() {
+export default async function BookNowPage() {
+	const packages = await getPackages();
+
 	return (
 		<main className="pt-20">
 			{/* Hero Section */}
@@ -36,7 +39,9 @@ export default function BookNowPage() {
 								</div>
 							}
 						>
-							<BookingForm />
+							<BookingForm
+								packages={packages.map(({ _id, name }) => ({ _id, name }))}
+							/>
 						</Suspense>
 					</div>
 				</div>

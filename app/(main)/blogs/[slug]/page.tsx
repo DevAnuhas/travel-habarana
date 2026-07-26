@@ -4,10 +4,9 @@ import Link from "next/link";
 import { CalendarDots } from "@phosphor-icons/react/dist/ssr";
 import { Badge } from "@/components/ui/badge";
 import { BlogCard } from "@/components/ui/blog-card";
-import { getAllPosts, getOtherPosts, getPost } from "@/sanity/queries";
+import { getOtherPosts, getPost, getPostSlugs } from "@/sanity/queries";
 import { PortableText } from "next-sanity";
 import {
-	ALL_POSTS_QUERYResult,
 	GET_OTHERS_POSTS_QUERYResult,
 	POST_QUERYResult,
 	Post,
@@ -32,8 +31,11 @@ type RelatedPost = GET_OTHERS_POSTS_QUERYResult[number];
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
 	const { slug } = await params;
-	const post = (await getPost(slug)) || notFound();
-	const otherPosts = await getOtherPosts(slug, 3);
+	const [post, otherPosts] = await Promise.all([
+		getPost(slug),
+		getOtherPosts(slug, 3),
+	]);
+	if (!post) notFound();
 
 	const formatDate = (dateString: string) => {
 		return new Date(dateString).toLocaleDateString("en-US", {
@@ -243,11 +245,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 									className="flex space-y-2 p-4 border bg-accent-foreground/50"
 								>
 									<Image
-										src={
-											comment?.image
-												? urlFor(comment.image).url()
-												: "/assets/avatar-placeholder.svg"
-										}
+										src="/assets/avatar-placeholder.svg"
 										alt="User Avatar"
 										width={48}
 										height={48}
@@ -290,10 +288,10 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
 // Generate static params for all blog posts
 export async function generateStaticParams() {
-	const posts: ALL_POSTS_QUERYResult = await getAllPosts(8);
+	const posts = await getPostSlugs();
 
-	return posts.map((post) => ({
-		slug: post.slug,
+	return posts.map((post: { slug?: string | null }) => ({
+		slug: post.slug || "",
 	}));
 }
 

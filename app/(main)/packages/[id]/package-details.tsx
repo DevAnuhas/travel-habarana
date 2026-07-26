@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { notFound, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -21,6 +20,7 @@ import {
 import { toast } from "sonner";
 import { favoritesManager } from "@/utils/favoritesManager";
 import { siteConfig } from "@/config/site";
+import type { PublicPackage } from "@/lib/packages";
 
 import { Button } from "@/components/ui/button";
 import SectionHeading from "@/components/ui/section-heading";
@@ -38,22 +38,13 @@ import {
 	BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { ImageGallery } from "@/components/ui/image-gallery";
-import LoadingSpinner from "@/components/ui/spinner";
-
-interface Package {
-	_id: string;
-	slug: string;
-	name: string;
-	description: string;
-	duration: string;
-	included: string[];
-	images: string[];
-}
-
-export function PackageDetails({ id }: { id: string }) {
-	const router = useRouter();
-	const [packageData, setPackageData] = useState<Package | null>(null);
-	const [isLoading, setIsLoading] = useState(true);
+export function PackageDetails({
+	packageData,
+	relatedPackages,
+}: {
+	packageData: PublicPackage;
+	relatedPackages: PublicPackage[];
+}) {
 	const [isFavorite, setIsFavorite] = useState(false);
 
 	// Initialize the favorite state from localStorage
@@ -62,64 +53,6 @@ export function PackageDetails({ id }: { id: string }) {
 			setIsFavorite(favoritesManager.isFavorite(packageData._id));
 		}
 	}, [packageData]);
-
-	const [relatedPackages, setRelatedPackages] = useState<Package[]>([]);
-	const [isLoadingRelated, setIsLoadingRelated] = useState(true);
-
-	const fetchRelatedPackages = useCallback(async () => {
-		try {
-			setIsLoadingRelated(true);
-			const res = await fetch("/api/packages");
-
-			if (!res.ok) {
-				throw new Error("Failed to fetch related packages");
-			}
-
-			const data = await res.json();
-
-			// Filter out the current package and limit to 3 packages
-			const filtered = data
-				.filter((pkg: Package) => pkg._id !== id)
-				.slice(0, 3);
-
-			setRelatedPackages(filtered);
-		} catch (error) {
-			console.error("Failed to fetch related packages:", error);
-		} finally {
-			setIsLoadingRelated(false);
-		}
-	}, [id]);
-
-	useEffect(() => {
-		const fetchPackage = async () => {
-			try {
-				setIsLoading(true);
-				const res = await fetch(`/api/packages/${id}`);
-
-				if (!res.ok) {
-					if (res.status === 404) {
-						notFound();
-					}
-					throw new Error(`Failed to load package: ${res.status}`);
-				}
-
-				const data = await res.json();
-				setPackageData(data);
-
-				// Fetch related packages after main package is loaded
-				fetchRelatedPackages();
-			} catch (error) {
-				console.error("Failed to fetch package:", error);
-				toast.error("Failed to load package details. Please try again.");
-			} finally {
-				setIsLoading(false);
-			}
-		};
-
-		if (id) {
-			fetchPackage();
-		}
-	}, [id, router, fetchRelatedPackages]);
 
 	const toggleFavorite = () => {
 		if (!packageData?._id) return;
@@ -153,28 +86,6 @@ export function PackageDetails({ id }: { id: string }) {
 			toast.success("Link copied to clipboard!");
 		}
 	};
-
-	if (isLoading) {
-		return (
-			<div className="flex justify-center items-center h-96">
-				<LoadingSpinner />
-			</div>
-		);
-	}
-
-	if (!packageData) {
-		return (
-			<div className="text-center py-24">
-				<h1 className="text-2xl font-bold mb-4">Package Not Found</h1>
-				<p className="mb-6 text-gray-600">
-					The package you’re looking for doesn’t exist or has been removed.
-				</p>
-				<Button asChild>
-					<Link href="/packages">View All Packages</Link>
-				</Button>
-			</div>
-		);
-	}
 
 	return (
 		<>
@@ -378,11 +289,7 @@ export function PackageDetails({ id }: { id: string }) {
 					subtitle="Explore our other safari and cultural experiences"
 				/>
 
-				{isLoadingRelated ? (
-					<div className="flex justify-center items-center h-48 mt-8">
-						<LoadingSpinner />
-					</div>
-				) : relatedPackages.length > 0 ? (
+				{relatedPackages.length > 0 ? (
 					<div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
 						{relatedPackages.map((pkg) => (
 							<motion.div

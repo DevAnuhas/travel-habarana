@@ -5,7 +5,7 @@ import { NotFoundError } from "@/lib/errors";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import { commentRequestSchema } from "@/lib/types";
 import { withErrorHandler } from "@/middleware/error-handler";
-import { client } from "@/sanity/lib/client";
+import { getSanityWriteClient } from "@/sanity/lib/write-client";
 
 export async function POST(request: NextRequest) {
 	return withErrorHandler(request, async () => {
@@ -19,7 +19,8 @@ export async function POST(request: NextRequest) {
 			windowMs: 10 * 60 * 1000,
 		});
 
-		const postExists = await client.fetch<boolean>(
+		const writeClient = getSanityWriteClient();
+		const postExists = await writeClient.fetch<boolean>(
 			"count(*[_type == 'post' && _id == $postId]) > 0",
 			{ postId: data._id }
 		);
@@ -28,7 +29,7 @@ export async function POST(request: NextRequest) {
 			throw new NotFoundError("Post not found");
 		}
 
-		await client.create({
+		await writeClient.create({
 			_type: "comment",
 			post: {
 				_type: "reference",

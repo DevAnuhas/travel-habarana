@@ -8,21 +8,34 @@
  */
 
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { getServerSession } from "next-auth";
 import { NextStudio } from "next-sanity/studio";
 
 import { authOptions } from "@/lib/auth-options";
 import config from "../../../../sanity.config";
 
-export const dynamic = "force-dynamic";
-
 export { metadata, viewport } from "next-sanity/studio";
 
-export default async function StudioPage() {
+async function AuthenticatedStudio() {
 	const session = await getServerSession(authOptions);
 	if (session?.user?.role !== "admin") {
 		redirect("/admin/login");
 	}
 
 	return <NextStudio config={config} />;
+}
+
+export default function StudioPage() {
+	return (
+		<Suspense
+			fallback={
+				<div className="flex min-h-screen items-center justify-center">
+					<p>Loading content studio…</p>
+				</div>
+			}
+		>
+			<AuthenticatedStudio />
+		</Suspense>
+	);
 }

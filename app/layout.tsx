@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import { Inter, DM_Serif_Display } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
-import { AuthProvider } from "@/components/providers/session-provider";
 import { siteConfig } from "@/config/site";
 
 const inter = Inter({
@@ -153,10 +152,8 @@ export default function RootLayout({
 				/>
 			</head>
 			<body className={`${inter.variable} ${dmSerifDisplay.variable}`}>
-				<AuthProvider>
-					{children}
-					<Toaster />
-				</AuthProvider>
+				{children}
+				<Toaster />
 			</body>
 		</html>
 	);

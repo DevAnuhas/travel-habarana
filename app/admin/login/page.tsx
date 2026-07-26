@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 import LoginForm from "./login-form";
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
 	robots: "noindex, nofollow",
 };
 
-const LoginPage = async () => {
+async function LoginContent() {
 	const session = await getServerSession(authOptions);
 
 	if (session?.user?.role === "admin") redirect("/admin/dashboard");
@@ -29,6 +30,20 @@ const LoginPage = async () => {
 			</div>
 		</div>
 	);
-};
+}
 
-export default LoginPage;
+export default function LoginPage() {
+	return (
+		<Suspense
+			fallback={
+				<div className="flex min-h-[80vh] items-center justify-center">
+					<p className="text-sm text-muted-foreground">
+						Loading admin portal…
+					</p>
+				</div>
+			}
+		>
+			<LoginContent />
+		</Suspense>
+	);
+}

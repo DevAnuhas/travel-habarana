@@ -7,10 +7,6 @@ import FeaturedBlogsSection from "@/components/home/featured-blogs-section";
 import CTABannerSection from "@/components/home/cta-banner-section";
 import FAQSection from "@/components/common/faq-section";
 
-// Add dynamic settings to ensure content is fresh
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-
 export default function Home() {
 	return (
 		<>

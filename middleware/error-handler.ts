@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { unstable_rethrow } from "next/navigation";
 import { getToken } from "next-auth/jwt";
 import { z } from "zod";
 import { AppError, ForbiddenError } from "@/lib/errors";
@@ -15,6 +16,7 @@ export async function withErrorHandler(
 	try {
 		return await handler(req);
 	} catch (error) {
+		unstable_rethrow(error);
 		console.error("API Error: ", error);
 
 		if (error instanceof AppError) {

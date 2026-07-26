@@ -20,6 +20,14 @@ const contentSecurityPolicy = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+	cacheComponents: true,
+	cacheLife: {
+		content: {
+			stale: 300,
+			revalidate: 3600,
+			expire: 604800,
+		},
+	},
 	poweredByHeader: false,
 	images: {
 		remotePatterns: [

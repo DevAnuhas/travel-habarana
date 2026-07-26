@@ -1,531 +1,281 @@
-"use client";
+import { Suspense } from "react";
+import Link from "next/link";
+import { MagnifyingGlass } from "@phosphor-icons/react/dist/ssr";
 
-import React, {
-	useState,
-	useEffect,
-	useMemo,
-	useCallback,
-	Suspense,
-} from "react";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { BlogCard } from "@/components/ui/blog-card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MagnifyingGlass } from "@phosphor-icons/react/dist/ssr";
-import {
-	getAllPosts,
-	getCategories,
-	getCategoryPost,
-	getPostsCount,
-	getCategoryPostCount,
-} from "@/sanity/queries";
-import {
-	Post,
-	Category,
-	ALL_POSTS_QUERYResult,
-	CATEGORIES_QUERYResult,
-	CATEGORY_POSTResult,
-} from "@/sanity/types";
-import LoadingSpinner from "@/components/ui/spinner";
-import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
+import { getBlogIndex, getCategories } from "@/sanity/queries";
+import type { Post } from "@/sanity/types";
 
-// Helper function to get slug value consistently
-const getSlugValue = (
-	slug: string | { current?: string } | undefined
-): string => {
-	if (!slug) return "";
-	return typeof slug === "string" ? slug : slug.current || "";
-};
-
-// Constants for pagination
 const POSTS_PER_PAGE = 9;
 
-// Loading component for Suspense boundary
-const BlogPageLoading = () => {
+type BlogSearchParams = Promise<{
+	category?: string | string[];
+	search?: string | string[];
+	page?: string | string[];
+}>;
+
+function readParam(value: string | string[] | undefined) {
+	return Array.isArray(value) ? value[0] || "" : value || "";
+}
+
+function normalizeCategory(value: string) {
+	const category = value.trim().toLowerCase();
+	return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(category)
+		? category.slice(0, 100)
+		: "";
+}
+
+function normalizeSearch(value: string) {
+	return value.trim().replace(/\s+/g, " ").slice(0, 80);
+}
+
+function toSearchPattern(value: string) {
+	const terms = value
+		.normalize("NFKC")
+		.replace(/[^\p{L}\p{N}\s-]/gu, " ")
+		.trim()
+		.split(/\s+/)
+		.filter(Boolean);
+
+	return terms.length > 0 ? `*${terms.join("*")}*` : "";
+}
+
+function createBlogUrl({
+	category,
+	search,
+	page,
+}: {
+	category?: string;
+	search?: string;
+	page?: number;
+}) {
+	const params = new URLSearchParams();
+	if (category) params.set("category", category);
+	if (search) params.set("search", search);
+	if (page && page > 1) params.set("page", String(page));
+	const query = params.toString();
+	return query ? `/blogs?${query}` : "/blogs";
+}
+
+async function BlogSearch({
+	searchParams,
+}: {
+	searchParams: BlogSearchParams;
+}) {
+	const params = await searchParams;
+	const category = normalizeCategory(readParam(params.category));
+	const search = normalizeSearch(readParam(params.search));
+
 	return (
-		<div className="w-full h-screen flex justify-center items-center">
-			<LoadingSpinner />
+		<form action="/blogs" className="relative mx-auto max-w-md" role="search">
+			<MagnifyingGlass className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-gray-400" />
+			<Input
+				type="search"
+				name="search"
+				placeholder="Search blog posts..."
+				defaultValue={search}
+				className="bg-white pr-24 pl-10 text-gray-900"
+				maxLength={80}
+			/>
+			{category && <input type="hidden" name="category" value={category} />}
+			<Button
+				type="submit"
+				size="sm"
+				className="absolute top-1/2 right-1.5 -translate-y-1/2"
+			>
+				Search
+			</Button>
+		</form>
+	);
+}
+
+function BlogGridSkeleton() {
+	return (
+		<div className="container mx-auto px-4 py-12" aria-busy="true">
+			<div className="mb-8 h-16 animate-pulse rounded-lg bg-gray-200" />
+			<div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+				{Array.from({ length: 6 }, (_, index) => (
+					<div
+						key={index}
+						className="h-96 animate-pulse rounded-xl bg-gray-200"
+					/>
+				))}
+			</div>
 		</div>
 	);
-};
+}
 
-// Main component wrapped with Suspense
-const BlogPage = () => {
-	const router = useRouter();
-	const searchParams = useSearchParams();
-	const pathname = usePathname();
+async function BlogResults({
+	searchParams,
+}: {
+	searchParams: BlogSearchParams;
+}) {
+	const params = await searchParams;
+	const category = normalizeCategory(readParam(params.category));
+	const search = normalizeSearch(readParam(params.search));
+	const requestedPage = Number.parseInt(readParam(params.page) || "1", 10);
+	const page = Number.isFinite(requestedPage)
+		? Math.max(1, Math.min(requestedPage, 1000))
+		: 1;
+	const start = (page - 1) * POSTS_PER_PAGE;
 
-	// Get category from URL query parameter or default to "all"
-	const categoryParam = searchParams.get("category");
-	const searchParam = searchParams.get("search");
-
-	// State management
-	const [selectedCategory, setSelectedCategory] = useState<string>(
-		categoryParam || "all"
-	);
-	const [searchQuery, setSearchQuery] = useState(searchParam || "");
-	const [allPosts, setAllPosts] = useState<Post[]>([]);
-	const [categoryPosts, setCategoryPosts] = useState<Post[]>([]);
-	const [blogCategories, setBlogCategories] = useState<Category[]>([]);
-	const [isLoading, setIsLoading] = useState(true);
-	const [isLoadingCategory, setIsLoadingCategory] = useState(false);
-
-	// New state for infinite scrolling
-	const [page, setPage] = useState(1);
-	const [hasMore, setHasMore] = useState(true);
-	const [totalPosts, setTotalPosts] = useState(0);
-	const [loadingMore, setLoadingMore] = useState(false);
-
-	// Intersection observer for infinite scrolling
-	const { ref, isIntersecting } = useIntersectionObserver({
-		threshold: 0.1,
-		rootMargin: "200px",
-		enabled: !isLoading && !loadingMore && hasMore,
-	});
-
-	// Update URL when category changes
-	const updateCategoryInURL = useCallback(
-		(category: string) => {
-			const params = new URLSearchParams(searchParams.toString());
-
-			if (category === "all") {
-				params.delete("category");
-			} else {
-				params.set("category", category);
-			}
-
-			// Use replace to avoid growing browser history for filter changes
-			const newUrl = params.toString()
-				? `${pathname}?${params.toString()}`
-				: pathname;
-			router.replace(newUrl, { scroll: false });
-		},
-		[searchParams, pathname, router]
-	);
-
-	// Function to handle category selection
-	const handleCategorySelect = (category: string) => {
-		setIsLoadingCategory(true);
-		setSelectedCategory(category);
-		setPage(1); // Reset to page 1 when changing categories
-		setAllPosts([]); // Clear existing posts
-		setCategoryPosts([]); // Clear existing category posts
-		setHasMore(true); // Reset hasMore state
-		updateCategoryInURL(category);
-	};
-
-	// Update URL when search query changes
-	const updateSearchInURL = useCallback(
-		(search: string) => {
-			const params = new URLSearchParams(searchParams.toString());
-
-			if (!search) {
-				params.delete("search");
-			} else {
-				params.set("search", search);
-			}
-
-			// Use replace to avoid growing browser history for each keystroke
-			const newUrl = params.toString()
-				? `${pathname}?${params.toString()}`
-				: pathname;
-			router.replace(newUrl, { scroll: false });
-		},
-		[searchParams, pathname, router]
-	);
-
-	// Store timeout reference
-	const searchDebounceRef = React.useRef<NodeJS.Timeout | null>(null);
-
-	// Completely separate typing from URL updates
-	const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const newSearchQuery = e.target.value;
-
-		// Just update local state immediately
-		setSearchQuery(newSearchQuery);
-
-		// Clear any existing timeout
-		if (searchDebounceRef.current) {
-			clearTimeout(searchDebounceRef.current);
-		}
-	};
-
-	// Separate URL update button instead of automatic update while typing
-	const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-		e.preventDefault(); // Prevent form submission default behavior
-		setPage(1); // Reset to page 1 when searching
-		setAllPosts([]); // Clear existing posts
-		setCategoryPosts([]); // Clear existing category posts
-		setHasMore(true); // Reset hasMore state
-		updateSearchInURL(searchQuery); // Only update URL when explicitly submitted
-	};
-
-	// Fetch categories on initial load
-	useEffect(() => {
-		const fetchCategories = async () => {
-			try {
-				const fetchedCategories: CATEGORIES_QUERYResult = await getCategories();
-
-				setBlogCategories(
-					fetchedCategories.map((category) => ({
-						...(category as unknown as Category),
-					}))
-				);
-
-				// If there's a category param in the URL, validate it against fetched categories
-				if (categoryParam && categoryParam !== "all") {
-					const isValidCategory = fetchedCategories.some(
-						(category) =>
-							getSlugValue(category.slug?.toString()) === categoryParam
-					);
-
-					if (!isValidCategory) {
-						// If category doesn't exist, reset to "all" and update URL
-						setSelectedCategory("all");
-						updateCategoryInURL("all");
-					}
-				}
-
-				// Initialize search from URL if present but don't update query params
-				if (searchParam) {
-					setSearchQuery(searchParam);
-				}
-			} catch (error) {
-				console.error("Failed to fetch categories:", error);
-			}
-		};
-
-		fetchCategories();
-	}, [categoryParam, searchParam, updateCategoryInURL]);
-
-	// Fetch total post count
-	useEffect(() => {
-		const fetchTotalPosts = async () => {
-			try {
-				if (selectedCategory === "all") {
-					const count = await getPostsCount();
-					setTotalPosts(count);
-				} else {
-					const count = await getCategoryPostCount(selectedCategory);
-					setTotalPosts(count);
-				}
-			} catch (error) {
-				console.error("Failed to fetch post counts:", error);
-				setTotalPosts(0);
-			}
-		};
-
-		fetchTotalPosts();
-	}, [selectedCategory]);
-
-	// Load initial posts
-	useEffect(() => {
-		const fetchInitialPosts = async () => {
-			setIsLoading(true);
-			try {
-				const start = 0;
-				const end = POSTS_PER_PAGE - 1;
-
-				if (selectedCategory === "all") {
-					const fetchedPosts: ALL_POSTS_QUERYResult = await getAllPosts(
-						start,
-						end
-					);
-					setAllPosts(
-						fetchedPosts.map((post) => ({
-							...(post as unknown as Post),
-						}))
-					);
-				} else {
-					const fetchedPosts: CATEGORY_POSTResult = await getCategoryPost(
-						selectedCategory,
-						start,
-						end
-					);
-					setCategoryPosts(
-						fetchedPosts.map((post) => ({
-							...(post as unknown as Post),
-						}))
-					);
-				}
-
-				// Update hasMore based on whether we've loaded all posts
-				const currentLoadedCount = POSTS_PER_PAGE;
-				setHasMore(currentLoadedCount < totalPosts);
-			} catch (error) {
-				console.error("Failed to fetch blog data:", error);
-				if (selectedCategory === "all") {
-					setAllPosts([]);
-				} else {
-					setCategoryPosts([]);
-				}
-			} finally {
-				setIsLoading(false);
-				setIsLoadingCategory(false);
-			}
-		};
-
-		fetchInitialPosts();
-	}, [selectedCategory, searchParam, totalPosts]);
-
-	// Effect for loading more posts when intersection observed
-	useEffect(() => {
-		const loadMorePosts = async () => {
-			if (!isIntersecting || loadingMore || !hasMore) return;
-
-			setLoadingMore(true);
-			try {
-				const start = page * POSTS_PER_PAGE;
-				const end = start + POSTS_PER_PAGE - 1;
-
-				if (selectedCategory === "all") {
-					const morePosts: ALL_POSTS_QUERYResult = await getAllPosts(
-						start,
-						end
-					);
-
-					if (morePosts.length) {
-						setAllPosts((prev) => [
-							...prev,
-							...morePosts.map((post) => ({ ...(post as unknown as Post) })),
-						]);
-						setPage((prev) => prev + 1);
-					}
-
-					// Check if we've loaded all posts
-					setHasMore(start + morePosts.length < totalPosts);
-				} else {
-					const morePosts: CATEGORY_POSTResult = await getCategoryPost(
-						selectedCategory,
-						start,
-						end
-					);
-
-					if (morePosts.length) {
-						setCategoryPosts((prev) => [
-							...prev,
-							...morePosts.map((post) => ({ ...(post as unknown as Post) })),
-						]);
-						setPage((prev) => prev + 1);
-					}
-
-					// Check if we've loaded all posts
-					setHasMore(start + morePosts.length < totalPosts);
-				}
-			} catch (error) {
-				console.error("Failed to load more posts:", error);
-			} finally {
-				setLoadingMore(false);
-			}
-		};
-
-		loadMorePosts();
-	}, [
-		isIntersecting,
-		loadingMore,
-		hasMore,
-		page,
-		selectedCategory,
-		totalPosts,
+	const [categories, result] = await Promise.all([
+		getCategories(),
+		getBlogIndex({
+			category,
+			search: toSearchPattern(search),
+			start,
+			end: start + POSTS_PER_PAGE,
+		}),
 	]);
 
-	const filteredPosts = useMemo(() => {
-		// Use either all posts or category posts based on selection
-		let posts: Post[] = selectedCategory === "all" ? allPosts : categoryPosts;
-
-		// Apply search filter if there's a query
-		if (searchQuery) {
-			const searchTermLower = searchQuery.toLowerCase();
-			posts = posts.filter(
-				(post) =>
-					(post.title || "").toLowerCase().includes(searchTermLower) ||
-					(post.excerpt || "").toLowerCase().includes(searchTermLower)
-			);
-		}
-
-		return posts;
-	}, [selectedCategory, searchQuery, allPosts, categoryPosts]);
+	const posts = (result.posts ?? []) as unknown as Post[];
+	const total = result.total ?? 0;
+	const pageCount = Math.max(1, Math.ceil(total / POSTS_PER_PAGE));
 
 	return (
-		<main className="py-20 bg-gray-50">
-			{/* Hero Section */}
-			<section className="bg-primary text-white py-16 md:py-16">
+		<div className="container mx-auto px-4 py-12">
+			<nav className="mb-8" aria-label="Blog categories">
+				<h2 className="mb-4 text-lg font-semibold">Filter by Category</h2>
+				<div className="flex flex-wrap gap-2">
+					<Badge
+						asChild
+						variant={category ? "outline" : "default"}
+						className="transition-colors"
+					>
+						<Link href={createBlogUrl({ search })}>All Posts</Link>
+					</Badge>
+					{categories.map((item) => {
+						const slug = item.slug || "";
+						if (!slug) return null;
+
+						return (
+							<Badge
+								asChild
+								key={slug}
+								variant={category === slug ? "default" : "outline"}
+								className="transition-colors"
+							>
+								<Link href={createBlogUrl({ category: slug, search })}>
+									{item.title}
+								</Link>
+							</Badge>
+						);
+					})}
+				</div>
+			</nav>
+
+			<p className="mb-6 text-gray-600" aria-live="polite">
+				{search
+					? `${total} result${total === 1 ? "" : "s"} for “${search}”`
+					: `${total} article${total === 1 ? "" : "s"}`}
+			</p>
+
+			{posts.length > 0 ? (
+				<>
+					<div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+						{posts.map((post, index) => (
+							<BlogCard
+								key={`${String(post.slug)}-${post._updatedAt}`}
+								post={post}
+								index={index}
+							/>
+						))}
+					</div>
+
+					{pageCount > 1 && (
+						<nav
+							className="mt-12 flex items-center justify-center gap-4"
+							aria-label="Blog pagination"
+						>
+							{page > 1 ? (
+								<Button asChild variant="outline">
+									<Link
+										href={createBlogUrl({
+											category,
+											search,
+											page: page - 1,
+										})}
+										rel="prev"
+									>
+										Previous
+									</Link>
+								</Button>
+							) : (
+								<Button variant="outline" disabled>
+									Previous
+								</Button>
+							)}
+							<span className="text-sm text-gray-600">
+								Page {Math.min(page, pageCount)} of {pageCount}
+							</span>
+							{page < pageCount ? (
+								<Button asChild variant="outline">
+									<Link
+										href={createBlogUrl({
+											category,
+											search,
+											page: page + 1,
+										})}
+										rel="next"
+									>
+										Next
+									</Link>
+								</Button>
+							) : (
+								<Button variant="outline" disabled>
+									Next
+								</Button>
+							)}
+						</nav>
+					)}
+				</>
+			) : (
+				<div className="py-12 text-center">
+					<p className="mb-4 text-lg text-gray-500">
+						No blog posts found matching your criteria.
+					</p>
+					<Button asChild variant="link">
+						<Link href="/blogs">Clear filters</Link>
+					</Button>
+				</div>
+			)}
+		</div>
+	);
+}
+
+export default function BlogsPage({
+	searchParams,
+}: {
+	searchParams: BlogSearchParams;
+}) {
+	return (
+		<main className="bg-gray-50 pt-20">
+			<section className="bg-primary py-16 text-white">
 				<div className="container mx-auto px-4 text-center">
-					<h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
+					<h1 className="mb-4 text-3xl font-bold md:text-4xl lg:text-5xl">
 						Travel Blog
 					</h1>
-					<p className="text-lg md:text-xl max-w-2xl mx-auto mb-6">
-						Discover amazing stories, travel tips, and cultural insights from
-						the heart of Sri Lanka
+					<p className="mx-auto mb-6 max-w-2xl text-lg md:text-xl">
+						Discover safari guides, wildlife stories, and local travel advice
+						from Sri Lanka&apos;s Cultural Triangle.
 					</p>
-					{/* Search Bar */}
-					<form
-						onSubmit={handleSearchSubmit}
-						className="relative max-w-md mx-auto"
+					<Suspense
+						fallback={
+							<div className="mx-auto h-9 max-w-md animate-pulse rounded-md bg-white/30" />
+						}
 					>
-						<MagnifyingGlass className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-						<Input
-							type="text"
-							placeholder="Search blog posts..."
-							value={searchQuery}
-							onChange={handleSearchChange}
-							className="pl-10 pr-16 bg-white text-gray-900"
-							disabled={isLoading}
-							autoComplete="off"
-							onKeyDown={(e) => {
-								if (e.key === "Enter") {
-									e.preventDefault();
-									setPage(1); // Reset page when searching
-									setAllPosts([]); // Clear existing posts
-									setCategoryPosts([]); // Clear existing category posts
-									setHasMore(true); // Reset hasMore state
-									updateSearchInURL(searchQuery);
-								}
-							}}
-						/>
-					</form>
+						<BlogSearch searchParams={searchParams} />
+					</Suspense>
 				</div>
 			</section>
 
-			<div className="container mx-auto px-4 py-12">
-				{/* Category Filter */}
-				<div className="mb-8">
-					<h2 className="text-lg font-semibold mb-4">Filter by Category</h2>
-					<div className="flex flex-wrap gap-2">
-						<Badge
-							variant={selectedCategory === "all" ? "default" : "outline"}
-							className="cursor-pointer hover:bg-primary hover:text-white transition-colors"
-							onClick={() => handleCategorySelect("all")}
-						>
-							All Posts
-						</Badge>
-						{blogCategories?.map((category) => (
-							<Badge
-								key={getSlugValue(category.slug)}
-								variant={
-									selectedCategory === getSlugValue(category.slug)
-										? "default"
-										: "outline"
-								}
-								className="cursor-pointer hover:bg-primary hover:text-white transition-colors"
-								onClick={() => {
-									handleCategorySelect(getSlugValue(category.slug));
-								}}
-							>
-								{category.title}
-							</Badge>
-						))}
-					</div>
-				</div>
-
-				{/* Results Count */}
-				<div className="mb-6">
-					<p className="text-gray-600">
-						{isLoading || (selectedCategory !== "all" && isLoadingCategory) ? (
-							"Loading..."
-						) : searchQuery ? (
-							<>
-								Showing {filteredPosts.length} results for &quot;{searchQuery}
-								&quot;
-								{totalPosts > filteredPosts.length && hasMore
-									? ` (Scroll for more)`
-									: ``}
-							</>
-						) : (
-							<>
-								Showing {filteredPosts.length} posts{" "}
-								{totalPosts > filteredPosts.length && hasMore
-									? ` of ${totalPosts} `
-									: ` `}
-								{selectedCategory !== "all" &&
-									`in ${blogCategories.find((c) => getSlugValue(c.slug) === selectedCategory)?.title}`}
-							</>
-						)}
-					</p>
-				</div>
-
-				{/* Blog Posts Grid */}
-				{isLoading && (
-					<div className="flex justify-center items-center h-64">
-						<LoadingSpinner />
-					</div>
-				)}
-
-				{!isLoading && filteredPosts.length > 0 && (
-					<>
-						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-							{filteredPosts.map((post, index) => (
-								<BlogCard
-									key={getSlugValue(post.slug) + "-" + post._updatedAt}
-									post={post as unknown as Post}
-									index={index}
-								/>
-							))}
-						</div>
-
-						{/* Loading indicator for infinite scroll */}
-						{hasMore && (
-							<div
-								ref={ref}
-								className="flex justify-center items-center py-8 mt-8"
-							>
-								{loadingMore ? (
-									<LoadingSpinner />
-								) : (
-									<p className="text-gray-500">Scroll for more</p>
-								)}
-							</div>
-						)}
-					</>
-				)}
-
-				{!isLoading && filteredPosts.length === 0 && (
-					<div className="text-center py-12">
-						<p className="text-gray-500 text-lg mb-4">
-							No blog posts found matching your criteria.
-						</p>
-						<Button
-							onClick={() => {
-								// Reset loading state to show feedback
-								setIsLoading(true);
-
-								// Clear any existing debounce timeout
-								if (searchDebounceRef.current) {
-									clearTimeout(searchDebounceRef.current);
-									searchDebounceRef.current = null;
-								}
-
-								// Clear category and search states
-								setSelectedCategory("all");
-								setSearchQuery("");
-								setPage(1);
-								setHasMore(true);
-								setAllPosts([]);
-								setCategoryPosts([]);
-
-								// Directly clear URL without any parameters
-								router.replace(pathname);
-
-								// Give a small delay for UI feedback
-								setTimeout(() => setIsLoading(false), 300);
-							}}
-							variant={"link"}
-						>
-							Clear filters
-						</Button>
-					</div>
-				)}
-			</div>
+			<Suspense fallback={<BlogGridSkeleton />}>
+				<BlogResults searchParams={searchParams} />
+			</Suspense>
 		</main>
-	);
-};
-
-// Export the component wrapped in a Suspense boundary
-export default function Page() {
-	return (
-		<Suspense fallback={<BlogPageLoading />}>
-			<BlogPage />
-		</Suspense>
 	);
 }

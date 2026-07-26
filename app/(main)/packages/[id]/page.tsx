@@ -1,49 +1,20 @@
-import { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { PackageDetails } from "./package-details";
+import type { Metadata } from "next";
+import { notFound, permanentRedirect } from "next/navigation";
+
 import { siteConfig } from "@/config/site";
-import mongoose from "mongoose";
-import connectMongoDB from "@/lib/mongodb";
-import PackageModel from "@/models/Package";
+import { getPackage, getPackages } from "@/lib/packages";
+import { PackageDetails } from "./package-details";
 
 interface PackageDetailsPageProps {
 	params: Promise<{ id: string }>;
 }
 
-// Interface to represent package data from database
-interface Package {
-	_id: mongoose.Types.ObjectId | string;
-	slug: string;
-	name: string;
-	description: string;
-	duration: string;
-	included: string[];
-	images: string[];
-	__v?: number;
-	createdAt?: Date;
-	updatedAt?: Date;
-}
-
 export async function generateStaticParams() {
 	try {
-		// Connect directly to MongoDB instead of using the API route during build
-		await connectMongoDB();
-		const packages = (await PackageModel.find({}).lean()) as Package[];
-
-		return packages.map((pkg) => {
-			// Use slug as primary identifier, or convert _id to string safely
-			const id =
-				pkg.slug ||
-				(typeof pkg._id === "object" &&
-				pkg._id !== null &&
-				"toString" in pkg._id
-					? pkg._id.toString()
-					: String(pkg._id));
-
-			return { id };
-		});
+		const packages = await getPackages();
+		return packages.map((packageItem) => ({ id: packageItem.slug }));
 	} catch (error) {
-		console.error("Error generating static params:", error);
+		console.error("Unable to pre-render package routes:", error);
 		return [];
 	}
 }
@@ -52,103 +23,72 @@ export async function generateMetadata({
 	params,
 }: PackageDetailsPageProps): Promise<Metadata> {
 	const { id } = await params;
+	const packageData = await getPackage(id);
 
-	try {
-		// Connect directly to MongoDB during build instead of using the API route
-		await connectMongoDB();
-
-		// Try to find by slug first (primary lookup method)
-		let packageData = (await PackageModel.findOne({
-			slug: id,
-		}).lean()) as Package | null;
-
-		// Fall back to MongoDB _id only if necessary and if it's a valid ObjectId
-		if (!packageData && id.match(/^[0-9a-fA-F]{24}$/)) {
-			const mongoose = (await import("mongoose")).default;
-			if (mongoose.Types.ObjectId.isValid(id)) {
-				packageData = (await PackageModel.findById(
-					id
-				).lean()) as Package | null;
-			}
-		}
-
-		if (!packageData) {
-			return {
-				title: "Package Not Found",
-				description: "The requested package could not be found.",
-				robots: { index: false, follow: false },
-			};
-		}
-
+	if (!packageData) {
 		return {
-			title: `${packageData.name} | ${siteConfig.name}`,
-			description: packageData.description.substring(0, 160), // Limit to 160 characters for SEO
-			robots: { index: true, follow: true },
-			openGraph: {
-				title: `${packageData.name} | ${siteConfig.name}`,
-				description: packageData.description.substring(0, 160),
-				url: `${siteConfig.url}/packages/${packageData.slug || id}`,
-				siteName: siteConfig.name,
-				images: [
-					{
-						url: packageData.images?.[0] || siteConfig.ogImage,
-						width: 800,
-						height: 600,
-						alt: `${packageData.name} Image`,
-					},
-				],
-				locale: "en_US",
-				type: "website",
-			},
-			twitter: {
-				card: "summary_large_image",
-				title: `${packageData.name} | ${siteConfig.name}`,
-				description: packageData.description.substring(0, 160),
-				images: [packageData.images?.[0] || siteConfig.ogImage],
-			},
-		};
-	} catch (error) {
-		console.error("Error generating metadata:", error);
-		return {
-			title: "Travel Package",
-			description: `Discover amazing travel packages with ${siteConfig.name}.`,
-			robots: { index: true, follow: true },
+			title: "Package Not Found",
+			description: "The requested package could not be found.",
+			robots: { index: false, follow: false },
 		};
 	}
+
+	const description = packageData.description.slice(0, 160);
+	const canonical = `/packages/${packageData.slug}`;
+	const image = packageData.images[0] || siteConfig.ogImage;
+
+	return {
+		title: packageData.name,
+		description,
+		alternates: { canonical },
+		robots: { index: true, follow: true },
+		openGraph: {
+			title: packageData.name,
+			description,
+			url: canonical,
+			siteName: siteConfig.name,
+			images: [{ url: image, alt: packageData.name }],
+			locale: "en_US",
+			type: "website",
+		},
+		twitter: {
+			card: "summary_large_image",
+			title: packageData.name,
+			description,
+			images: [image],
+		},
+	};
 }
 
 export default async function PackageDetailsPage({
 	params,
 }: PackageDetailsPageProps) {
 	const { id } = await params;
+	const [packageData, packages] = await Promise.all([
+		getPackage(id),
+		getPackages(),
+	]);
 
-	try {
-		// Connect to the database and validate the package exists server-side
-		await connectMongoDB();
-
-		// Try to find by slug first
-		let packageData = await PackageModel.findOne({ slug: id }).lean();
-
-		// Fall back to MongoDB _id only if necessary and valid
-		if (!packageData && id.match(/^[0-9a-fA-F]{24}$/)) {
-			if (mongoose.Types.ObjectId.isValid(id)) {
-				packageData = await PackageModel.findById(id).lean();
-			}
-		}
-
-		if (!packageData) {
-			notFound();
-		}
-
-		return (
-			<main className="pt-20 bg-gray-50">
-				<div className="container mx-auto px-4 py-8">
-					<PackageDetails id={id} />
-				</div>
-			</main>
-		);
-	} catch (error) {
-		console.error("Error in package details page:", error);
+	if (!packageData) {
 		notFound();
 	}
+
+	if (id !== packageData.slug) {
+		permanentRedirect(`/packages/${packageData.slug}`);
+	}
+
+	const relatedPackages = packages
+		.filter((packageItem) => packageItem._id !== packageData._id)
+		.slice(0, 3);
+
+	return (
+		<main className="bg-gray-50 pt-20">
+			<div className="container mx-auto px-4 py-8">
+				<PackageDetails
+					packageData={packageData}
+					relatedPackages={relatedPackages}
+				/>
+			</div>
+		</main>
+	);
 }

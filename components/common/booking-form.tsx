@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { CalendarDots } from "@phosphor-icons/react";
@@ -38,22 +38,24 @@ import {
 } from "@/components/ui/form";
 import { CircleNotch } from "@phosphor-icons/react";
 
-interface Package {
+interface PackageOption {
 	_id: string;
 	name: string;
 }
 
 type FormValues = z.infer<typeof inquirySchema>;
 
-export default function BookingForm() {
+export default function BookingForm({
+	packages,
+}: {
+	packages: PackageOption[];
+}) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 
 	// Safely access the packageId from searchParams
 	const packageIdFromUrl = searchParams ? searchParams.get("packageId") : null;
 
-	const [packages, setPackages] = useState<Package[]>([]);
-	const [isLoading, setIsLoading] = useState(true);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [idempotencyKey, setIdempotencyKey] = useState<string | null>(null);
 
@@ -69,32 +71,6 @@ export default function BookingForm() {
 			website: "",
 		},
 	});
-
-	// Fetch packages
-	useEffect(() => {
-		const fetchPackages = async () => {
-			try {
-				const res = await fetch("/api/packages");
-				const data = await res.json();
-				setPackages(data);
-
-				// If packageId is provided in URL, select it
-				if (
-					packageIdFromUrl &&
-					data.some((pkg: Package) => pkg._id === packageIdFromUrl)
-				) {
-					form.setValue("packageId", packageIdFromUrl);
-				}
-			} catch (error) {
-				console.error("Failed to fetch packages:", error);
-				toast.error("Failed to load packages. Please try again.");
-			} finally {
-				setIsLoading(false);
-			}
-		};
-
-		fetchPackages();
-	}, [packageIdFromUrl, form]);
 
 	const onSubmit = async (data: FormValues) => {
 		setIsSubmitting(true);
@@ -227,11 +203,7 @@ export default function BookingForm() {
 											</SelectTrigger>
 										</FormControl>
 										<SelectContent>
-											{isLoading ? (
-												<SelectItem value="loading" disabled>
-													Loading packages...
-												</SelectItem>
-											) : packages.length === 0 ? (
+											{packages.length === 0 ? (
 												<SelectItem value="none" disabled>
 													No packages available
 												</SelectItem>

@@ -11,6 +11,8 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { siteConfig } from "@/config/site";
 
+const COPYRIGHT_YEAR = 2026;
+
 export default function Footer() {
 	return (
 		<footer className="bg-gray-900 text-secondary">
@@ -144,8 +146,7 @@ export default function Footer() {
 
 				<div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400 text-sm">
 					<p>
-						&copy; {new Date().getFullYear()} {siteConfig.name}. All rights
-						reserved.
+						&copy; {COPYRIGHT_YEAR} {siteConfig.name}. All rights reserved.
 					</p>
 					<Link
 						href="/privacy"

@@ -1,23 +1,20 @@
+import "server-only";
+
+import { cacheLife, cacheTag } from "next/cache";
 import { createClient, type QueryParams } from "next-sanity";
 
 import { apiVersion, dataset, projectId } from "../env";
-
-const isDevelopment = process.env.NODE_ENV === "development";
-const developerToken = process.env.SANITY_API_TOKEN;
 
 export const client = createClient({
 	projectId,
 	dataset,
 	apiVersion,
-	useCdn: isDevelopment ? false : true,
-	token: developerToken,
-	stega: {
-		enabled: true,
-		studioUrl: "/admin",
-	},
+	useCdn: true,
+	perspective: "published",
+	stega: false,
 });
 
-export const clientFetch = <const QueryString extends string>({
+export async function clientFetch<const QueryString extends string>({
 	query,
 	params = {},
 	tags = [],
@@ -25,10 +22,10 @@ export const clientFetch = <const QueryString extends string>({
 	query: QueryString;
 	params?: QueryParams;
 	tags?: string[];
-}) => {
-	return client.fetch(query, params, {
-		next: {
-			tags,
-		},
-	});
-};
+}) {
+	"use cache";
+	cacheLife({ stale: 300, revalidate: 3600, expire: 604800 });
+	cacheTag("sanity", ...tags);
+
+	return client.fetch(query, params);
+}
