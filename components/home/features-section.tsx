@@ -1,25 +1,21 @@
-"use client";
-
-import { useRef } from "react";
 import Image from "next/image";
-import { motion, useScroll, useTransform } from "framer-motion";
 import {
 	HandHeart,
 	CalendarHeart,
 	NavigationArrow,
 	FlowerLotus,
 	Image as ImageIcon,
-	IconProps,
-} from "@phosphor-icons/react";
+} from "@phosphor-icons/react/dist/ssr";
+import type { IconProps } from "@phosphor-icons/react";
 import SectionHeading from "@/components/ui/section-heading";
 import { siteConfig } from "@/config/site";
 
 const features: Array<Feature> = [
 	{
 		icon: HandHeart,
-		title: "Safe & Insured",
+		title: "Safety-Conscious Tours",
 		description:
-			"All our safari jeeps are equipped with seatbelts and fully insured for your safety and peace of mind.",
+			"Our local team plans each trip around current park conditions and responsible wildlife-viewing practices.",
 		image:
 			"https://res.cloudinary.com/travelhabarana/image/upload/v1747400857/IMG_8961_ntttrb.jpg",
 	},
@@ -76,38 +72,15 @@ type Feature = {
 };
 
 function FeatureItem({ feature, index }: { feature: Feature; index: number }) {
-	const ref = useRef(null);
-	const { scrollYProgress } = useScroll({
-		target: ref,
-		offset: ["start end", "end start"],
-	});
-
-	const y = useTransform(scrollYProgress, [0, 1], [50, -50]);
-
-	const opacity = useTransform(
-		scrollYProgress,
-		[0, 0.2, 0.8, 1],
-		[0.6, 1, 1, 0.6]
-	);
-
-	const scale = useTransform(scrollYProgress, [0, 0.5, 1], [0.95, 1, 0.95]);
-
 	const isEven = index % 2 === 0;
 
 	return (
 		<div
-			ref={ref}
 			className={`grid gap-12 items-center ${
 				isEven ? "md:grid-cols-[auto_1fr]" : "md:grid-cols-[1fr_auto]"
 			}`}
 		>
-			<motion.div
-				initial={{ opacity: 0, x: isEven ? -50 : 50 }}
-				whileInView={{ opacity: 1, x: 0 }}
-				viewport={{ once: true }}
-				transition={{ duration: 0.5, delay: 0.2 }}
-				className={`${!isEven && "md:order-2"}`}
-			>
+			<div className={`${!isEven && "md:order-2"}`}>
 				<div className="flex gap-6">
 					<div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center">
 						<feature.icon className="h-8 w-8 text-primary" />
@@ -119,16 +92,10 @@ function FeatureItem({ feature, index }: { feature: Feature; index: number }) {
 						</p>
 					</div>
 				</div>
-			</motion.div>
+			</div>
 
-			<motion.div
-				style={{
-					y,
-					opacity,
-					scale,
-					boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.3)",
-				}}
-				className={`relative h-[300px] md:h-[350px] rounded-lg overflow-hidden ${
+			<div
+				className={`relative h-[300px] md:h-[350px] rounded-lg overflow-hidden shadow-xl ${
 					isEven ? "md:order-2" : "md:order-1"
 				}`}
 			>
@@ -145,7 +112,7 @@ function FeatureItem({ feature, index }: { feature: Feature; index: number }) {
 						<ImageIcon size={48} />
 					</div>
 				)}
-			</motion.div>
+			</div>
 		</div>
 	);
 }

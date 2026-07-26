@@ -58,7 +58,7 @@ export default function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-300 transition-colors hover:text-secondary"
-                aria-label="Instagram"
+                aria-label="TikTok"
               >
                 <TiktokLogo size={20} />
               </a>

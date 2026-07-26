@@ -1,14 +1,12 @@
-"use client";
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import {
 	ArrowRight,
 	Clock,
 	Check,
 	ChatCircleDots,
 	Image as ImageIcon,
-} from "@phosphor-icons/react";
+} from "@phosphor-icons/react/dist/ssr";
 import { Button } from "./button";
 
 interface PackageCardProps {
@@ -33,14 +31,7 @@ export default function PackageCard({
 	const packageIdentifier = slug || id;
 
 	return (
-		<motion.div
-			className="bg-white rounded-xl overflow-hidden shadow-lg h-full flex flex-col"
-			initial={{ opacity: 0, y: 20 }}
-			whileInView={{ opacity: 1, y: 0 }}
-			transition={{ duration: 0.5 }}
-			viewport={{ once: true }}
-			whileHover={{ y: -5 }}
-		>
+		<div className="bg-white rounded-xl overflow-hidden shadow-lg h-full flex flex-col transition-transform hover:-translate-y-1">
 			<Link href={`/packages/${packageIdentifier}`} passHref>
 				<div className="relative h-64 w-full overflow-hidden">
 					{image ? (
@@ -92,9 +83,8 @@ export default function PackageCard({
 							<ChatCircleDots size={16} />
 							Contact us for pricing & availability
 						</span>
-						<motion.div
+						<div
 							className="inline-flex items-center justify-center text-primary font-medium hover:text-primary group cursor-pointer"
-							whileHover={{ x: 5 }}
 						>
 							<Button variant={"link"}>
 								View Details
@@ -103,10 +93,10 @@ export default function PackageCard({
 									className="ml-1 group-hover:ml-2 transition-all"
 								/>
 							</Button>
-						</motion.div>
+						</div>
 					</div>
 				</div>
 			</Link>
-		</motion.div>
+		</div>
 	);
 }

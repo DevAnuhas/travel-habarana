@@ -19,6 +19,14 @@ export const metadata: Metadata = {
     title: "Minneriya & Habarana Jeep Safaris | Ceylon Safari",
     description: siteConfig.description,
     url: "/",
+    images: [
+      {
+        url: siteConfig.ogImage,
+        width: 1200,
+        height: 630,
+        alt: "Ceylon Safari wildlife and village experiences in Habarana",
+      },
+    ],
   },
 }
 

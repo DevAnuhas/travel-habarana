@@ -65,8 +65,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       mainEntityOfPage: canonicalUrl,
       inLanguage: "en",
       author: {
-        "@type": "Person",
-        name: post.author?.name || siteConfig.name,
+        "@type": "Organization",
+        "@id": `${siteConfig.url}/#business`,
+        name: siteConfig.name,
       },
       publisher: { "@id": `${siteConfig.url}/#business` },
       articleSection: post.categories?.map((category) => category.title),

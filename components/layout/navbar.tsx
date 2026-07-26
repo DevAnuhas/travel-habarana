@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { motion } from "framer-motion";
 import { PaperPlaneTilt, List, X } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { siteConfig } from "@/config/site";
@@ -134,12 +133,7 @@ export default function Navbar() {
 
 			{/* Mobile Navigation */}
 			{isMobileMenuOpen && (
-				<motion.div
-					initial={{ opacity: 0, height: 0 }}
-					animate={{ opacity: 1, height: "auto" }}
-					exit={{ opacity: 0, height: 0 }}
-					className="lg:hidden bg-white"
-				>
+				<div className="lg:hidden bg-white">
 					<div className="container mx-auto px-4 py-4 flex flex-col space-y-4">
 						{navLinks.map((link) => (
 							<MobileNavLink
@@ -157,7 +151,7 @@ export default function Navbar() {
 							</Link>
 						</Button>
 					</div>
-				</motion.div>
+				</div>
 			)}
 		</header>
 	);

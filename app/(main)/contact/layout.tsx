@@ -9,6 +9,14 @@ export const metadata: Metadata = {
     title: `Contact ${siteConfig.name}`,
     description: `Plan a private Habarana safari or village experience with our local team.`,
     url: "/contact",
+    images: [
+      {
+        url: siteConfig.ogImage,
+        width: 1200,
+        height: 630,
+        alt: "Ceylon Safari wildlife and village experiences in Habarana",
+      },
+    ],
   },
 }
 

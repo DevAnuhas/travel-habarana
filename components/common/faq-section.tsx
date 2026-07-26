@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import {
 	Accordion,
 	AccordionContent,
@@ -86,13 +85,9 @@ function FAQSection() {
 						className="space-y-4"
 					>
 						{faqs.map((faq, index) => (
-							<motion.div
+							<div
 								key={index}
 								className="overflow-hidden rounded-lg border border-gray-200 bg-white"
-								initial={{ opacity: 0, y: 20 }}
-								whileInView={{ opacity: 1, y: 0 }}
-								transition={{ duration: 0.3, delay: index * 0.1 }}
-								viewport={{ once: true }}
 							>
 								<AccordionItem key={index} value={`item-${index + 1}`}>
 									<AccordionTrigger className="p-4 text-sm sm:text-lg font-sans">
@@ -102,7 +97,7 @@ function FAQSection() {
 										{faq.answer}
 									</AccordionContent>
 								</AccordionItem>
-							</motion.div>
+							</div>
 						))}
 					</Accordion>
 				</div>

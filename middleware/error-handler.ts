@@ -17,7 +17,6 @@ export async function withErrorHandler(
 		return await handler(req);
 	} catch (error) {
 		unstable_rethrow(error);
-		console.error("API Error: ", error);
 
 		if (error instanceof AppError) {
 			return NextResponse.json(
@@ -36,6 +35,7 @@ export async function withErrorHandler(
 			);
 		}
 
+		console.error("Unexpected API error:", error);
 		return NextResponse.json(
 			{ error: "Internal Server Error" },
 			{ status: 500 }

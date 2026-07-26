@@ -14,6 +14,14 @@ export const metadata: Metadata = {
     description:
       "Request current pricing and availability for a private jeep safari or village experience.",
     url: "/book-now",
+    images: [
+      {
+        url: siteConfig.ogImage,
+        width: 1200,
+        height: 630,
+        alt: "Ceylon Safari wildlife and village experiences in Habarana",
+      },
+    ],
   },
 }
 

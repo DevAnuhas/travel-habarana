@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { getBlogIndex, getCategories } from "@/sanity/queries"
 import type { Post } from "@/sanity/types"
+import { siteConfig } from "@/config/site"
 
 const POSTS_PER_PAGE = 9
 
@@ -43,6 +44,14 @@ export async function generateMetadata({
       description:
         "Practical safari planning and local travel advice from Habarana.",
       url: "/blogs",
+      images: [
+        {
+          url: siteConfig.ogImage,
+          width: 1200,
+          height: 630,
+          alt: "Ceylon Safari wildlife and village experiences in Habarana",
+        },
+      ],
     },
   }
 }

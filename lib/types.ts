@@ -66,10 +66,13 @@ export const inquirySchema = z.object({
 		.min(7, "Phone number is required")
 		.max(30, "Phone number is too long")
 		.regex(/^[+\d][\d\s().-]+$/, "Please enter a valid phone number"),
-	packageId: objectIdSchema,
+	packageId: z
+		.string()
+		.min(1, "Please select a package")
+		.regex(/^[a-f\d]{24}$/i, "Please select a valid package"),
 	date: z.date({ error: "Please select a date" }),
 	numberOfPeople: z
-		.number()
+		.number({ error: "Please enter the number of people" })
 		.int()
 		.min(1, { message: "Number of people is required" })
 		.max(50, "Please contact us directly for groups larger than 50"),
@@ -81,7 +84,7 @@ export const inquiryRequestSchema = inquirySchema
 	.omit({ date: true })
 	.extend({
 		date: z.coerce
-			.date()
+			.date({ error: "Please select a valid date" })
 			.refine(
 				(date) => date.getTime() >= new Date().setHours(0, 0, 0, 0),
 				"Preferred date cannot be in the past"

@@ -5,7 +5,7 @@ const isDevelopment = process.env.NODE_ENV === "development"
 
 const contentSecurityPolicy = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ""} https://static.elfsight.com https://*.sanity.io`,
+  `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ""} https://static.elfsight.com https://*.elfsightcdn.com https://*.sanity.io`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://res.cloudinary.com https://cdn.sanity.io https://*.elfsight.com https://*.elfsightcdn.com",
   "font-src 'self' data:",

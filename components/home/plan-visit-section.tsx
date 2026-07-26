@@ -1,8 +1,5 @@
-"use client";
-
 import Link from "next/link";
 import Image from "next/image";
-import { motion } from "framer-motion";
 import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { Button } from "@/components/ui/button";
 import SectionHeading from "@/components/ui/section-heading";
@@ -19,23 +16,7 @@ function PlanningStepCard({
 	tip: string;
 }) {
 	return (
-		<motion.div
-			className="relative bg-white/20 backdrop-blur-md rounded-xl overflow-hidden"
-			initial={{
-				opacity: 0,
-				y: 20,
-				boxShadow: "0 5px 15px -5px rgba(0, 0, 0, 0.3)",
-			}}
-			whileInView={{ opacity: 1, y: 0 }}
-			whileHover={{
-				scale: 1.03,
-				boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)",
-			}}
-			transition={{
-				duration: 0.2,
-			}}
-			viewport={{ once: true }}
-		>
+		<div className="relative overflow-hidden rounded-xl bg-white/20 shadow-md backdrop-blur-md transition-transform hover:-translate-y-1">
 			{/* Step number indicator */}
 			<div className="absolute top-0 left-0 w-12 h-12 bg-primary text-white flex items-center justify-center text-xl font-bold font-serif rounded-br-xl z-10">
 				{number}
@@ -48,7 +29,7 @@ function PlanningStepCard({
 					<p className="text-sm text-muted-foreground">{tip}</p>
 				</div>
 			</div>
-		</motion.div>
+		</div>
 	);
 }
 
@@ -102,13 +83,7 @@ function PlanVisitSection() {
 				</div>
 
 				{/* Additional text and CTA Buttons */}
-				<motion.div
-					className="text-center mt-16"
-					initial={{ opacity: 0, y: 20 }}
-					whileInView={{ opacity: 1, y: 0 }}
-					transition={{ duration: 0.5, delay: 0.7 }}
-					viewport={{ once: true }}
-				>
+				<div className="text-center mt-16">
 					<p className="mb-8 max-w-2xl mx-auto">
 						Have questions or need assistance? Contact us for a quick response!
 					</p>
@@ -124,7 +99,7 @@ function PlanVisitSection() {
 							</Button>
 						</Link>
 					</div>
-				</motion.div>
+				</div>
 			</div>
 		</section>
 	);

@@ -210,6 +210,7 @@ async function main() {
 
 const bySlug = new Map(posts.map((post) => [post.slug, post]))
 const primary = bySlug.get("habarana-jeep-safari")
+const editorialAuthorId = "author-ceylon-safari-editorial-team"
 
 if (!primary) {
   throw new Error("The canonical Habarana safari article was not found")
@@ -217,6 +218,20 @@ if (!primary) {
 
 const transaction = client
   .transaction()
+  .createIfNotExists({
+    _id: editorialAuthorId,
+    _type: "author",
+    name: "Ceylon Safari Editorial Team",
+    slug: {
+      _type: "slug",
+      current: "ceylon-safari-editorial-team",
+    },
+    bio: [
+      block(
+        "Local safari planning guidance from the Ceylon Safari team in Habarana, Sri Lanka."
+      ),
+    ],
+  })
   .patch(primary._id, (patch) => patch.set(primaryPatch))
 
 for (const slug of duplicateSlugs) {
@@ -241,6 +256,15 @@ for (const { slug, set } of editorialPatches) {
 }
 
 for (const post of posts) {
+  transaction.patch(post._id, (patch) =>
+    patch.set({
+      author: {
+        _type: "reference",
+        _ref: editorialAuthorId,
+      },
+    })
+  )
+
   if (post.slug === "habarana-jeep-safari") continue
 
   const body = post.body?.map((item) => {

@@ -49,7 +49,7 @@ export async function generateMetadata({
       url: canonical,
       siteName: siteConfig.name,
       images: [{ url: image, alt: packageData.name }],
-      locale: "en_US",
+      locale: siteConfig.locale,
       type: "website",
     },
     twitter: {

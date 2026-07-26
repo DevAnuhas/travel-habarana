@@ -1,8 +1,5 @@
-"use client";
-
 import Link from "next/link";
 import Image from "next/image";
-import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { CalendarDots } from "@phosphor-icons/react/dist/ssr";
 import { urlFor } from "@/sanity/lib/image";
@@ -23,15 +20,8 @@ export function BlogCard({ post, index = 0 }: BlogCardProps) {
 	};
 
 	return (
-		<motion.article
+		<article
 			className="bg-white rounded-xl overflow-hidden shadow-lg h-full flex flex-col group"
-			initial={{ opacity: 0, y: 20 }}
-			animate={{ opacity: 1, y: 0 }}
-			transition={{
-				duration: 0.5,
-				delay: index * 0.2,
-			}}
-			viewport={{ once: true, margin: "-50px" }}
 		>
 			<Link
 				href={`/blogs/${post.slug?.current ? post.slug.current : post.slug}`}
@@ -77,6 +67,6 @@ export function BlogCard({ post, index = 0 }: BlogCardProps) {
 					</div>
 				</div>
 			</Link>
-		</motion.article>
+		</article>
 	);
 }

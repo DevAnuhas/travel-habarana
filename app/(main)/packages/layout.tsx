@@ -1,5 +1,7 @@
 import type { Metadata } from "next"
 
+import { siteConfig } from "@/config/site"
+
 export const metadata: Metadata = {
   title: "Safari & Village Tour Packages in Habarana",
   description:
@@ -10,6 +12,14 @@ export const metadata: Metadata = {
     description:
       "Private jeep safaris and local cultural experiences from Habarana, Sri Lanka.",
     url: "/packages",
+    images: [
+      {
+        url: siteConfig.ogImage,
+        width: 1200,
+        height: 630,
+        alt: "Ceylon Safari wildlife and village experiences in Habarana",
+      },
+    ],
   },
 }
 
