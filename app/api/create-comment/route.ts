@@ -1,34 +1,47 @@
 import { type NextRequest, NextResponse } from "next/server";
+
+import { getClientAddress, parseJsonBody } from "@/lib/api";
+import { NotFoundError } from "@/lib/errors";
+import { enforceRateLimit } from "@/lib/rate-limit";
+import { commentRequestSchema } from "@/lib/types";
+import { withErrorHandler } from "@/middleware/error-handler";
 import { client } from "@/sanity/lib/client";
 
 export async function POST(request: NextRequest) {
-	try {
-		const { _id, name, email, comment, imageUrl } = await request.json();
+	return withErrorHandler(request, async () => {
+		const data = await parseJsonBody(request, commentRequestSchema, 8_192);
+		const clientAddress = getClientAddress(request.headers);
 
-		// Create the comment document in Sanity
-		// By default, comments are not approved (approved: false)
+		await enforceRateLimit({
+			scope: "public-comment",
+			identifier: `${clientAddress}:${data._id}`,
+			limit: 3,
+			windowMs: 10 * 60 * 1000,
+		});
+
+		const postExists = await client.fetch<boolean>(
+			"count(*[_type == 'post' && _id == $postId]) > 0",
+			{ postId: data._id }
+		);
+
+		if (!postExists) {
+			throw new NotFoundError("Post not found");
+		}
+
 		await client.create({
 			_type: "comment",
 			post: {
 				_type: "reference",
-				_ref: _id,
+				_ref: data._id,
 			},
-			name,
-			email,
-			comment,
-			imageUrl,
+			name: data.name,
+			comment: data.comment,
 			approved: false,
 		});
 
-		return NextResponse.json({
-			message: "Comment submitted successfully",
-			status: 201,
-		});
-	} catch (error) {
-		console.error("Error submitting comment:", error);
 		return NextResponse.json(
-			{ message: "Could not submit comment", error: (error as Error).message },
-			{ status: 500 }
+			{ message: "Comment submitted for moderation" },
+			{ status: 201 }
 		);
-	}
+	});
 }

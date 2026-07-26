@@ -2,9 +2,10 @@ import { type NextRequest, NextResponse } from "next/server";
 import connectMongoDB from "@/lib/mongodb";
 import Inquiry from "@/models/Inquiry";
 import Package from "@/models/Package";
-import { inquirySchema } from "@/lib/types";
+import { inquiryUpdateSchema, objectIdSchema } from "@/lib/types";
 import { NotFoundError } from "@/lib/errors";
 import { withErrorHandler, withAdminAuth } from "@/middleware/error-handler";
+import { parseJsonBody } from "@/lib/api";
 
 // Get a inquiry by id
 export async function GET(
@@ -14,6 +15,7 @@ export async function GET(
 	return withErrorHandler(request, async () => {
 		return withAdminAuth(request, async () => {
 			const { id } = await params;
+			objectIdSchema.parse(id);
 			await connectMongoDB();
 			Package.init();
 
@@ -36,11 +38,11 @@ export async function PUT(
 	return withErrorHandler(request, async () => {
 		return withAdminAuth(request, async () => {
 			const { id } = await params;
-			const updatedInquiry = inquirySchema.safeParse(await request.json());
-
-			if (!updatedInquiry.success) {
-				return NextResponse.json(updatedInquiry.error.issues, { status: 400 });
-			}
+			objectIdSchema.parse(id);
+			const updatedInquiry = await parseJsonBody(
+				request,
+				inquiryUpdateSchema
+			);
 
 			await connectMongoDB();
 
@@ -50,8 +52,11 @@ export async function PUT(
 				throw new NotFoundError("Inquiry not found");
 			}
 
-			await Inquiry.findByIdAndUpdate(id, updatedInquiry.data);
-			return NextResponse.json(updatedInquiry.data, { status: 201 });
+			const savedInquiry = await Inquiry.findByIdAndUpdate(id, updatedInquiry, {
+				new: true,
+				runValidators: true,
+			});
+			return NextResponse.json(savedInquiry, { status: 200 });
 		});
 	});
 }
@@ -64,6 +69,7 @@ export async function DELETE(
 	return withErrorHandler(request, async () => {
 		return withAdminAuth(request, async () => {
 			const { id } = await params;
+			objectIdSchema.parse(id);
 			await connectMongoDB();
 
 			const inquiry = await Inquiry.findById(id);

@@ -1,11 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { revalidatePath, revalidateTag } from "next/cache";
 import mongoose from "mongoose";
 import connectMongoDB from "@/lib/mongodb";
 import Package from "@/models/Package";
-import { packageSchema } from "@/lib/types";
+import { packageIdentifierSchema, packageSchema } from "@/lib/types";
 import { NotFoundError } from "@/lib/errors";
 import { withErrorHandler, withAdminAuth } from "@/middleware/error-handler";
 import { generateSlug } from "@/utils/slug";
+import { parseJsonBody } from "@/lib/api";
 
 // Get a package by id or slug
 export async function GET(
@@ -14,6 +16,7 @@ export async function GET(
 ) {
 	return withErrorHandler(request, async () => {
 		const { id } = await params;
+		packageIdentifierSchema.parse(id);
 		await connectMongoDB();
 
 		// Try to find by slug first (primary lookup method now)
@@ -50,11 +53,12 @@ export async function PUT(
 	return withErrorHandler(request, async () => {
 		return withAdminAuth(request, async () => {
 			const { id } = await params;
-			const updatedPackage = packageSchema.safeParse(await request.json());
-
-			if (!updatedPackage.success) {
-				return NextResponse.json(updatedPackage.error.issues, { status: 400 });
-			}
+			packageIdentifierSchema.parse(id);
+			const updatedPackage = await parseJsonBody(
+				request,
+				packageSchema,
+				64_000
+			);
 
 			await connectMongoDB();
 
@@ -70,7 +74,7 @@ export async function PUT(
 			}
 
 			// If name changed, update the slug too
-			const packageData = { ...updatedPackage.data };
+			const packageData = { ...updatedPackage };
 
 			if (packageData.name !== packageItem.name) {
 				packageData.slug = generateSlug(packageData.name);
@@ -88,11 +92,19 @@ export async function PUT(
 				}
 			}
 
-			await Package.findByIdAndUpdate(packageItem._id, packageData);
-			return NextResponse.json(
-				{ ...packageData, _id: packageItem._id },
-				{ status: 201 }
+			const savedPackage = await Package.findByIdAndUpdate(
+				packageItem._id,
+				packageData,
+				{ new: true, runValidators: true }
 			);
+			revalidateTag("package", "max");
+			revalidatePath("/packages");
+			revalidatePath(`/packages/${packageItem.slug}`);
+			if (savedPackage?.slug && savedPackage.slug !== packageItem.slug) {
+				revalidatePath(`/packages/${savedPackage.slug}`);
+			}
+			revalidatePath("/sitemap.xml");
+			return NextResponse.json(savedPackage, { status: 200 });
 		});
 	});
 }
@@ -105,6 +117,7 @@ export async function DELETE(
 	return withErrorHandler(request, async () => {
 		return withAdminAuth(request, async () => {
 			const { id } = await params;
+			packageIdentifierSchema.parse(id);
 			await connectMongoDB();
 
 			let packageItem;
@@ -119,6 +132,10 @@ export async function DELETE(
 				throw new NotFoundError("Package not found");
 			}
 
+			revalidateTag("package", "max");
+			revalidatePath("/packages");
+			revalidatePath(`/packages/${packageItem.slug}`);
+			revalidatePath("/sitemap.xml");
 			return NextResponse.json({ success: true }, { status: 200 });
 		});
 	});

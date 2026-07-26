@@ -1,8 +1,14 @@
+import "server-only";
+
 import nodemailer from "nodemailer";
 import { siteConfig } from "@/config/site";
 
 // Configure nodemailer transporter
 export const getEmailTransporter = () => {
+	if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+		throw new Error("Email service is not configured");
+	}
+
 	return nodemailer.createTransport({
 		host: "smtp.gmail.com",
 		port: 465,
@@ -30,6 +36,20 @@ interface Inquiry {
 interface PackageDetails {
 	name: string;
 	images?: string[];
+}
+
+function escapeHtml(value: string): string {
+	return value.replace(
+		/[&<>"']/g,
+		(character) =>
+			({
+				"&": "&amp;",
+				"<": "&lt;",
+				">": "&gt;",
+				'"': "&quot;",
+				"'": "&#039;",
+			})[character] ?? character
+	);
 }
 
 // Format date for display
@@ -152,7 +172,7 @@ export function newInquiryAdminTemplate(
             <h2>Package Information</h2>
             <div class="detail-row">
               <div class="detail-label">Package:</div>
-              <div class="detail-value">${packageDetails.name}</div>
+              <div class="detail-value">${escapeHtml(packageDetails.name)}</div>
             </div>
           </div>
           
@@ -160,15 +180,15 @@ export function newInquiryAdminTemplate(
             <h2>Customer Information</h2>
             <div class="detail-row">
               <div class="detail-label">Name:</div>
-              <div class="detail-value">${inquiry.name}</div>
+              <div class="detail-value">${escapeHtml(inquiry.name)}</div>
             </div>
             <div class="detail-row">
               <div class="detail-label">Email:</div>
-              <div class="detail-value">${inquiry.email}</div>
+              <div class="detail-value">${escapeHtml(inquiry.email)}</div>
             </div>
             <div class="detail-row">
               <div class="detail-label">Phone:</div>
-              <div class="detail-value">${inquiry.phone}</div>
+              <div class="detail-value">${escapeHtml(inquiry.phone)}</div>
             </div>
             <div class="detail-row">
               <div class="detail-label">Date:</div>
@@ -183,7 +203,7 @@ export function newInquiryAdminTemplate(
 								? `
             <div class="detail-row">
               <div class="detail-label">Special Requests:</div>
-              <div class="detail-value">${inquiry.specialRequests}</div>
+              <div class="detail-value">${escapeHtml(inquiry.specialRequests)}</div>
             </div>
             `
 								: ""
@@ -304,23 +324,25 @@ export function newInquiryCustomerTemplate(
         </div>
         
         <div class="content">
-          <p>Dear ${inquiry.name},</p>
+          <p>Dear ${escapeHtml(inquiry.name)},</p>
           
           <p>Thank you for your interest in our <strong>${
-						packageDetails.name
+						escapeHtml(packageDetails.name)
 					}</strong> package. We have received your inquiry and our team will get back to you within 24 hours.</p>
           
           <div class="inquiry-summary">
             <h2>Your Inquiry Details</h2>
             <ul>
-              <li><strong>Package:</strong> ${packageDetails.name}</li>
+              <li><strong>Package:</strong> ${escapeHtml(packageDetails.name)}</li>
               <li><strong>Date:</strong> ${formatDate(inquiry.date)}</li>
               <li><strong>Number of People:</strong> ${
 								inquiry.numberOfPeople
 							}</li>
               ${
 								inquiry.specialRequests
-									? `<li><strong>Special Requests:</strong> ${inquiry.specialRequests}</li>`
+									? `<li><strong>Special Requests:</strong> ${escapeHtml(
+											inquiry.specialRequests
+										)}</li>`
 									: ""
 							}
             </ul>
@@ -457,7 +479,7 @@ export function passwordResetAdminTemplate(
         
         <div class="content">
           <h2>Password Reset Request</h2>
-          <p>Hello ${userName},</p>
+          <p>Hello ${escapeHtml(userName)},</p>
                    <p>We received a request to reset your password for your ${
 											siteConfig.name
 										} admin account. If you made this request, click the button below to reset your password:</p>

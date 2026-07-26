@@ -5,18 +5,33 @@ import bcrypt from "bcryptjs";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import PasswordResetToken from "@/models/PasswordResetToken";
+import { passwordPolicySchema } from "@/lib/types";
+import { getClientAddress, parseJsonBody } from "@/lib/api";
+import { enforceRateLimit } from "@/lib/rate-limit";
+import { withErrorHandler } from "@/middleware/error-handler";
 
 const resetPasswordSchema = z.object({
-	token: z.string().min(1, "Token is required"),
-	password: z.string().min(8, "Password must be at least 8 characters long"),
+	token: z.string().trim().length(64, "Invalid reset token"),
+	password: passwordPolicySchema,
 });
 
 export async function POST(request: NextRequest) {
-	try {
-		await connectDB();
+	return withErrorHandler(request, async () => {
+		const { token, password } = await parseJsonBody(
+			request,
+			resetPasswordSchema,
+			4_096
+		);
+		const clientAddress = getClientAddress(request.headers);
 
-		const body = await request.json();
-		const { token, password } = resetPasswordSchema.parse(body);
+		await enforceRateLimit({
+			scope: "reset-password",
+			identifier: clientAddress,
+			limit: 10,
+			windowMs: 60 * 60 * 1000,
+		});
+
+		await connectDB();
 
 		// Hash the provided token to compare with stored hash
 		const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
@@ -72,19 +87,5 @@ export async function POST(request: NextRequest) {
 			},
 			{ status: 201 }
 		);
-	} catch (error) {
-		console.error("Reset password error:", error);
-
-		if (error instanceof z.ZodError) {
-			return NextResponse.json(
-				{ success: false, message: error.issues[0].message },
-				{ status: 400 }
-			);
-		}
-
-		return NextResponse.json(
-			{ success: false, message: "An unexpected error occurred" },
-			{ status: 500 }
-		);
-	}
+	});
 }

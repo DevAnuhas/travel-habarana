@@ -35,10 +35,11 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import PasswordStrengthIndicator from "@/components/ui/password-strength-indicator";
+import { passwordPolicySchema } from "@/lib/types";
 
 const resetPasswordSchema = z
 	.object({
-		password: z.string().min(8, "Password must be at least 8 characters long"),
+		password: passwordPolicySchema,
 		confirmPassword: z.string().min(1, "Please confirm your password"),
 	})
 	.refine((data) => data.password === data.confirmPassword, {

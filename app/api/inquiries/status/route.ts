@@ -4,12 +4,16 @@ import Inquiry from "@/models/Inquiry";
 import { inquiryStatusUpdateSchema } from "@/lib/types";
 import { NotFoundError, ValidationError } from "@/lib/errors";
 import { withErrorHandler, withAdminAuth } from "@/middleware/error-handler";
+import { parseJsonBody } from "@/lib/api";
 
 // POST update inquiry status
 export async function POST(req: NextRequest) {
 	return withErrorHandler(req, async (req) => {
 		return withAdminAuth(req, async () => {
-			const validatedData = inquiryStatusUpdateSchema.parse(await req.json());
+			const validatedData = await parseJsonBody(
+				req,
+				inquiryStatusUpdateSchema
+			);
 
 			if (validatedData.ids.length === 0) {
 				throw new ValidationError("No inquiry IDs provided");

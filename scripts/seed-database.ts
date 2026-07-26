@@ -4,14 +4,18 @@ import clearDatabase from "@/scripts/clear-database";
 import User from "@/models/User";
 import Package from "@/models/Package";
 
-// Admin users
-const adminUsers = [
-	{
-		email: "admin@travelhabarana.com",
-		password: "password",
-		role: "admin",
-	},
-];
+function getAdminUsers() {
+	const email = process.env.SEED_ADMIN_EMAIL;
+	const password = process.env.SEED_ADMIN_PASSWORD;
+
+	if (!email || !password) {
+		throw new Error(
+			"SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD are required to seed users."
+		);
+	}
+
+	return [{ email, password, role: "admin" }];
+}
 
 // Tour packages
 const travelPackages = [
@@ -111,6 +115,7 @@ const travelPackages = [
 
 async function seedDatabase() {
 	try {
+		const adminUsers = getAdminUsers();
 		await connectMongoDB();
 
 		// Clear existing data
@@ -144,12 +149,11 @@ async function seedDatabase() {
 		console.log(`   • Admin users created: ${adminCount}`);
 		console.log(`   • Travel packages created: ${packageCount}`);
 
-		// Display login credentials
+		// Display the seeded account without printing its password.
 		if (adminCount > 0) {
-			console.log("\n🔐 Admin Login Credentials:");
+			console.log("\n🔐 Seeded Admin Accounts:");
 			adminUsers.forEach((admin) => {
 				console.log(`   Email: ${admin.email}`);
-				console.log(`   Password: ${admin.password}\n`);
 				console.log(`   ---`);
 			});
 		}

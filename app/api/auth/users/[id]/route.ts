@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 import connectMongoDB from "@/lib/mongodb";
 import User from "@/models/User";
-import { passwordChangeSchema } from "@/lib/types";
+import { objectIdSchema, passwordChangeSchema } from "@/lib/types";
 import {
 	NotFoundError,
 	ForbiddenError,
@@ -10,6 +10,8 @@ import {
 	ValidationError,
 } from "@/lib/errors";
 import { withErrorHandler, withAdminAuth } from "@/middleware/error-handler";
+import { parseJsonBody } from "@/lib/api";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 // Change password
 export async function PATCH(req: NextRequest) {
@@ -24,15 +26,24 @@ export async function PATCH(req: NextRequest) {
 				throw new UnauthorizedError();
 			}
 
-			const body = await req.json();
-
 			// Validate request body
-			const validatedData = passwordChangeSchema.parse(body);
+			const validatedData = await parseJsonBody(
+				req,
+				passwordChangeSchema,
+				4_096
+			);
+
+			await enforceRateLimit({
+				scope: "change-password",
+				identifier: String(token.id),
+				limit: 5,
+				windowMs: 60 * 60 * 1000,
+			});
 
 			await connectMongoDB();
 
 			// Find user
-			const user = await User.findById(token.id);
+			const user = await User.findById(token.id).select("+password");
 			if (!user) {
 				throw new UnauthorizedError("User not found");
 			}
@@ -62,6 +73,7 @@ export async function DELETE(
 	return withErrorHandler(req, async (req) => {
 		return withAdminAuth(req, async () => {
 			const { id } = await params;
+			objectIdSchema.parse(id);
 			const token = await getToken({
 				req,
 				secret: process.env.NEXTAUTH_SECRET,

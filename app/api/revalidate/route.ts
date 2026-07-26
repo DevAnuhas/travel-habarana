@@ -1,61 +1,52 @@
-import { revalidatePath } from "next/cache";
-import { NextRequest, NextResponse } from "next/server";
+import { timingSafeEqual } from "node:crypto";
+
+import { revalidatePath, revalidateTag } from "next/cache";
+import { type NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+
+import { parseJsonBody } from "@/lib/api";
+import { UnauthorizedError } from "@/lib/errors";
+import { withErrorHandler } from "@/middleware/error-handler";
+
+const webhookSchema = z.object({
+	_type: z.enum(["post", "comment", "author", "category"]),
+	isFeatured: z.boolean().optional(),
+	slug: z.object({ current: z.string().max(200) }).optional(),
+});
+
+function hasValidSecret(request: NextRequest) {
+	const configuredSecret = process.env.SANITY_WEBHOOK_SECRET;
+	const providedSecret = request.headers.get("x-webhook-secret");
+
+	if (!configuredSecret || !providedSecret) {
+		return false;
+	}
+
+	const expected = Buffer.from(configuredSecret);
+	const provided = Buffer.from(providedSecret);
+	return (
+		expected.length === provided.length && timingSafeEqual(expected, provided)
+	);
+}
 
 export async function POST(request: NextRequest) {
-	try {
-		// Parse the request body
-		const body = await request.json();
-
-		// Verify the webhook secret if you have one
-		const secret = request.headers.get("x-webhook-secret");
-		const validSecret = secret === process.env.SANITY_WEBHOOK_SECRET;
-
-		if (!validSecret) {
-			return NextResponse.json(
-				{ message: "Invalid webhook secret" },
-				{ status: 401 }
-			);
+	return withErrorHandler(request, async () => {
+		if (!hasValidSecret(request)) {
+			throw new UnauthorizedError("Invalid webhook secret");
 		}
 
-		// Determine what type of content changed
-		const { _type, isFeatured } = body;
+		const body = await parseJsonBody(request, webhookSchema, 16_384);
 
-		// Define paths to revalidate based on content type
-		const pathsToRevalidate = ["/"];
+		revalidateTag("sanity", "max");
+		revalidateTag(body._type, "max");
+		revalidatePath("/");
+		revalidatePath("/blogs");
+		revalidatePath("/sitemap.xml");
 
-		if (_type === "post") {
-			// For blog posts revalidate the blog listings and sitemap
-			pathsToRevalidate.push("/blogs");
-			pathsToRevalidate.push("/sitemap.xml");
-
-			// If it's a featured post, we also need to revalidate the homepage
-			if (isFeatured) {
-				// Revalidate specific tags for featured posts
-				revalidatePath("/", "page");
-				revalidatePath("/", "layout");
-			}
+		if (body.slug?.current) {
+			revalidatePath(`/blogs/${body.slug.current}`);
 		}
 
-		if (_type === "package") {
-			// For packages revalidate the package listings and sitemap
-			pathsToRevalidate.push("/packages");
-			pathsToRevalidate.push("/sitemap.xml");
-		}
-
-		// Revalidate all necessary paths
-		for (const path of pathsToRevalidate) {
-			revalidatePath(path);
-		}
-
-		return NextResponse.json({
-			revalidated: true,
-			message: `Revalidated paths: ${pathsToRevalidate.join(", ")}`,
-		});
-	} catch (error) {
-		console.error("Error revalidating paths:", error);
-		return NextResponse.json(
-			{ message: "Error revalidating paths", error: (error as Error).message },
-			{ status: 500 }
-		);
-	}
+		return NextResponse.json({ revalidated: true });
+	});
 }

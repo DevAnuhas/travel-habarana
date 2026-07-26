@@ -7,13 +7,22 @@
  * https://github.com/sanity-io/next-sanity
  */
 
-import { NextStudio } from 'next-sanity/studio'
-import config from '../../../../sanity.config'
+import { redirect } from "next/navigation";
+import { getServerSession } from "next-auth";
+import { NextStudio } from "next-sanity/studio";
 
-export const dynamic = 'force-static'
+import { authOptions } from "@/lib/auth-options";
+import config from "../../../../sanity.config";
 
-export { metadata, viewport } from 'next-sanity/studio'
+export const dynamic = "force-dynamic";
 
-export default function StudioPage() {
-  return <NextStudio config={config} />
+export { metadata, viewport } from "next-sanity/studio";
+
+export default async function StudioPage() {
+	const session = await getServerSession(authOptions);
+	if (session?.user?.role !== "admin") {
+		redirect("/admin/login");
+	}
+
+	return <NextStudio config={config} />;
 }

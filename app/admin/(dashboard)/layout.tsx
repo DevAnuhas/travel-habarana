@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { getServerSession } from "next-auth";
 import { AdminSidebar } from "@/components/layout/sidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { authOptions } from "@/lib/auth-options";
 
 export const metadata: Metadata = {
 	title: "Admin Dashboard - Travel Habarana",
@@ -9,11 +12,16 @@ export const metadata: Metadata = {
 	robots: "noindex, nofollow",
 };
 
-export default function AdminLayout({
+export default async function AdminLayout({
 	children,
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
+	const session = await getServerSession(authOptions);
+	if (session?.user?.role !== "admin") {
+		redirect("/admin/login");
+	}
+
 	return (
 		<SidebarProvider>
 			<div className="hidden md:block">

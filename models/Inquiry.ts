@@ -13,6 +13,13 @@ const inquirySchema = new mongoose.Schema(
 		date: { type: Date, required: true },
 		numberOfPeople: { type: Number, required: true },
 		specialRequests: { type: String },
+		requestKey: {
+			type: String,
+			unique: true,
+			sparse: true,
+			index: true,
+			select: false,
+		},
 		status: {
 			type: String,
 			enum: ["new", "contacted", "confirmed", "cancelled"],

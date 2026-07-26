@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { CalendarDots } from "@phosphor-icons/react";
@@ -55,6 +55,7 @@ export default function BookingForm() {
 	const [packages, setPackages] = useState<Package[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [idempotencyKey, setIdempotencyKey] = useState<string | null>(null);
 
 	// Initialize the form with React Hook Form and Zod resolver
 	const form = useForm<FormValues>({
@@ -65,6 +66,7 @@ export default function BookingForm() {
 			phone: "",
 			packageId: packageIdFromUrl || "",
 			specialRequests: "",
+			website: "",
 		},
 	});
 
@@ -96,6 +98,8 @@ export default function BookingForm() {
 
 	const onSubmit = async (data: FormValues) => {
 		setIsSubmitting(true);
+		const submissionKey = idempotencyKey ?? globalThis.crypto.randomUUID();
+		setIdempotencyKey(submissionKey);
 
 		try {
 			const formData = {
@@ -109,12 +113,14 @@ export default function BookingForm() {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
+					"Idempotency-Key": submissionKey,
 				},
 				body: JSON.stringify(formData),
 			});
 
 			if (!response.ok) {
-				throw new Error("Failed to submit inquiry");
+				const result = await response.json().catch(() => null);
+				throw new Error(result?.error || "Failed to submit inquiry");
 			}
 
 			toast.success(
@@ -123,6 +129,7 @@ export default function BookingForm() {
 
 			// Reset form
 			form.reset();
+			setIdempotencyKey(null);
 
 			// Redirect to thank you page
 			router.push("/thank-you");
@@ -145,6 +152,14 @@ export default function BookingForm() {
 
 			<Form {...form}>
 				<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+					<input
+						{...form.register("website")}
+						type="text"
+						tabIndex={-1}
+						autoComplete="off"
+						aria-hidden="true"
+						className="absolute -left-[9999px] size-px"
+					/>
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 						{/* Name */}
 						<FormField
@@ -287,6 +302,7 @@ export default function BookingForm() {
 										<Input
 											type="number"
 											min="1"
+											max="50"
 											step="1"
 											value={field.value}
 											onChange={(e) =>

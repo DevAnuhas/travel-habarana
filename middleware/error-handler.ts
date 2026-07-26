@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
+import { z } from "zod";
 import { AppError, ForbiddenError } from "@/lib/errors";
 
 export type ApiHandler = (
@@ -19,7 +20,17 @@ export async function withErrorHandler(
 		if (error instanceof AppError) {
 			return NextResponse.json(
 				{ error: error.message },
-				{ status: error.statusCode }
+				{ status: error.statusCode, headers: error.headers }
+			);
+		}
+
+		if (error instanceof z.ZodError) {
+			return NextResponse.json(
+				{
+					error: "Invalid request",
+					issues: error.issues.map(({ path, message }) => ({ path, message })),
+				},
+				{ status: 400 }
 			);
 		}
 

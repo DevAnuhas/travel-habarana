@@ -4,17 +4,30 @@ import crypto from "crypto";
 import connectDB from "@/lib/mongodb";
 import PasswordResetToken from "@/models/PasswordResetToken";
 import User from "@/models/User";
+import { getClientAddress, parseJsonBody } from "@/lib/api";
+import { enforceRateLimit } from "@/lib/rate-limit";
+import { withErrorHandler } from "@/middleware/error-handler";
 
 const verifyTokenSchema = z.object({
-	token: z.string().min(1, "Token is required"),
+	token: z.string().trim().length(64, "Invalid reset token"),
 });
 
 export async function POST(request: NextRequest) {
-	try {
-		await connectDB();
+	return withErrorHandler(request, async () => {
+		const { token } = await parseJsonBody(
+			request,
+			verifyTokenSchema,
+			4_096
+		);
 
-		const body = await request.json();
-		const { token } = verifyTokenSchema.parse(body);
+		await enforceRateLimit({
+			scope: "verify-reset-token",
+			identifier: getClientAddress(request.headers),
+			limit: 20,
+			windowMs: 15 * 60 * 1000,
+		});
+
+		await connectDB();
 
 		// Hash the provided token to compare with stored hash
 		const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
@@ -56,19 +69,5 @@ export async function POST(request: NextRequest) {
 			},
 			{ status: 200 }
 		);
-	} catch (error) {
-		console.error("Verify reset token error:", error);
-
-		if (error instanceof z.ZodError) {
-			return NextResponse.json(
-				{ success: false, message: error.issues[0].message },
-				{ status: 400 }
-			);
-		}
-
-		return NextResponse.json(
-			{ success: false, message: "An unexpected error occurred" },
-			{ status: 500 }
-		);
-	}
+	});
 }

@@ -11,7 +11,7 @@ export default function PasswordStrengthIndicator({
 	const getPasswordStrength = (password: string) => {
 		let strength = 0;
 		const checks = [
-			password.length >= 8,
+			password.length >= 12,
 			/[A-Z]/.test(password),
 			/[a-z]/.test(password),
 			/[0-9]/.test(password),
@@ -69,12 +69,12 @@ export default function PasswordStrengthIndicator({
 			<Progress value={passwordStrength.percentage} className="h-2" />
 			<div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
 				<div className="flex items-center gap-1">
-					{password.length >= 8 ? (
+					{password.length >= 12 ? (
 						<CheckCircle className="h-3 w-3 text-green-600" />
 					) : (
 						<WarningCircle className="h-3 w-3 text-gray-400" />
 					)}
-					8+ characters
+					12+ characters
 				</div>
 				<div className="flex items-center gap-1">
 					{/[A-Z]/.test(password) ? (

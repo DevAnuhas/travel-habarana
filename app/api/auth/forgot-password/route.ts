@@ -9,29 +9,41 @@ import {
 	getEmailTransporter,
 	passwordResetAdminTemplate,
 } from "@/lib/email-service";
+import { getClientAddress, parseJsonBody } from "@/lib/api";
+import { enforceRateLimit } from "@/lib/rate-limit";
+import { withErrorHandler } from "@/middleware/error-handler";
 
 const forgotPasswordSchema = z.object({
-	email: z.string().email("Invalid email address"),
+	email: z.email("Invalid email address").trim().toLowerCase(),
 });
 
 export async function POST(request: NextRequest) {
-	try {
-		await connectDB();
+	return withErrorHandler(request, async () => {
+		const { email } = await parseJsonBody(
+			request,
+			forgotPasswordSchema,
+			4_096
+		);
+		const clientAddress = getClientAddress(request.headers);
 
-		const body = await request.json();
-		const { email } = forgotPasswordSchema.parse(body);
+		await enforceRateLimit({
+			scope: "forgot-password",
+			identifier: `${clientAddress}:${email}`,
+			limit: 5,
+			windowMs: 60 * 60 * 1000,
+		});
+
+		await connectDB();
 
 		// Find user by email
 		const user = await User.findOne({ email: email.toLowerCase() });
 
 		if (!user) {
-			return NextResponse.json(
-				{
-					success: false,
-					message: "A user with this email address was not found",
-				},
-				{ status: 404 }
-			);
+			return NextResponse.json({
+				success: true,
+				message:
+					"If an account exists for this email, a reset link will be sent.",
+			});
 		}
 
 		// Delete any existing reset tokens for this user
@@ -65,33 +77,11 @@ export async function POST(request: NextRequest) {
 			});
 		} catch (error) {
 			console.error("Failed to send password reset email:", error);
-			return NextResponse.json(
-				{ success: false, message: "Failed to send password reset email" },
-				{ status: 500 }
-			);
 		}
 
-		return NextResponse.json(
-			{
-				success: true,
-				message:
-					"Password reset link has been sent. Check your email for instructions.",
-			},
-			{ status: 200 }
-		);
-	} catch (error) {
-		console.error("Forgot password error:", error);
-
-		if (error instanceof z.ZodError) {
-			return NextResponse.json(
-				{ success: false, message: error.issues[0].message },
-				{ status: 400 }
-			);
-		}
-
-		return NextResponse.json(
-			{ success: false, message: "An unexpected error occurred" },
-			{ status: 500 }
-		);
-	}
+		return NextResponse.json({
+			success: true,
+			message: "If an account exists for this email, a reset link will be sent.",
+		});
+	});
 }
