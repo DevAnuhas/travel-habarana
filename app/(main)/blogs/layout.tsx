@@ -1,15 +1,16 @@
-import type { Metadata } from "next";
+import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-	title: "Blogs",
-	description:
-		"Discover insightful travel tips, guides, and stories about Habarana. Explore our latest blog posts to plan your perfect adventure in Sri Lanka with Travel Habarana.",
-};
+  title: "Safari Guides & Habarana Travel Blog",
+  description:
+    "Plan a better safari with local guides to Minneriya, Kaudulla, Hurulu Eco Park, Habarana village experiences, and Sri Lanka's Cultural Triangle.",
+  alternates: { canonical: "/blogs" },
+}
 
 export default function BlogsPageLayout({
-	children,
+  children,
 }: Readonly<{
-	children: React.ReactNode;
+  children: React.ReactNode
 }>) {
-	return children;
+  return children
 }

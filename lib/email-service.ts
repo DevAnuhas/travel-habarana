@@ -1,73 +1,81 @@
-import "server-only";
+import "server-only"
 
-import nodemailer from "nodemailer";
-import { siteConfig } from "@/config/site";
+import nodemailer from "nodemailer"
+import { siteConfig } from "@/config/site"
 
 // Configure nodemailer transporter
 export const getEmailTransporter = () => {
-	if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-		throw new Error("Email service is not configured");
-	}
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+    throw new Error("Email service is not configured")
+  }
 
-	return nodemailer.createTransport({
-		host: "smtp.gmail.com",
-		port: 465,
-		secure: true,
-		auth: {
-			user: process.env.EMAIL_USER,
-			pass: process.env.EMAIL_PASSWORD,
-		},
-	});
-};
+  return nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASSWORD,
+    },
+  })
+}
+
+export const getEmailSender = (name: string) => ({
+  name,
+  address:
+    process.env.EMAIL_FROM ||
+    process.env.EMAIL_USER ||
+    siteConfig.contact.email,
+})
 
 /**
  * Email templates for various notifications
  */
 
 interface Inquiry {
-	name: string;
-	email: string;
-	phone: string;
-	date: string;
-	numberOfPeople: number;
-	specialRequests?: string;
+  name: string
+  email: string
+  phone: string
+  date: string
+  numberOfPeople: number
+  specialRequests?: string
 }
 
 interface PackageDetails {
-	name: string;
-	images?: string[];
+  name: string
+  images?: string[]
 }
 
 function escapeHtml(value: string): string {
-	return value.replace(
-		/[&<>"']/g,
-		(character) =>
-			({
-				"&": "&amp;",
-				"<": "&lt;",
-				">": "&gt;",
-				'"': "&quot;",
-				"'": "&#039;",
-			})[character] ?? character
-	);
+  return value.replace(
+    /[&<>"']/g,
+    (character) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;",
+      })[character] ?? character
+  )
 }
 
 // Format date for display
 export function formatDate(dateString: string): string {
-	return new Date(dateString).toLocaleDateString("en-US", {
-		weekday: "long",
-		year: "numeric",
-		month: "long",
-		day: "numeric",
-	});
+  return new Date(dateString).toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  })
 }
 
 // Admin notification for new inquiry
 export function newInquiryAdminTemplate(
-	inquiry: Inquiry,
-	packageDetails: PackageDetails
+  inquiry: Inquiry,
+  packageDetails: PackageDetails
 ) {
-	return `
+  return `
     <!DOCTYPE html>
     <html>
     <head>
@@ -165,8 +173,8 @@ export function newInquiryAdminTemplate(
         
         <div class="content">
           <p>You have received a new booking inquiry from the ${
-						siteConfig.name
-					} website. Please review the details below and respond to the customer as soon as possible.</p>
+            siteConfig.name
+          } website. Please review the details below and respond to the customer as soon as possible.</p>
           
           <div class="package-info">
             <h2>Package Information</h2>
@@ -199,44 +207,42 @@ export function newInquiryAdminTemplate(
               <div class="detail-value">${inquiry.numberOfPeople} people</div>
             </div>
             ${
-							inquiry.specialRequests
-								? `
+              inquiry.specialRequests
+                ? `
             <div class="detail-row">
               <div class="detail-label">Special Requests:</div>
               <div class="detail-value">${escapeHtml(inquiry.specialRequests)}</div>
             </div>
             `
-								: ""
-						}
+                : ""
+            }
           </div>
           
           <p>Please respond to this inquiry within 24 hours to ensure customer satisfaction.</p>
           
-          <a href="${
-						process.env.NEXT_PUBLIC_APP_URL || siteConfig.url
-					}/admin/inquiries" class="cta-button">View in Admin Dashboard</a>
+          <a href="${siteConfig.url}/admin/inquiries" class="cta-button">View in Admin Dashboard</a>
         </div>
         
         <div class="footer">
           <p>This is an automated email from ${
-						siteConfig.name
-					}. Please do not reply to this email.</p>
+            siteConfig.name
+          }. Please do not reply to this email.</p>
           <p>&copy; ${new Date().getFullYear()} ${
-						siteConfig.name
-					}. All rights reserved.</p>
+            siteConfig.name
+          }. All rights reserved.</p>
         </div>
       </div>
     </body>
     </html>
-  `;
+  `
 }
 
 // Customer confirmation for new inquiry
 export function newInquiryCustomerTemplate(
-	inquiry: Inquiry,
-	packageDetails: PackageDetails
+  inquiry: Inquiry,
+  packageDetails: PackageDetails
 ) {
-	return `
+  return `
     <!DOCTYPE html>
     <html>
     <head>
@@ -326,9 +332,9 @@ export function newInquiryCustomerTemplate(
         <div class="content">
           <p>Dear ${escapeHtml(inquiry.name)},</p>
           
-          <p>Thank you for your interest in our <strong>${
-						escapeHtml(packageDetails.name)
-					}</strong> package. We have received your inquiry and our team will get back to you within 24 hours.</p>
+          <p>Thank you for your interest in our <strong>${escapeHtml(
+            packageDetails.name
+          )}</strong> package. We have received your inquiry and our team will get back to you within 24 hours.</p>
           
           <div class="inquiry-summary">
             <h2>Your Inquiry Details</h2>
@@ -336,15 +342,15 @@ export function newInquiryCustomerTemplate(
               <li><strong>Package:</strong> ${escapeHtml(packageDetails.name)}</li>
               <li><strong>Date:</strong> ${formatDate(inquiry.date)}</li>
               <li><strong>Number of People:</strong> ${
-								inquiry.numberOfPeople
-							}</li>
+                inquiry.numberOfPeople
+              }</li>
               ${
-								inquiry.specialRequests
-									? `<li><strong>Special Requests:</strong> ${escapeHtml(
-											inquiry.specialRequests
-										)}</li>`
-									: ""
-							}
+                inquiry.specialRequests
+                  ? `<li><strong>Special Requests:</strong> ${escapeHtml(
+                      inquiry.specialRequests
+                    )}</li>`
+                  : ""
+              }
             </ul>
           </div>
           
@@ -382,25 +388,23 @@ export function newInquiryCustomerTemplate(
         
         <div class="footer">
           <p>&copy; ${new Date().getFullYear()} ${
-						siteConfig.name
-					}. All rights reserved.</p>
+            siteConfig.name
+          }. All rights reserved.</p>
         </div>
       </div>
     </body>
     </html>
-  `;
+  `
 }
 
 // Password reset email template
 export function passwordResetAdminTemplate(
-	resetToken: string,
-	userName: string
+  resetToken: string,
+  userName: string
 ) {
-	const resetUrl = `${
-		process.env.NEXT_PUBLIC_APP_URL || siteConfig.url
-	}/admin/reset-password?token=${resetToken}`;
+  const resetUrl = `${siteConfig.url}/admin/reset-password?token=${resetToken}`
 
-	return `<!DOCTYPE html>
+  return `<!DOCTYPE html>
     <html>
     <head>
       <meta charset="utf-8">
@@ -481,8 +485,8 @@ export function passwordResetAdminTemplate(
           <h2>Password Reset Request</h2>
           <p>Hello ${escapeHtml(userName)},</p>
                    <p>We received a request to reset your password for your ${
-											siteConfig.name
-										} admin account. If you made this request, click the button below to reset your password:</p>
+                     siteConfig.name
+                   } admin account. If you made this request, click the button below to reset your password:</p>
           
           <div style="text-align: center; margin: 30px 0;">
             <a href="${resetUrl}" class="reset-button">Reset My Password</a>
@@ -508,13 +512,13 @@ export function passwordResetAdminTemplate(
         
         <div class="footer">
           <p>This is an automated security email from ${
-						siteConfig.name
-					} Admin Portal.</p>
+            siteConfig.name
+          } Admin Portal.</p>
           <p>&copy; ${new Date().getFullYear()} ${
-						siteConfig.name
-					}. All rights reserved.</p>
+            siteConfig.name
+          }. All rights reserved.</p>
         </div>
       </div>
     </body>
-    </html>`;
+    </html>`
 }

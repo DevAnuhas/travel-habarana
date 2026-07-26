@@ -1,160 +1,166 @@
-import Script from "next/script";
-import type { Metadata } from "next";
-import { Inter, DM_Serif_Display } from "next/font/google";
-import "./globals.css";
-import { Toaster } from "@/components/ui/sonner";
-import { siteConfig } from "@/config/site";
+import type { Metadata } from "next"
+import { DM_Serif_Display, Inter } from "next/font/google"
+
+import "./globals.css"
+
+import { JsonLd } from "@/components/seo/json-ld"
+import { Toaster } from "@/components/ui/sonner"
+import { siteConfig } from "@/config/site"
 
 const inter = Inter({
-	variable: "--font-inter",
-	subsets: ["latin"],
-});
+  variable: "--font-inter",
+  subsets: ["latin"],
+  display: "swap",
+})
 
 const dmSerifDisplay = DM_Serif_Display({
-	variable: "--font-dm-serif-display",
-	subsets: ["latin"],
-	weight: "400",
-});
+  variable: "--font-dm-serif-display",
+  subsets: ["latin"],
+  weight: "400",
+  display: "swap",
+})
 
 export const metadata: Metadata = {
-	metadataBase: new URL(siteConfig.url),
-	title: {
-		default: `${siteConfig.name} - Sri Lankan Safari & Cultural Tours`,
-		template: `%s | ${siteConfig.name}`,
-	},
-	description:
-		"Experience the best safari tours in Sri Lanka with Travel Habarana. Book jeep safaris to Hurulu, Minneriya, and Kaudulla National Parks, plus authentic village cultural tours.",
-	keywords: [
-		"Travel Habarana",
-		"Sri Lanka Safari Tours",
-		"Hurulu Eco Park",
-		"Minneriya National Park",
-		"Kaudulla National Park",
-		"Jeep Safari Sri Lanka",
-		"Cultural Tours Sri Lanka",
-		"Village Tours Sri Lanka",
-		"Wildlife Tours Sri Lanka",
-		"Travel Packages Sri Lanka",
-		"Book Safari Tours Sri Lanka",
-		"Travel Sri Lanka",
-		"Sri Lanka Travel Guide",
-	],
-	openGraph: {
-		title: {
-			default: `${siteConfig.name} - Sri Lankan Safari & Cultural Tours`,
-			template: `%s | ${siteConfig.name}`,
-		},
-		description: siteConfig.description,
-		url: siteConfig.url,
-		siteName: siteConfig.name,
-		images: [
-			{
-				url: siteConfig.ogImage,
-				width: 800,
-				height: 600,
-				alt: `${siteConfig.name} - Featured Image`,
-			},
-		],
-		locale: "en_US",
-		type: "website",
-	},
-	twitter: {
-		card: "summary_large_image",
-		title: {
-			default: `${siteConfig.name} - Sri Lankan Safari & Cultural Tours`,
-			template: `%s | ${siteConfig.name}`,
-		},
-		description: siteConfig.description,
-		images: [
-			{
-				url: siteConfig.ogImage,
-				alt: `${siteConfig.name} - Featured Image`,
-			},
-		],
-	},
-	alternates: {
-		canonical: siteConfig.url,
-	},
-	authors: [
-		{
-			name: siteConfig.author,
-			url: siteConfig.url,
-		},
-	],
-	creator: siteConfig.author,
-	publisher: siteConfig.author,
-	formatDetection: {
-		email: false,
-		address: false,
-		telephone: false,
-	},
-};
+  metadataBase: new URL(siteConfig.url),
+  applicationName: siteConfig.name,
+  title: {
+    default: "Minneriya & Habarana Jeep Safaris | Ceylon Safari",
+    template: `%s | ${siteConfig.name}`,
+  },
+  description:
+    "Book private elephant jeep safaris from Habarana to Minneriya, Kaudulla, and Hurulu Eco Park, plus local village and cooking experiences.",
+  openGraph: {
+    title: "Minneriya & Habarana Jeep Safaris | Ceylon Safari",
+    description: siteConfig.description,
+    siteName: siteConfig.name,
+    images: [
+      {
+        url: siteConfig.ogImage,
+        width: 1200,
+        height: 630,
+        alt: "Ceylon Safari wildlife and village experiences in Habarana",
+      },
+    ],
+    locale: siteConfig.locale,
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Minneriya & Habarana Jeep Safaris | Ceylon Safari",
+    description: siteConfig.description,
+    images: [siteConfig.ogImage],
+  },
+  authors: [{ name: siteConfig.author, url: siteConfig.url }],
+  creator: siteConfig.author,
+  publisher: siteConfig.author,
+  category: "travel",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+  },
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  other: {
+    "geo.region": "LK-7",
+    "geo.placename": siteConfig.contact.addressLocality,
+    "geo.position": `${siteConfig.geo.latitude};${siteConfig.geo.longitude}`,
+    ICBM: `${siteConfig.geo.latitude}, ${siteConfig.geo.longitude}`,
+  },
+}
+
+const businessId = `${siteConfig.url}/#business`
+
+const organizationGraph = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "TravelAgency",
+      "@id": businessId,
+      name: siteConfig.name,
+      alternateName: siteConfig.formerNames,
+      description: siteConfig.description,
+      disambiguatingDescription:
+        "Ceylon Safari at Anuradhapura Road, Habarana 50150, formerly Travel Habarana Jeep Safari & Village Foods.",
+      url: siteConfig.url,
+      logo: {
+        "@type": "ImageObject",
+        url: new URL(siteConfig.logo, siteConfig.url).toString(),
+      },
+      image: new URL(siteConfig.ogImage, siteConfig.url).toString(),
+      telephone: siteConfig.contact.phoneE164,
+      email: siteConfig.contact.email,
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: siteConfig.contact.streetAddress,
+        addressLocality: siteConfig.contact.addressLocality,
+        postalCode: siteConfig.contact.postalCode,
+        addressCountry: siteConfig.contact.addressCountry,
+      },
+      geo: {
+        "@type": "GeoCoordinates",
+        latitude: siteConfig.geo.latitude,
+        longitude: siteConfig.geo.longitude,
+      },
+      hasMap: siteConfig.links.googleMaps,
+      openingHours: siteConfig.openingHours,
+      areaServed: siteConfig.serviceAreas.map((name) => ({
+        "@type": "Place",
+        name,
+      })),
+      contactPoint: {
+        "@type": "ContactPoint",
+        telephone: siteConfig.contact.phoneE164,
+        email: siteConfig.contact.email,
+        contactType: "reservations",
+        availableLanguage: "English",
+      },
+      sameAs: [
+        siteConfig.links.googleMaps,
+        siteConfig.links.facebook,
+        siteConfig.links.instagram,
+        siteConfig.links.tiktok,
+      ],
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${siteConfig.url}/#website`,
+      name: siteConfig.name,
+      alternateName: siteConfig.formerNames,
+      url: siteConfig.url,
+      description: siteConfig.description,
+      inLanguage: "en",
+      publisher: { "@id": businessId },
+    },
+  ],
+}
 
 export default function RootLayout({
-	children,
+  children,
 }: Readonly<{
-	children: React.ReactNode;
+  children: React.ReactNode
 }>) {
-	return (
-		<html lang="en" suppressHydrationWarning>
-			<head>
-				<Script
-					id="schema-org-script"
-					type="application/ld+json"
-					dangerouslySetInnerHTML={{
-						__html: JSON.stringify({
-							"@context": "https://schema.org",
-							"@type": "Organization",
-							"@id": `${siteConfig.url}/#organization`,
-							name: siteConfig.name,
-							url: siteConfig.url,
-							logo: {
-								"@type": "ImageObject",
-								url: `${siteConfig.url}${siteConfig.logo}`,
-								width: 180,
-								height: 60,
-							},
-							contactPoint: {
-								"@type": "ContactPoint",
-								telephone: siteConfig.contact.phone,
-								contactType: "customer service",
-								email: siteConfig.contact.email,
-							},
-							address: {
-								"@type": "PostalAddress",
-								addressLocality: siteConfig.contact.address,
-							},
-							sameAs: [
-								siteConfig.links.facebook,
-								siteConfig.links.instagram,
-								siteConfig.links.tiktok,
-							],
-						}),
-					}}
-				/>
-				<Script
-					id="schema-website-script"
-					type="application/ld+json"
-					dangerouslySetInnerHTML={{
-						__html: JSON.stringify({
-							"@context": "https://schema.org",
-							"@type": "WebSite",
-							"@id": `${siteConfig.url}/#website`,
-							name: siteConfig.name,
-							alternateName: "Travel in Habarana",
-							url: siteConfig.url,
-							description: siteConfig.description,
-							publisher: {
-								"@id": `${siteConfig.url}/#organization`,
-							},
-						}),
-					}}
-				/>
-			</head>
-			<body className={`${inter.variable} ${dmSerifDisplay.variable}`}>
-				{children}
-				<Toaster />
-			</body>
-		</html>
-	);
+  return (
+    <html lang="en-LK" suppressHydrationWarning>
+      <head>
+        <JsonLd data={organizationGraph} />
+      </head>
+      <body className={`${inter.variable} ${dmSerifDisplay.variable}`}>
+        {children}
+        <Toaster />
+      </body>
+    </html>
+  )
 }

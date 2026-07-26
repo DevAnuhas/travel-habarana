@@ -1,8 +1,8 @@
-# Travel Habarana - Safari Booking Web Application
+# Ceylon Safari - Tour Website and Inquiry Management
 
 ## Overview
 
-Travel Habarana is a Next.js 15 web application designed to promote and manage safari and village tour bookings in Sri Lanka. The platform allows users to browse safari packages (Hurulu Eco Park, Minneriya National Park, Kaudulla National Park) and a village tour, submit booking inquiries, and receive follow-up from the client. The application features a rich blog section powered by Sanity CMS, allowing admins to create and manage content easily. A secure admin panel enables authorized admins to manage packages, inquiries, blog content, and admin users. The application uses MongoDB for data storage, Sanity for content management, Auth.js for authentication, and Tailwind CSS and Shadcn UI for styling.
+Ceylon Safari is a Next.js 16 website for private jeep safaris and village experiences around Habarana, Minneriya, Kaudulla, and Hurulu Eco Park. MongoDB stores packages, inquiries, and admin users; Sanity powers the public blog and moderated comments.
 
 ## Features
 
@@ -14,7 +14,7 @@ Travel Habarana is a Next.js 15 web application designed to promote and manage s
 
 ## Tech Stack
 
-- **Framework**: Next.js 15
+- **Framework**: Next.js 16 with Cache Components
 - **Database**: MongoDB (via Mongoose)
 - **CMS**: Sanity.io (for blog content)
 - **Image Storage**: Cloudinary, Sanity Asset Pipeline
@@ -24,7 +24,8 @@ Travel Habarana is a Next.js 15 web application designed to promote and manage s
 
 ## Prerequisites
 
-- Node.js (v18 or later)
+- Node.js 24
+- pnpm 11.17 or later
 - MongoDB Atlas account (for cloud database)
 - Sanity.io account (for blog content management)
 - Cloudinary account (for cloud image storage)
@@ -43,7 +44,7 @@ Travel Habarana is a Next.js 15 web application designed to promote and manage s
 2. **Install Dependencies**:
 
    ```bash
-   npm install
+   pnpm install
    ```
 
 3. **Set Up Environment Variables**:
@@ -56,6 +57,7 @@ Travel Habarana is a Next.js 15 web application designed to promote and manage s
 
    # Authentication
    NEXTAUTH_SECRET=<your-nextauth-secret>
+   RATE_LIMIT_SALT=<your-random-rate-limit-salt>
 
    # Image Storage
    CLOUDINARY_URL=cloudinary://<your-api-key>:<your-api-secret>@<your-cloud-name>
@@ -63,29 +65,31 @@ Travel Habarana is a Next.js 15 web application designed to promote and manage s
    # Email
    EMAIL_USER=<your-email@example.com>
    EMAIL_PASSWORD=<your-email-password>
+   EMAIL_FROM=<verified-sender@example.com>
 
    # Sanity
    NEXT_PUBLIC_SANITY_PROJECT_ID=<your-sanity-project-id>
    NEXT_PUBLIC_SANITY_DATASET=<your-sanity-dataset>
    SANITY_API_TOKEN=<your-sanity-api-token>
    SANITY_WEBHOOK_SECRET=<your-sanity-webhook-secret>
+   NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=<search-console-token>
    ```
 
    - Update `MONGODB_URI` with your MongoDB Atlas connection string.
    - Update `CLOUDINARY_URL` with your Cloudinary API key and API secret.
-   - Generate `NEXTAUTH_SECRET` and `SANITY_WEBHOOK_SECRET` using `openssl rand -base64 32` or an online generator.
+   - Generate `NEXTAUTH_SECRET`, `RATE_LIMIT_SALT`, and `SANITY_WEBHOOK_SECRET` with a cryptographically secure random generator.
    - Update `EMAIL_USER` and `EMAIL_PASSWORD` with your SMTP server credentials.
    - Configure Sanity environment variables with your project credentials.
 
 4. **Seed the Database**:
 
-   - Run the `npm run seed` command to seed the database with sample data.
-   - Console output will show the admin user's login credentials.
+   - Set `ALLOW_DATABASE_RESET=true`, `SEED_ADMIN_EMAIL`, and a strong `SEED_ADMIN_PASSWORD`.
+   - Run `pnpm seed`. This intentionally clears existing application data first.
 
 5. **Run the Development Server**:
 
    ```bash
-   npm run dev
+   pnpm dev
    ```
 
    - Open [http://localhost:3000](http://localhost:3000) to view the app.
@@ -105,7 +109,7 @@ Travel Habarana is a Next.js 15 web application designed to promote and manage s
   - `queries.ts`: GROQ queries for fetching blog content.
   - `lib/`: Sanity client utilities.
 - **`middleware/error-handler.ts`**: Error handling middleware.
-- **`middleware.ts`**: Authentication middleware for protected routes.
+- **`proxy.ts`**: Early admin-route authentication checks; server layouts and APIs enforce authorization again.
 - **`components/`**: React components for the UI.
 
 ## Usage
@@ -214,7 +218,7 @@ The blog functionality enhances the travel website by providing valuable content
 ### User Features
 
 - **Blog Listing**: Browse all blog posts with pagination and filtering by categories.
-- **Search**: Real-time search functionality to find specific blog posts.
+- **Search**: Server-rendered search with crawlable URL-based pagination.
 - **Featured Posts**: Highlighted blog posts displayed on the homepage.
 - **Category Filtering**: Filter blog posts by different categories.
 - **Reading Experience**: Clean and responsive layout for optimal reading on all devices.
@@ -245,8 +249,8 @@ The blog functionality enhances the travel website by providing valuable content
 - **Performance Optimizations**:
   - Responsive image handling with art direction.
   - Pagination for efficient loading of blog posts.
-  - Client-side filtering for quick category browsing.
-  - Real-time content updates with minimal revalidation.
+  - Cache Components with tagged Sanity and package revalidation.
+  - Server-rendered category filtering and pagination.
 
 ## Sanity Setup Instructions
 
@@ -286,7 +290,7 @@ To set up Sanity for the blog functionality, follow these instructions:
 ### Content Management Tips
 
 - **Images**: For best results, use images with a 16:9 aspect ratio for blog thumbnails.
-- **Excerpts**: Keep excerpts concise (150-200 characters) for optimal display in listings.
+- **Excerpts**: Keep excerpts between 50 and 160 characters.
 - **Categories**: Use consistent categories to improve content organization.
 - **Comments**: Check the studio regularly for new comments that need moderation.
 

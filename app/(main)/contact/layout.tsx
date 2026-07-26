@@ -1,15 +1,21 @@
-import type { Metadata } from "next";
-import { siteConfig } from "@/config/site";
+import type { Metadata } from "next"
+import { siteConfig } from "@/config/site"
 
 export const metadata: Metadata = {
-	title: "Contact Us",
-	description: `Get in touch with ${siteConfig.name} for safari and village tour inquiries`,
-};
+  title: "Contact Our Habarana Safari Team",
+  description: `Contact ${siteConfig.name} on WhatsApp, phone, or email for Minneriya, Kaudulla, Hurulu, and Habarana village tour inquiries.`,
+  alternates: { canonical: "/contact" },
+  openGraph: {
+    title: `Contact ${siteConfig.name}`,
+    description: `Plan a private Habarana safari or village experience with our local team.`,
+    url: "/contact",
+  },
+}
 
 export default function ContactPageLayout({
-	children,
+  children,
 }: Readonly<{
-	children: React.ReactNode;
+  children: React.ReactNode
 }>) {
-	return children;
+  return children
 }

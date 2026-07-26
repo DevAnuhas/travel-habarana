@@ -1,5 +1,5 @@
-import { CommentIcon } from "@sanity/icons/Comment";
-import { defineField, defineType } from "sanity";
+import { CommentIcon } from "@sanity/icons/Comment"
+import { defineField, defineType } from "sanity"
 
 export const commentType = defineType({
   name: "comment",
@@ -10,53 +10,40 @@ export const commentType = defineType({
     defineField({
       name: "name",
       type: "string",
+      validation: (Rule) => Rule.required().min(2).max(80),
     }),
     defineField({
       name: "approved",
       title: "Approved",
       type: "boolean",
-      description: "Comments won't show on the site without approval",
-    }),
-    defineField({
-      name: "email",
-      type: "string",
+      description: "Comments are hidden from the public site until approved.",
+      initialValue: false,
     }),
     defineField({
       name: "comment",
       type: "text",
+      rows: 5,
+      validation: (Rule) => Rule.required().min(3).max(2000),
     }),
     defineField({
       name: "post",
       type: "reference",
       to: [{ type: "post" }],
-    }),
-    defineField({
-      name: "imageUrl",
-      type: "string",
-      title: "User image link",
-    }),
-    defineField({
-      name: "image",
-      type: "image",
-      options: {
-        hotspot: true,
-      },
+      validation: (Rule) => Rule.required(),
     }),
   ],
-
   preview: {
     select: {
       title: "name",
-      email: "email",
       approved: "approved",
-      media: "image",
+      comment: "comment",
     },
-    prepare({ title, approved, email, media }) {
+    prepare({ title, approved, comment }) {
       return {
         title,
-        subtitle: `${approved ? "Approved" : "In review"} | User: ${email}`,
-        media: media ? media : CommentIcon,
-      };
+        subtitle: `${approved ? "Approved" : "In review"} · ${comment || ""}`,
+        media: CommentIcon,
+      }
     },
   },
-});
+})
