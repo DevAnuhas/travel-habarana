@@ -18,9 +18,7 @@ export const inquirySchema = z.object({
 	email: z.string().email("Please enter a valid email address"),
 	phone: z.string().min(5, "Phone number is required"),
 	packageId: z.string().min(1, "Please select a package"),
-	date: z.date({
-		required_error: "Please select a date",
-	}),
+	date: z.date({ error: "Please select a date" }),
 	numberOfPeople: z
 		.number()
 		.int()

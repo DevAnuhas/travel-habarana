@@ -6,7 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { BlogCard } from "@/components/ui/blog-card";
 import { getAllPosts, getOtherPosts, getPost } from "@/sanity/queries";
 import { PortableText } from "next-sanity";
-import { ALL_POSTS_QUERYResult, Post } from "@/sanity/types";
+import {
+	ALL_POSTS_QUERYResult,
+	GET_OTHERS_POSTS_QUERYResult,
+	POST_QUERYResult,
+	Post,
+} from "@/sanity/types";
 import { urlFor } from "@/sanity/lib/image";
 import { Metadata } from "next/types";
 import { siteConfig } from "@/config/site";
@@ -16,6 +21,14 @@ import ShareArticle from "@/components/ui/share-article";
 interface BlogPostPageProps {
 	params: Promise<{ slug: string }>;
 }
+
+type BlogCategory = NonNullable<
+	NonNullable<POST_QUERYResult>["categories"]
+>[number];
+type BlogComment = NonNullable<
+	NonNullable<POST_QUERYResult>["comments"]
+>[number];
+type RelatedPost = GET_OTHERS_POSTS_QUERYResult[number];
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
 	const { slug } = await params;
@@ -38,7 +51,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 					{/* Article Header */}
 					<header className="mb-8">
 						<div className="flex flex-wrap gap-2 mb-4">
-							{post.categories?.map((category) => (
+							{post.categories?.map((category: BlogCategory) => (
 								<Link
 									key={category.slug}
 									href={`/blogs?category=${category.slug}`}
@@ -167,6 +180,10 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 											</>
 										),
 										link: ({ value, children }) => {
+											if (!value?.href) {
+												return <>{children}</>;
+											}
+
 											return (
 												<Link
 													href={value.href}
@@ -220,7 +237,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 								Comments ({post?.comments?.length})
 							</h3>
 							<hr className="pb-2" />
-							{post?.comments?.map((comment) => (
+							{post?.comments?.map((comment: BlogComment) => (
 								<div
 									key={comment?._id}
 									className="flex space-y-2 p-4 border bg-accent-foreground/50"
@@ -257,7 +274,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 							Related Articles
 						</h2>
 						<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-							{otherPosts.map((relatedPost) => (
+							{otherPosts.map((relatedPost: RelatedPost) => (
 								<BlogCard
 									key={relatedPost?.slug?.current}
 									post={relatedPost as unknown as Post}

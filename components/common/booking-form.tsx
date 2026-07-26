@@ -266,7 +266,7 @@ export default function BookingForm() {
 													field.value ? new Date(field.value) : undefined
 												}
 												onSelect={(date) => field.onChange(date)}
-												initialFocus
+												autoFocus
 												disabled={(date) => date < new Date()}
 											/>
 										</PopoverContent>

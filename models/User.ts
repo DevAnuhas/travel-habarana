@@ -20,11 +20,10 @@ userSchema.methods.comparePassword = async function (
 };
 
 // Hash password before saving
-userSchema.pre("save", async function (next) {
+userSchema.pre("save", async function () {
 	if (this.isModified("password")) {
 		this.password = await bcrypt.hash(this.password, 12);
 	}
-	next();
 });
 
 const User = mongoose.models.User || mongoose.model("User", userSchema);

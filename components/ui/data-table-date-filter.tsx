@@ -86,7 +86,7 @@ export function DataTableDateFilter<TData, TValue>({
 						mode="single"
 						selected={currentDate}
 						onSelect={handleSelect}
-						initialFocus
+						autoFocus
 					/>
 				</PopoverContent>
 			</Popover>
