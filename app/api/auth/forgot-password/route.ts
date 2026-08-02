@@ -5,11 +5,7 @@ import connectDB from "@/lib/mongodb"
 import User from "@/models/User"
 import PasswordResetToken from "@/models/PasswordResetToken"
 import { siteConfig } from "@/config/site"
-import {
-  getEmailSender,
-  getEmailTransporter,
-  passwordResetAdminTemplate,
-} from "@/lib/email-service"
+import { passwordResetAdminTemplate, sendEmail } from "@/lib/email-service"
 import { getClientAddress, parseJsonBody } from "@/lib/api"
 import { enforceRateLimit } from "@/lib/rate-limit"
 import { withErrorHandler } from "@/middleware/error-handler"
@@ -62,10 +58,7 @@ export async function POST(request: NextRequest) {
 
     // Send password reset email
     try {
-      const transporter = getEmailTransporter()
-
-      await transporter.sendMail({
-        from: getEmailSender(`${siteConfig.name} Admin`),
+      await sendEmail({
         to: email,
         subject: `Password Reset Request - ${siteConfig.name} Admin`,
         html: passwordResetAdminTemplate(resetToken, user.email),

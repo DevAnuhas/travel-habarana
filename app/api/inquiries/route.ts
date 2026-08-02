@@ -13,10 +13,9 @@ import { siteConfig } from "@/config/site"
 import { getClientAddress, parseJsonBody } from "@/lib/api"
 import { enforceRateLimit } from "@/lib/rate-limit"
 import {
-  getEmailSender,
-  getEmailTransporter,
   newInquiryAdminTemplate,
   newInquiryCustomerTemplate,
+  sendEmail,
 } from "@/lib/email-service"
 
 export async function GET(req: NextRequest) {
@@ -178,20 +177,16 @@ export async function POST(request: NextRequest) {
 
     // Send email notification
     try {
-      const transporter = getEmailTransporter()
-
       // Send notification to admin
-      await transporter.sendMail({
-        from: getEmailSender(siteConfig.name),
-        to: process.env.EMAIL_USER, // Admin email
+      await sendEmail({
+        to: "habaranatravel@gmail.com", // Admin email
         subject: `New Booking Inquiry: ${packageDetails.name}`,
         html: newInquiryAdminTemplate(newInquiry, packageDetails),
         replyTo: newInquiry.email, // Set reply-to as the customer's email
       })
 
       // Send confirmation to customer
-      await transporter.sendMail({
-        from: getEmailSender(siteConfig.name),
+      await sendEmail({
         to: newInquiry.email,
         subject: `Your Booking Inquiry - ${siteConfig.name}`,
         html: newInquiryCustomerTemplate(newInquiry, packageDetails),

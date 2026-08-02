@@ -1,32 +1,32 @@
 import "server-only"
 
-import nodemailer from "nodemailer"
+import { Resend } from "resend"
 import { siteConfig } from "@/config/site"
 
-// Configure nodemailer transporter
-export const getEmailTransporter = () => {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+const resend = new Resend(process.env.RESEND_API_KEY)
+
+export async function sendEmail(params: {
+  to: string
+  subject: string
+  html: string
+  replyTo?: string
+}) {
+  if (!process.env.RESEND_API_KEY) {
     throw new Error("Email service is not configured")
   }
 
-  return nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASSWORD,
-    },
+  const { error } = await resend.emails.send({
+    from: process.env.EMAIL_FROM || `${siteConfig.name} <no-reply@ceylonsafari.com>`,
+    to: params.to,
+    subject: params.subject,
+    html: params.html,
+    replyTo: params.replyTo,
   })
-}
 
-export const getEmailSender = (name: string) => ({
-  name,
-  address:
-    process.env.EMAIL_FROM ||
-    process.env.EMAIL_USER ||
-    siteConfig.contact.email,
-})
+  if (error) {
+    throw new Error(error.message)
+  }
+}
 
 /**
  * Email templates for various notifications
