@@ -53,7 +53,7 @@ export async function PUT(
 			}
 
 			const savedInquiry = await Inquiry.findByIdAndUpdate(id, updatedInquiry, {
-				new: true,
+				returnDocument: "after",
 				runValidators: true,
 			});
 			return NextResponse.json(savedInquiry, { status: 200 });

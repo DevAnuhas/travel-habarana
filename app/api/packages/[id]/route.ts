@@ -95,7 +95,7 @@ export async function PUT(
 			const savedPackage = await Package.findByIdAndUpdate(
 				packageItem._id,
 				packageData,
-				{ new: true, runValidators: true }
+				{ returnDocument: "after", runValidators: true }
 			);
 			revalidateTag("package", "max");
 			revalidatePath("/packages");
