@@ -1,6 +1,6 @@
 # Ceylon Safari: homepage and package landing-page revamp
 
-Date: 29 Sep 2026 · Status: revision 1, addressing reviewer round 1 (gpt-6-sol, high) · Owner decisions delegated to the reviewer by the user
+Date: 29 Sep 2026 · Status: **approved** (gpt-6-sol, high; review rounds 1–2) · Owner decisions delegated to the reviewer by the user
 
 ## 1. Intent
 
@@ -73,7 +73,7 @@ These build on fields that lead-recovery Tasks 2–4 already add: `previousSlugs
 | `whatToBring` | string[] | ≤ 10 × 100 | Checklist. |
 | `itinerary` | `{time?, title, detail?}[]` | ≤ 10 | Timeline. |
 | `faqs` | `{question, answer}[]` | ≤ 10 | Package FAQ, answers server-rendered. |
-| `imageAlts` | string[] | ≤ 30 × 150, aligned by index with `images` | Meaningful alt text per photo. Fallback: `${name}, photo n`. |
+| `imageAlts` | `{src, alt}[]`, stored with URLs as values since Mongo keys can't contain dots | ≤ 30; `src` is a URL, `alt` 1–150 chars | Meaningful alt text per photo, **keyed by image URL** so gaps, reordering and removal can never mislabel a photo. The serializer exposes `Record<src, alt>` for images still present. The admin edits one input beside each photo. Fallback: `${name}, photo n`. |
 | `season` | `{peak: number[], good: number[]}` | months 1–12, unique, disjoint | Season strip. |
 
 **Category fallback.** Every live package has `category` unset today. `inferCategory(slug, name)` gives an explicit, tested keyword fallback, applied in the serializer only when `category` is null:
@@ -141,7 +141,7 @@ Mobile order, top to bottom. On desktop, a two-column layout with a sticky booki
 
 1. **Gallery.** One server-rendered list whose layout changes by breakpoint. On mobile it's a 16:9 scroll-snap strip of at most 8 photos, which keeps the first viewport for the decision facts. On desktop it's a mosaic of one large image and up to four tiles.
    - The lead image is rendered once with `priority`, with no duplicate hidden copy.
-   - Alt text comes from `imageAlts`, falling back to `${name}, photo n`.
+   - Alt text comes from `imageAlts[src]` (URL-keyed), falling back to `${name}, photo n`.
    - No autoplay, no framer-motion. It replaces `ImageGallery`.
 2. **Header.**
    - H1 = `name`, then a price line (price or "Price on request").
