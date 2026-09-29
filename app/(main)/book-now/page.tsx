@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { Suspense } from "react"
 import BookingForm from "@/components/common/booking-form"
 import { ContactActions } from "@/components/common/contact-actions"
 import FAQSection from "@/components/common/faq-section"
@@ -27,16 +28,20 @@ export const metadata: Metadata = {
   },
 }
 
+type SearchParams = Promise<{ packageId?: string | string[] }>
+type PackageOption = { _id: string; name: string }
+
 export default async function BookNowPage({
   searchParams,
 }: {
-  searchParams: Promise<{ packageId?: string | string[] }>
+  searchParams: SearchParams
 }) {
-  const [packages, { packageId }] = await Promise.all([
-    getPackages(),
-    searchParams,
-  ])
-  const initialPackageId = resolveInitialPackageId(packageId, packages)
+  // Cached, so this stays in the static shell. searchParams is request data
+  // and is only read inside <Suspense> below (Cache Components rule).
+  const packages = (await getPackages()).map(({ _id, name }) => ({
+    _id,
+    name,
+  }))
 
   return (
     <main className="pt-20">
@@ -65,10 +70,14 @@ export default async function BookNowPage({
               </p>
               <ContactActions />
             </div>
-            <BookingForm
-              packages={packages.map(({ _id, name }) => ({ _id, name }))}
-              initialPackageId={initialPackageId}
-            />
+            {/* The fallback is the complete form without prefill, so the
+                static HTML is a working form, never a loading message. */}
+            <Suspense fallback={<BookingForm packages={packages} />}>
+              <PrefilledBookingForm
+                packages={packages}
+                searchParams={searchParams}
+              />
+            </Suspense>
           </div>
         </div>
       </section>
@@ -76,5 +85,21 @@ export default async function BookNowPage({
       <FAQSection variant="booking" />
       <MobileContactBar />
     </main>
+  )
+}
+
+async function PrefilledBookingForm({
+  packages,
+  searchParams,
+}: {
+  packages: PackageOption[]
+  searchParams: SearchParams
+}) {
+  const { packageId } = await searchParams
+  return (
+    <BookingForm
+      packages={packages}
+      initialPackageId={resolveInitialPackageId(packageId, packages)}
+    />
   )
 }
