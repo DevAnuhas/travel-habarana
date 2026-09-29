@@ -148,7 +148,13 @@ const firstViewport = () =>
 
 const endOfPage = () =>
   evaluate(`(async () => { ${IN_PAGE}
-    scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }); await new Promise((r) => setTimeout(r, 150))
+    // Layout can keep growing after a font-size change (reflow, lazy images), so
+    // scroll until we are really at the bottom instead of trusting one jump.
+    for (let i = 0; i < 20; i++) {
+      scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" })
+      await new Promise((r) => setTimeout(r, 150))
+      if (scrollY >= document.documentElement.scrollHeight - innerHeight - 1) break
+    }
     const links = document.querySelectorAll("footer a")
     const bar = document.querySelector("[data-contact-bar]")
     const footer = document.querySelector("footer")
