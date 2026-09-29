@@ -222,6 +222,10 @@ for (const target of targets) {
       const lead = await evaluate(
         `document.querySelector("[data-lead-image] img, img[data-lead-image]")?.currentSrc ?? null`
       )
+      if (!lead)
+        console.log(
+          `INFO  ${tag} no lead image on this page (nothing to count)`
+        )
       if (lead) {
         const leadKey = decodeURIComponent(
           new URL(lead).searchParams.get("url") ?? lead
