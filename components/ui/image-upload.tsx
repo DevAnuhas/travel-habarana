@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { useDropzone } from "react-dropzone";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -50,42 +50,165 @@ const toExistingFiles = (urls: readonly string[]): UploadingFile[] =>
 const sameOrder = (a: readonly string[], b: readonly string[]) =>
 	a.length === b.length && a.every((url, index) => url === b[index]);
 
-// Order-insensitive. Sorts copies: `value` is the form's own array, and
-// sorting it in place reorders the saved photos (the first one is the lead).
-const sameImages = (a: readonly string[], b: readonly string[]) =>
-	sameOrder([...a].sort(), [...b].sort());
+const completedUrls = (files: readonly UploadingFile[]) =>
+	files
+		.filter((file) => file.progress === 100 && !file.error && file.url)
+		.map((file) => file.url as string);
+
+const errorMessage = (error: unknown) =>
+	error instanceof Error ? error.message : "Unknown error";
+
+interface CloudinarySignature {
+	apiKey: string;
+	timestamp: number;
+	signature: string;
+	uploadPreset: string;
+	cloudName: string;
+	error?: string;
+}
+
+/**
+ * Uploads one file with progress reports. Aborting the signal cancels the
+ * request and rejects; a load event that still fires afterwards is ignored.
+ */
+function uploadToCloudinary(
+	file: File,
+	signature: CloudinarySignature,
+	signal: AbortSignal,
+	onProgress: (percent: number) => void
+): Promise<string> {
+	return new Promise((resolve, reject) => {
+		const cancelled = () =>
+			reject(new DOMException("Upload cancelled", "AbortError"));
+		if (signal.aborted) return cancelled();
+
+		const xhr = new XMLHttpRequest();
+		const abort = () => xhr.abort();
+		signal.addEventListener("abort", abort, { once: true });
+		const settle = (finish: () => void) => {
+			signal.removeEventListener("abort", abort);
+			finish();
+		};
+
+		xhr.upload.onprogress = (event) => {
+			if (event.lengthComputable) {
+				onProgress(Math.round((event.loaded / event.total) * 100));
+			}
+		};
+		xhr.onload = () =>
+			settle(() => {
+				if (xhr.status < 200 || xhr.status >= 300) {
+					console.error("Upload failed:", xhr.status, xhr.responseText);
+					return reject(new Error(`Upload failed with status ${xhr.status}`));
+				}
+				try {
+					resolve(JSON.parse(xhr.responseText).secure_url);
+				} catch (parseError) {
+					console.error("Error parsing response:", parseError);
+					reject(new Error("Invalid response format"));
+				}
+			});
+		xhr.onerror = () =>
+			settle(() => reject(new Error("Network error during upload")));
+		xhr.ontimeout = () => settle(() => reject(new Error("Upload timeout")));
+		xhr.onabort = () => settle(cancelled);
+
+		const formData = new FormData();
+		formData.append("file", file);
+		formData.append("api_key", signature.apiKey);
+		formData.append("timestamp", signature.timestamp.toString());
+		formData.append("signature", signature.signature);
+		formData.append("upload_preset", signature.uploadPreset);
+
+		xhr.open(
+			"POST",
+			`https://api.cloudinary.com/v1_1/${signature.cloudName}/image/upload`
+		);
+		xhr.timeout = 60000;
+		xhr.send(formData);
+	});
+}
+
+/**
+ * One editing session of the field. `generation` changes whenever the form
+ * hands over a value this component did not emit (a reset after save, another
+ * package); upload work started in an older session must not touch the new one.
+ */
+interface Session {
+	generation: number;
+	files: UploadingFile[];
+	isLoading: boolean;
+}
+
+const startSession = (generation: number, urls: readonly string[]): Session => ({
+	generation,
+	files: toExistingFiles(urls),
+	isLoading: false,
+});
+
+// A stable fallback: a fresh [] per render would look like a new form value.
+const NO_URLS: string[] = [];
 
 export function ImageUpload({
-	value = [],
+	value = NO_URLS,
 	onChange,
 	maxFiles = 5,
 }: ImageUploadProps) {
-	const [uploadingFiles, setUploadingFiles] = useState(() =>
-		toExistingFiles(value)
+	const [session, setSession] = useState(() => startSession(0, value));
+	const { generation, files: uploadingFiles, isLoading } = session;
+	const shownUrls = useMemo(
+		() => completedUrls(uploadingFiles),
+		[uploadingFiles]
 	);
-	const [isLoading, setIsLoading] = useState(false);
 
-	// The URLs this component last received or emitted. A value with the same
-	// set is our own change coming back; any other set (a form reset, another
-	// package) replaces the previews. Adjusted during render rather than in an
-	// effect, so the effect below never sees previews one render behind and
-	// never emits a stale or empty list.
-	const [knownUrls, setKnownUrls] = useState(value);
-	if (!sameImages(value, knownUrls)) {
-		setKnownUrls(value);
-		setUploadingFiles(toExistingFiles(value));
+	// Our own emissions come back equal to what we show. Any other new value
+	// came from the form, even when only its order differs (the form saves its
+	// first photo as the lead), and starts a new session. Adjusted during render
+	// so the effect below never compares against previews one render behind.
+	// Limitation: a reset to exactly the shown list cannot be told apart from
+	// our own change and keeps any upload still in flight.
+	const [previousValue, setPreviousValue] = useState(value);
+	if (value !== previousValue) {
+		setPreviousValue(value);
+		if (!sameOrder(value, shownUrls)) {
+			setSession(startSession(generation + 1, value));
+		}
 	}
 
 	// Report finished uploads, removals and reorders to the form.
 	useEffect(() => {
-		const urls = uploadingFiles
-			.filter((file) => file.progress === 100 && !file.error && file.url)
-			.map((file) => file.url as string);
+		if (!sameOrder(shownUrls, value)) onChange(shownUrls);
+	}, [shownUrls, value, onChange]);
 
-		if (sameOrder(urls, knownUrls)) return;
-		setKnownUrls(urls);
-		onChange(urls);
-	}, [uploadingFiles, knownUrls, onChange]);
+	// One AbortController per session: a new session or unmount (the dialog
+	// closing) cancels the signature request and every upload still running.
+	const controllerRef = useRef<AbortController | null>(null);
+	useEffect(() => {
+		const controller = new AbortController();
+		controllerRef.current = controller;
+		return () => controller.abort();
+	}, [generation]);
+
+	// Applies an update only while the session it was started in is current.
+	const updateSession = useCallback(
+		(startedIn: number, update: (current: Session) => Session) =>
+			setSession((current) =>
+				current.generation === startedIn ? update(current) : current
+			),
+		[]
+	);
+	const updateFile = useCallback(
+		(startedIn: number, id: string, patch: Partial<UploadingFile>) =>
+			updateSession(startedIn, (current) => ({
+				...current,
+				files: current.files.map((file) =>
+					file.id === id ? { ...file, ...patch } : file
+				),
+			})),
+		[updateSession]
+	);
+	const setFiles = (files: UploadingFile[]) =>
+		setSession((current) => ({ ...current, files }));
 
 	const onDrop = useCallback(
 		async (acceptedFiles: File[]) => {
@@ -94,13 +217,16 @@ export function ImageUpload({
 				toast.error(`You can only upload up to ${maxFiles} images`);
 				return;
 			}
+			const signal = controllerRef.current?.signal;
+			if (!signal) return;
 
-			setIsLoading(true);
+			updateSession(generation, (current) => ({ ...current, isLoading: true }));
 
 			try {
-				// Get the upload signature from our API
-				const signatureResponse = await fetch("/api/cloudinary");
-				const signatureData = await signatureResponse.json();
+				const signatureResponse = await fetch("/api/cloudinary", { signal });
+				const signatureData: CloudinarySignature =
+					await signatureResponse.json();
+				if (signal.aborted) return;
 
 				if (!signatureResponse.ok) {
 					throw new Error(
@@ -108,164 +234,63 @@ export function ImageUpload({
 					);
 				}
 
-				console.log("Received signature data:", signatureData);
-
-				// Add files to our state with 0 progress and unique IDs
-				const newFiles = acceptedFiles.map((file) => ({
-					id: generateId(), // Generate unique ID for each new file
+				const newFiles: UploadingFile[] = acceptedFiles.map((file) => ({
+					id: generateId(),
 					file,
 					progress: 0,
 					uploading: true,
 					error: false,
 					isExisting: false,
 				}));
+				updateSession(generation, (current) => ({
+					...current,
+					files: [...current.files, ...newFiles],
+				}));
 
-				setUploadingFiles((prev) => [...prev, ...newFiles]);
+				const urls = await Promise.all(
+					newFiles.map(async ({ id, file }) => {
+						try {
+							const url = await uploadToCloudinary(
+								file,
+								signatureData,
+								signal,
+								(progress) => updateFile(generation, id, { progress })
+							);
+							updateFile(generation, id, {
+								uploading: false,
+								progress: 100,
+								url,
+							});
+							return url;
+						} catch (error) {
+							if (signal.aborted) return null;
+							console.error("Upload error for file:", file.name, error);
+							updateFile(generation, id, { uploading: false, error: true });
+							toast.error(`Failed to upload ${file.name}: ${errorMessage(error)}`);
+							return null;
+						}
+					})
+				);
+				if (signal.aborted) return;
 
-				// Upload each file
-				const uploadPromises = acceptedFiles.map(async (file, fileIndex) => {
-					const formData = new FormData();
-					formData.append("file", file);
-					formData.append("api_key", signatureData.apiKey);
-					formData.append("timestamp", signatureData.timestamp.toString());
-					formData.append("signature", signatureData.signature);
-					formData.append("upload_preset", signatureData.uploadPreset);
-
-					console.log("Uploading with params:", {
-						api_key: signatureData.apiKey,
-						timestamp: signatureData.timestamp,
-						upload_preset: signatureData.uploadPreset,
-						signature: signatureData.signature.substring(0, 10) + "...",
-						cloudName: signatureData.cloudName,
-					});
-
-					try {
-						// Use XMLHttpRequest for progress tracking
-						const xhr = new XMLHttpRequest();
-						const fileId = newFiles[fileIndex].id;
-
-						// Track upload progress
-						xhr.upload.onprogress = (event) => {
-							if (event.lengthComputable) {
-								const progress = Math.round((event.loaded / event.total) * 100);
-
-								setUploadingFiles((prev) =>
-									prev.map((item) => {
-										if (item.id === fileId) {
-											return { ...item, progress };
-										}
-										return item;
-									})
-								);
-							}
-						};
-
-						// Create a promise that resolves when the upload is complete
-						const uploadPromise = new Promise<string>((resolve, reject) => {
-							xhr.onload = () => {
-								if (xhr.status >= 200 && xhr.status < 300) {
-									try {
-										const response = JSON.parse(xhr.responseText);
-										console.log("Upload response:", response);
-										resolve(response.secure_url);
-									} catch (parseError) {
-										console.error("Error parsing response:", parseError);
-										reject(new Error("Invalid response format"));
-									}
-								} else {
-									console.error("Upload failed with status:", xhr.status);
-									console.error("Response:", xhr.responseText);
-									reject(new Error(`Upload failed with status ${xhr.status}`));
-								}
-							};
-
-							xhr.onerror = () => {
-								console.error("Network error during upload");
-								reject(new Error("Network error during upload"));
-							};
-
-							xhr.ontimeout = () => {
-								console.error("Upload timeout");
-								reject(new Error("Upload timeout"));
-							};
-						});
-
-						// Start the upload
-						const uploadUrl = `https://api.cloudinary.com/v1_1/${signatureData.cloudName}/image/upload`;
-						console.log("Upload URL:", uploadUrl);
-
-						xhr.open("POST", uploadUrl);
-						xhr.timeout = 60000; // 60 second timeout
-						xhr.send(formData);
-
-						// Wait for the upload to complete
-						const url = await uploadPromise;
-
-						// Update our state with the completed upload
-						setUploadingFiles((prev) =>
-							prev.map((item) => {
-								if (item.id === fileId) {
-									return {
-										...item,
-										uploading: false,
-										progress: 100,
-										url,
-										isExisting: false,
-									};
-								}
-								return item;
-							})
-						);
-
-						return url;
-					} catch (error) {
-						console.error("Upload error for file:", file.name, error);
-
-						// Mark this file as errored
-						setUploadingFiles((prev) =>
-							prev.map((item) => {
-								if (item.id === newFiles[fileIndex].id) {
-									return { ...item, uploading: false, error: true };
-								}
-								return item;
-							})
-						);
-
-						toast.error(
-							`Failed to upload ${file.name}: ${
-								error instanceof Error ? error.message : "Unknown error"
-							}`
-						);
-						return null;
-					}
-				});
-
-				const results = await Promise.allSettled(uploadPromises);
-				const failedUploads = results.filter(
-					(result) => result.status === "rejected"
-				).length;
-				const successfulUploads = results.filter(
-					(result) => result.status === "fulfilled"
-				).length;
-
-				if (successfulUploads > 0) {
-					toast.success(`Successfully uploaded ${successfulUploads} image(s)`);
-				}
-
-				if (failedUploads > 0) {
-					toast.error(`Failed to upload ${failedUploads} image(s)`);
+				// Count results, not settled promises: each upload catches its
+				// own failure and would otherwise count as a success.
+				const uploaded = urls.filter(Boolean).length;
+				if (uploaded > 0) {
+					toast.success(`Successfully uploaded ${uploaded} image(s)`);
 				}
 			} catch (error) {
+				if (signal.aborted) return;
 				console.error("Error during upload process:", error);
-				toast.error(
-					"Failed to upload images: " +
-						(error instanceof Error ? error.message : "Unknown error")
-				);
+				toast.error(`Failed to upload images: ${errorMessage(error)}`);
 			} finally {
-				setIsLoading(false);
+				updateSession(generation, (current) => ({
+					...current,
+					isLoading: false,
+				}));
 			}
 		},
-		[uploadingFiles, maxFiles]
+		[uploadingFiles.length, maxFiles, generation, updateSession, updateFile]
 	);
 
 	const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -279,7 +304,7 @@ export function ImageUpload({
 	});
 
 	const removeImage = (index: number) => {
-		setUploadingFiles((prev) => prev.filter((_, i) => i !== index));
+		setFiles(uploadingFiles.filter((_, i) => i !== index));
 	};
 
 	const moveImage = (index: number, direction: "up" | "down") => {
@@ -296,12 +321,11 @@ export function ImageUpload({
 		newFiles[index] = newFiles[newIndex];
 		newFiles[newIndex] = temp;
 
-		setUploadingFiles(newFiles);
+		setFiles(newFiles);
 	};
 
-	// Fixed reorder handler
 	const handleReorder = (newOrder: UploadingFile[]) => {
-		setUploadingFiles(newOrder);
+		setFiles(newOrder);
 	};
 
 	const isDisabled =
