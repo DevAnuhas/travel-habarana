@@ -183,13 +183,14 @@ export function PackageLandingFields({
               isEmpty={(steps) => steps.length === 0}
               onChange={field.onChange}
               placeholder={
-                "2:30 pm | Hotel pickup | In an open safari jeep\n3:15 pm | Enter Minneriya National Park"
+                "2:30 pm | Hotel pickup | In an open safari jeep\n | Drive to the tank | Herds gather near the water\nDrop-off at your hotel"
               }
               rows={5}
             />
             <FormDescription>
-              One step per line: time | title | detail. Time and detail are
-              optional.
+              One step per line: time | title | detail. No time? Start the line
+              with | (for example: | Drive to the tank | Herds near the water).
+              A line with no | is just a title.
             </FormDescription>
             <FormMessage />
           </FormItem>
