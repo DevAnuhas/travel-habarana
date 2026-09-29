@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -36,60 +36,56 @@ interface UploadingFile {
 const generateId = () =>
 	`${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
+const toExistingFiles = (urls: readonly string[]): UploadingFile[] =>
+	urls.map((url, index) => ({
+		id: `existing-${generateId()}`,
+		file: new File([], `existing-file-${index}`),
+		progress: 100,
+		uploading: false,
+		error: false,
+		url,
+		isExisting: true,
+	}));
+
+const sameOrder = (a: readonly string[], b: readonly string[]) =>
+	a.length === b.length && a.every((url, index) => url === b[index]);
+
+// Order-insensitive. Sorts copies: `value` is the form's own array, and
+// sorting it in place reorders the saved photos (the first one is the lead).
+const sameImages = (a: readonly string[], b: readonly string[]) =>
+	sameOrder([...a].sort(), [...b].sort());
+
 export function ImageUpload({
 	value = [],
 	onChange,
 	maxFiles = 5,
 }: ImageUploadProps) {
-	const [uploadingFiles, setUploadingFiles] = useState<UploadingFile[]>([]);
+	const [uploadingFiles, setUploadingFiles] = useState(() =>
+		toExistingFiles(value)
+	);
 	const [isLoading, setIsLoading] = useState(false);
-	const lastValueRef = useRef<string[]>([]);
-	const isInitializedRef = useRef(false);
 
-	// Initialize with existing URLs (only once or when value changes significantly)
+	// The URLs this component last received or emitted. A value with the same
+	// set is our own change coming back; any other set (a form reset, another
+	// package) replaces the previews. Adjusted during render rather than in an
+	// effect, so the effect below never sees previews one render behind and
+	// never emits a stale or empty list.
+	const [knownUrls, setKnownUrls] = useState(value);
+	if (!sameImages(value, knownUrls)) {
+		setKnownUrls(value);
+		setUploadingFiles(toExistingFiles(value));
+	}
+
+	// Report finished uploads, removals and reorders to the form.
 	useEffect(() => {
-		// Check if this is a significant change (not just reordering)
-		const valueChanged =
-			JSON.stringify(value.sort()) !==
-			JSON.stringify(lastValueRef.current.sort());
-
-		if (!isInitializedRef.current || valueChanged) {
-			if (value.length > 0) {
-				const existingUrls = value.map((url, index) => ({
-					id: `existing-${index}-${Date.now()}`, // Generate unique ID
-					file: new File([], `existing-file-${index}`),
-					progress: 100,
-					uploading: false,
-					error: false,
-					url,
-					isExisting: true,
-				}));
-				setUploadingFiles(existingUrls);
-			} else {
-				setUploadingFiles([]);
-			}
-			lastValueRef.current = [...value];
-			isInitializedRef.current = true;
-		}
-	}, [value]);
-
-	// Update parent component when our internal state changes
-	useEffect(() => {
-		if (!isInitializedRef.current) return;
-
 		const urls = uploadingFiles
 			.filter((file) => file.progress === 100 && !file.error && file.url)
 			.map((file) => file.url as string);
 
-		// Only call onChange if the URLs have actually changed
-		const urlsChanged =
-			JSON.stringify(urls) !== JSON.stringify(lastValueRef.current);
-
-		if (urlsChanged) {
-			lastValueRef.current = [...urls];
-			onChange(urls);
-		}
-	}, [uploadingFiles, onChange]);
+		if (sameOrder(urls, knownUrls)) return;
+		setKnownUrls(urls);
+		onChange(urls);
+	}, [uploadingFiles, knownUrls, onChange]);
 
 	const onDrop = useCallback(
 		async (acceptedFiles: File[]) => {
@@ -452,6 +448,7 @@ export function ImageUpload({
 															src={file.url}
 															alt="Preview"
 															fill
+															sizes="64px"
 															className="object-cover"
 														/>
 													) : (
@@ -533,6 +530,7 @@ export function ImageUpload({
 															className="h-8 w-8 text-gray-900 hover:text-gray-600 hover:bg-gray-200"
 															onClick={() => moveImage(index, "up")}
 															disabled={index === 0 || file.uploading}
+															aria-label={`Move image ${index + 1} up`}
 														>
 															<ArrowUp className="h-4 w-4" />
 														</Button>
@@ -553,6 +551,7 @@ export function ImageUpload({
 																index === uploadingFiles.length - 1 ||
 																file.uploading
 															}
+															aria-label={`Move image ${index + 1} down`}
 														>
 															<ArrowDown className="h-4 w-4" />
 														</Button>
@@ -570,6 +569,7 @@ export function ImageUpload({
 															className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
 															onClick={() => removeImage(index)}
 															disabled={file.uploading}
+															aria-label={`Remove image ${index + 1}`}
 														>
 															<X className="h-4 w-4" />
 														</Button>
