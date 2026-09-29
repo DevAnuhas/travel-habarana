@@ -4,9 +4,10 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { PaperPlaneTilt, List, X } from "@phosphor-icons/react";
+import { List, Phone, WhatsappLogo, X } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { siteConfig } from "@/config/site";
+import { buildWhatsAppUrl, TEL_HREF } from "@/lib/contact-links";
 
 const navLinks = [
 	{
@@ -101,33 +102,40 @@ export default function Navbar() {
 							/>
 						))}
 
-						<Button
-							asChild
-							className={`ml-4 ${
-								isHomePage && !isScrolled
-									? "bg-white text-primary hover:bg-gray-100"
-									: "bg-primary hover:bg-primary text-white"
-							}`}
-						>
-							<Link href="/book-now" className="group">
-								Send Inquiry
-								<PaperPlaneTilt className="group-hover:rotate-45 transition-all" />
-							</Link>
+						<Button asChild variant="whatsapp" className="ml-4">
+							<a
+								href={buildWhatsAppUrl()}
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								<WhatsappLogo weight="fill" />
+								WhatsApp us
+							</a>
 						</Button>
 					</nav>
 
-					{/* Mobile Menu Button */}
-					<button
-						className="lg:hidden text-2xl focus:outline-none"
-						onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-						aria-label="Toggle menu"
-					>
-						{isMobileMenuOpen ? (
-							<X className="text-current" />
-						) : (
-							<List className="text-current" />
-						)}
-					</button>
+					{/* Mobile: call + menu */}
+					<div className="flex items-center gap-5 lg:hidden">
+						<a
+							href={TEL_HREF}
+							aria-label={`Call ${siteConfig.name}`}
+							className="text-2xl"
+						>
+							<Phone className="text-current" />
+						</a>
+						<button
+							className="text-2xl focus:outline-none"
+							onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+							aria-label="Toggle menu"
+							aria-expanded={isMobileMenuOpen}
+						>
+							{isMobileMenuOpen ? (
+								<X className="text-current" />
+							) : (
+								<List className="text-current" />
+							)}
+						</button>
+					</div>
 				</div>
 			</div>
 
@@ -144,10 +152,19 @@ export default function Navbar() {
 							/>
 						))}
 
-						<Button asChild className="w-full bg-primary hover:bg-primary">
+						<Button asChild variant="whatsapp" className="w-full">
+							<a
+								href={buildWhatsAppUrl()}
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								<WhatsappLogo weight="fill" />
+								WhatsApp us
+							</a>
+						</Button>
+						<Button asChild variant="outline" className="w-full">
 							<Link href="/book-now" onClick={() => setIsMobileMenuOpen(false)}>
-								Send Inquiry
-								<PaperPlaneTilt className="group-hover:translate-x-1 transition-all" />
+								Send an inquiry form
 							</Link>
 						</Button>
 					</div>
