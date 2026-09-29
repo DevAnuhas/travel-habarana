@@ -54,12 +54,10 @@ export const metadata: Metadata = {
   creator: siteConfig.author,
   publisher: siteConfig.author,
   category: "travel",
+  // Only preview directives here: index/follow is the default, and stating it
+  // at the root contradicts the noindex Next adds to 404s and pages that opt out.
   robots: {
-    index: true,
-    follow: true,
     googleBot: {
-      index: true,
-      follow: true,
       "max-image-preview": "large",
       "max-snippet": -1,
       "max-video-preview": -1,

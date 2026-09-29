@@ -4,6 +4,7 @@ import { notFound, permanentRedirect } from "next/navigation"
 import { siteConfig } from "@/config/site"
 import { JsonLd } from "@/components/seo/json-ld"
 import { selectRelatedPackages } from "@/lib/package-catalog"
+import { buildPackageTitle, truncateAtWord } from "@/lib/seo"
 import { getPackage, getPackages } from "@/lib/packages"
 import { PackageDetails } from "./package-details"
 
@@ -35,17 +36,19 @@ export async function generateMetadata({
     }
   }
 
-  const description = packageData.description.slice(0, 160)
+  const description = truncateAtWord(packageData.description)
+  const title = buildPackageTitle(packageData.name)
   const canonical = `/packages/${packageData.slug}`
   const image = packageData.images[0] || siteConfig.ogImage
 
   return {
-    title: packageData.name,
+    // `absolute`: the packages layout sets a plain title string, which resets
+    // the root "%s | Ceylon Safari" template for everything below it.
+    title: { absolute: title },
     description,
     alternates: { canonical },
-    robots: { index: true, follow: true },
     openGraph: {
-      title: packageData.name,
+      title,
       description,
       url: canonical,
       siteName: siteConfig.name,
@@ -55,7 +58,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: "summary_large_image",
-      title: packageData.name,
+      title,
       description,
       images: [image],
     },
