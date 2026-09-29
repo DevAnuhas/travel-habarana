@@ -24,3 +24,50 @@ describe("normalizeSeason", () => {
     })
   })
 })
+
+import { buildSeasonCells, cycleMonth, describeSeason } from "./season"
+
+describe("buildSeasonCells", () => {
+  it("returns null without usable data", () => {
+    expect(buildSeasonCells(undefined)).toBeNull()
+    expect(buildSeasonCells({ peak: [0, 13], good: [] })).toBeNull()
+  })
+
+  it("marks 12 months, peak winning over good", () => {
+    const cells = buildSeasonCells({ peak: [8, 9], good: [7, 10, 8] })!
+    expect(cells).toHaveLength(12)
+    expect(cells.map((c) => c.level).join(",")).toBe(
+      "off,off,off,off,off,off,good,peak,peak,good,off,off"
+    )
+    expect(cells[0]).toMatchObject({ month: 1, label: "Jan", initial: "J" })
+  })
+})
+
+describe("cycleMonth", () => {
+  it("cycles off → good → peak → off", () => {
+    const once = cycleMonth(null, 8)
+    expect(once).toEqual({ peak: [], good: [8] })
+    const twice = cycleMonth(once, 8)
+    expect(twice).toEqual({ peak: [8], good: [] })
+    expect(cycleMonth(twice, 8)).toBeNull()
+  })
+
+  it("keeps months sorted", () => {
+    expect(cycleMonth({ peak: [], good: [9] }, 7)).toEqual({
+      peak: [],
+      good: [7, 9],
+    })
+  })
+})
+
+describe("describeSeason", () => {
+  it("summarises runs of months", () => {
+    expect(describeSeason({ peak: [7, 8, 9], good: [6, 10, 12] })).toBe(
+      "Best: Jul–Sep. Good: Jun, Oct, Dec."
+    )
+  })
+
+  it("returns null without data", () => {
+    expect(describeSeason(undefined)).toBeNull()
+  })
+})

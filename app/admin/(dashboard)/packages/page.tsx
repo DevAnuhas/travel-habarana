@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -59,7 +58,11 @@ import {
 	CircleNotch,
 } from "@phosphor-icons/react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { packageSchema } from "@/lib/types";
+import { packageSchema, type PackageInput } from "@/lib/types";
+import type { FieldErrors } from "react-hook-form";
+import { PackageLandingFields } from "@/components/admin/package-landing-fields";
+import { ImageAltFields } from "@/components/admin/image-alt-fields";
+import { Megaphone } from "@phosphor-icons/react";
 import {
 	PACKAGE_CATEGORIES,
 	PACKAGE_CATEGORY_LABELS,
@@ -78,7 +81,7 @@ import {
 } from "@/components/ui/select";
 import { motion, AnimatePresence } from "framer-motion";
 
-type PackageFormValues = z.infer<typeof packageSchema>;
+type PackageFormValues = PackageInput;
 type Package = {
 	_id: string;
 	name: string;
@@ -94,16 +97,60 @@ type Package = {
 	priceCurrency?: PriceCurrency | null;
 	priceUnit?: PriceUnit | null;
 	priceNote?: string | null;
-};
+} & Partial<Pick<PackageInput, (typeof LANDING_KEYS)[number]>>;
 
-const emptyMerchandising = {
+const LANDING_KEYS = [
+	"summary",
+	"seoTitle",
+	"seoDescription",
+	"groupSize",
+	"highlights",
+	"notIncluded",
+	"timeSlots",
+	"pickupAreas",
+	"whatToBring",
+	"imageAlts",
+	"itinerary",
+	"faqs",
+	"season",
+] as const;
+
+// Every optional field starts as null so the admin can clear a value (the API
+// stores null; JSON.stringify would drop undefined and keep the old value).
+const emptyOptionalFields = {
 	category: null,
 	sortOrder: null,
 	priceFrom: null,
 	priceCurrency: null,
 	priceUnit: null,
 	priceNote: null,
+	summary: null,
+	seoTitle: null,
+	seoDescription: null,
+	groupSize: null,
+	highlights: null,
+	notIncluded: null,
+	timeSlots: null,
+	pickupAreas: null,
+	whatToBring: null,
+	imageAlts: null,
+	itinerary: null,
+	faqs: null,
+	season: null,
 } as const;
+
+// Which tab holds each field, so a failed save jumps to the first error.
+const TAB_FOR_FIELD: Partial<Record<keyof PackageInput, string>> = {
+	images: "images",
+	imageAlts: "images",
+	included: "included",
+	...Object.fromEntries(
+		LANDING_KEYS.filter((key) => key !== "imageAlts").map((key) => [
+			key,
+			"landing",
+		])
+	),
+};
 
 // TODO: This component should be refactored
 export default function PackagesPage() {
@@ -122,7 +169,7 @@ export default function PackagesPage() {
 			duration: "",
 			included: [],
 			images: [],
-			...emptyMerchandising,
+			...emptyOptionalFields,
 		},
 	});
 
@@ -144,6 +191,19 @@ export default function PackagesPage() {
 				priceCurrency: editingPackage.priceCurrency ?? null,
 				priceUnit: editingPackage.priceUnit ?? null,
 				priceNote: editingPackage.priceNote ?? null,
+				summary: editingPackage.summary ?? null,
+				seoTitle: editingPackage.seoTitle ?? null,
+				seoDescription: editingPackage.seoDescription ?? null,
+				groupSize: editingPackage.groupSize ?? null,
+				highlights: editingPackage.highlights ?? null,
+				notIncluded: editingPackage.notIncluded ?? null,
+				timeSlots: editingPackage.timeSlots ?? null,
+				pickupAreas: editingPackage.pickupAreas ?? null,
+				whatToBring: editingPackage.whatToBring ?? null,
+				imageAlts: editingPackage.imageAlts ?? null,
+				itinerary: editingPackage.itinerary ?? null,
+				faqs: editingPackage.faqs ?? null,
+				season: editingPackage.season ?? null,
 			});
 		} else {
 			form.reset({
@@ -152,7 +212,7 @@ export default function PackagesPage() {
 				duration: "",
 				included: [],
 				images: [],
-				...emptyMerchandising,
+				...emptyOptionalFields,
 			});
 		}
 	}, [editingPackage, form]);
@@ -197,6 +257,23 @@ export default function PackagesPage() {
 					priceCurrency: data.priceCurrency ?? null,
 					priceUnit: data.priceUnit ?? null,
 					priceNote: data.priceNote?.trim() || null,
+					summary: data.summary ?? null,
+					seoTitle: data.seoTitle ?? null,
+					seoDescription: data.seoDescription ?? null,
+					groupSize: data.groupSize ?? null,
+					highlights: data.highlights ?? null,
+					notIncluded: data.notIncluded ?? null,
+					timeSlots: data.timeSlots ?? null,
+					pickupAreas: data.pickupAreas ?? null,
+					whatToBring: data.whatToBring ?? null,
+					itinerary: data.itinerary ?? null,
+					faqs: data.faqs ?? null,
+					season: data.season ?? null,
+					// Drop descriptions of photos removed in this edit.
+					imageAlts:
+						data.imageAlts?.filter((entry) =>
+							data.images.includes(entry.src)
+						) ?? null,
 				}),
 			});
 
@@ -249,6 +326,12 @@ export default function PackagesPage() {
 		}
 	};
 
+	const onInvalid = (errors: FieldErrors<PackageFormValues>) => {
+		const firstField = Object.keys(errors)[0] as keyof PackageInput | undefined;
+		setActiveTab((firstField && TAB_FOR_FIELD[firstField]) ?? "general");
+		toast.error("Please fix the highlighted fields");
+	};
+
 	const handleTabChange = (value: string) => {
 		setActiveTab(value);
 	};
@@ -272,15 +355,22 @@ export default function PackagesPage() {
 			}
 		} else if (activeTab === "images") {
 			// Validate images tab fields before proceeding
-			const imagesValid = await form.trigger(["images"]);
+			const imagesValid = await form.trigger(["images", "imageAlts"]);
 			if (imagesValid) {
 				setActiveTab("included");
+			}
+		} else if (activeTab === "included") {
+			const includedValid = await form.trigger(["included"]);
+			if (includedValid) {
+				setActiveTab("landing");
 			}
 		}
 	};
 
 	const handlePreviousTab = () => {
-		if (activeTab === "included") {
+		if (activeTab === "landing") {
+			setActiveTab("included");
+		} else if (activeTab === "included") {
 			setActiveTab("images");
 		} else if (activeTab === "images") {
 			setActiveTab("general");
@@ -318,11 +408,11 @@ export default function PackagesPage() {
 							</DialogHeader>
 							<Form {...form}>
 								<form
-									onSubmit={form.handleSubmit(onSubmit)}
+									onSubmit={form.handleSubmit(onSubmit, onInvalid)}
 									className="space-y-4"
 								>
 									<Tabs value={activeTab} onValueChange={handleTabChange}>
-										<TabsList className="grid grid-cols-3 mb-4 bg-primary/10">
+										<TabsList className="grid grid-cols-4 mb-4 bg-primary/10">
 											<TabsTrigger
 												value="general"
 												className="flex items-center"
@@ -340,6 +430,13 @@ export default function PackagesPage() {
 											>
 												<ListChecks className="mr-2 h-4 w-4" />
 												Included Items
+											</TabsTrigger>
+											<TabsTrigger
+												value="landing"
+												className="flex items-center"
+											>
+												<Megaphone className="mr-2 h-4 w-4" />
+												Landing page
 											</TabsTrigger>
 										</TabsList>
 
@@ -597,6 +694,10 @@ export default function PackagesPage() {
 															</FormItem>
 														)}
 													/>
+													<ImageAltFields
+														control={form.control}
+														setValue={form.setValue}
+													/>
 													<div className="flex justify-between">
 														<Button
 															type="button"
@@ -638,6 +739,53 @@ export default function PackagesPage() {
 																<FormMessage />
 															</FormItem>
 														)}
+													/>
+													<DialogFooter className="flex !justify-between">
+														<Button
+															type="button"
+															variant="outline"
+															onClick={handlePreviousTab}
+														>
+															Back
+														</Button>
+														<div className="flex gap-2">
+															<Button
+																type="button"
+																variant="outline"
+																onClick={handleNextTab}
+															>
+																Landing page
+															</Button>
+															<Button type="submit" disabled={isSubmitting}>
+																{isSubmitting ? (
+																	<>
+																		<CircleNotch className="mr-1 h-4 w-4 animate-spin" />
+																		Saving...
+																	</>
+																) : editingPackage ? (
+																	"Update Package"
+																) : (
+																	"Create Package"
+																)}
+															</Button>
+														</div>
+													</DialogFooter>
+												</motion.div>
+											)}
+
+											{/* Landing Page Tab */}
+											{activeTab === "landing" && (
+												<motion.div
+													key="landing"
+													initial={{ opacity: 0, height: "fit-content" }}
+													animate={{ opacity: 1, height: "fit-content" }}
+													exit={{ opacity: 0, height: "fit-content" }}
+													transition={{ duration: 0.3, ease: "easeInOut" }}
+													className="space-y-4"
+												>
+													<PackageLandingFields
+														key={editingPackage?._id ?? "new"}
+														control={form.control}
 													/>
 													<DialogFooter className="flex !justify-between">
 														<Button
