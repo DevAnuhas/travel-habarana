@@ -1,12 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { revalidatePath, revalidateTag } from "next/cache";
 import mongoose from "mongoose";
 import connectMongoDB from "@/lib/mongodb";
 import Package from "@/models/Package";
 import { packageIdentifierSchema, packageSchema } from "@/lib/types";
 import { NotFoundError } from "@/lib/errors";
 import { withErrorHandler, withAdminAuth } from "@/middleware/error-handler";
-import { generateSlug } from "@/utils/slug";
+import { findAvailableSlug } from "@/lib/package-slug-store";
+import { planSlugChange } from "@/lib/package-slugs";
+import { revalidatePackages } from "@/lib/package-revalidation";
 import { parseJsonBody } from "@/lib/api";
 
 // Get a package by id or slug
@@ -73,23 +74,25 @@ export async function PUT(
 				throw new NotFoundError("Package not found");
 			}
 
-			// If name changed, update the slug too
-			const packageData = { ...updatedPackage };
+			const packageData: Record<string, unknown> = { ...updatedPackage };
 
-			if (packageData.name !== packageItem.name) {
-				packageData.slug = generateSlug(packageData.name);
+			// A rename regenerates the slug; the old one goes into previousSlugs so
+			// indexed URLs keep resolving (the page 308s them to the new slug).
+			if (updatedPackage.name !== packageItem.name) {
+				const nextSlug = await findAvailableSlug(
+					updatedPackage.name,
+					packageItem._id
+				);
 
-				const existingWithSlug = await Package.findOne({
-					slug: packageData.slug,
-					_id: { $ne: packageItem._id },
-				});
-
-				// If slug exists, add a timestamp suffix to make it unique
-				if (existingWithSlug) {
-					packageData.slug = `${packageData.slug}-${Date.now()
-						.toString()
-						.slice(-4)}`;
-				}
+				const slugState = planSlugChange(
+					{
+						slug: packageItem.slug,
+						previousSlugs: packageItem.previousSlugs ?? [],
+					},
+					nextSlug
+				);
+				packageData.slug = slugState.slug;
+				packageData.previousSlugs = slugState.previousSlugs;
 			}
 
 			const savedPackage = await Package.findByIdAndUpdate(
@@ -97,13 +100,7 @@ export async function PUT(
 				packageData,
 				{ returnDocument: "after", runValidators: true }
 			);
-			revalidateTag("package", "max");
-			revalidatePath("/packages");
-			revalidatePath(`/packages/${packageItem.slug}`);
-			if (savedPackage?.slug && savedPackage.slug !== packageItem.slug) {
-				revalidatePath(`/packages/${savedPackage.slug}`);
-			}
-			revalidatePath("/sitemap.xml");
+			revalidatePackages(packageItem.slug, savedPackage?.slug);
 			return NextResponse.json(savedPackage, { status: 200 });
 		});
 	});
@@ -132,10 +129,7 @@ export async function DELETE(
 				throw new NotFoundError("Package not found");
 			}
 
-			revalidateTag("package", "max");
-			revalidatePath("/packages");
-			revalidatePath(`/packages/${packageItem.slug}`);
-			revalidatePath("/sitemap.xml");
+			revalidatePackages(packageItem.slug);
 			return NextResponse.json({ success: true }, { status: 200 });
 		});
 	});

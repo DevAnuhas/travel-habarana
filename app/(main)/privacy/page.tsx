@@ -57,13 +57,12 @@ const sections = [
     ),
   },
   {
-    title: "Cookies and local storage",
+    title: "Cookies",
     content: (
       <p>
-        Administrative sign-in uses an authentication cookie. The favorites
-        feature stores selected package identifiers in your browser. Embedded
-        review or social services may use their own cookies or similar
-        technologies when loaded.
+        Administrative sign-in uses an authentication cookie. Embedded review
+        or social services may use their own cookies or similar technologies
+        when loaded.
       </p>
     ),
   },

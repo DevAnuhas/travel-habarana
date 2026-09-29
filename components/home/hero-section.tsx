@@ -1,134 +1,79 @@
-import Link from "next/link"
 import Image from "next/image"
-import {
-  CaretDoubleDown,
-  FacebookLogo,
-  InstagramLogo,
-  TiktokLogo,
-  WhatsappLogo,
-  EnvelopeOpen,
-  ArrowRight,
-} from "@phosphor-icons/react/dist/ssr"
-import type { IconProps } from "@phosphor-icons/react"
-import { Button } from "@/components/ui/button"
-import { siteConfig } from "@/config/site"
+import Link from "next/link"
+import { ArrowRight } from "@phosphor-icons/react/dist/ssr"
 
-function SocialIcon({
-  href,
-  icon: Icon,
-  label,
-}: {
-  href: string
-  icon: React.ComponentType<IconProps>
-  label: string
-}) {
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm transition-colors hover:bg-white/30"
-      aria-label={label}
-    >
-      <Icon size={24} weight="duotone" className="text-white" />
-    </a>
-  )
-}
+import { ContactActions } from "@/components/common/contact-actions"
+import { TrustLine } from "@/components/common/trust-line"
+import { imagery } from "@/config/imagery"
+import type { PublicPackage } from "@/lib/package-serialize"
+import { formatPrice, PRICE_ON_REQUEST } from "@/lib/pricing"
 
-function HeroSection() {
+// Content-sized (no viewport height) so the first phone viewport holds the
+// decision facts: what, duration, price, trust and WhatsApp for each safari.
+export default function HeroSection({ safaris }: { safaris: PublicPackage[] }) {
   return (
-    <section className="relative h-screen">
-      {/* Background image */}
-      <div className="absolute inset-0">
-          <Image
-            src="https://res.cloudinary.com/travelhabarana/image/upload/v1747296498/hero-image_hmg1je.webp"
-            alt="Elephant jeep safari near Minneriya and Habarana"
-            fill
-            priority
-            className="object-cover"
+    <section className="relative isolate overflow-hidden px-4 pt-24 pb-8 md:pt-32 md:pb-16">
+      <Image
+        src={imagery.hero.src}
+        alt={imagery.hero.alt}
+        fill
+        priority
+        data-lead-image
+        sizes="100vw"
+        className="-z-20 object-cover"
+      />
+      <div
+        className="absolute inset-0 -z-10 bg-gradient-to-b from-black/60 via-black/55 to-black/75"
+        aria-hidden="true"
+      />
+      <div className="container mx-auto">
+        <div className="grid max-w-2xl gap-4 text-white">
+          <p className="text-sm font-medium tracking-wide text-white/85 uppercase">
+            Minneriya · Kaudulla · Hurulu Eco Park
+          </p>
+          <h1>Jeep safaris from Habarana</h1>
+          <TrustLine tone="light" />
+          <ContactActions
+            compact
+            className="max-w-md [&_a:last-child]:border-white/60 [&_a:last-child]:bg-transparent [&_a:last-child]:text-white"
           />
-          <div className="absolute inset-0 bg-black/50" />
-      </div>
-
-      {/* Hero content */}
-      <div className="relative container mx-auto flex h-full items-center px-4">
-        <div className="grid w-full grid-cols-1 gap-4 lg:grid-cols-12 lg:gap-8">
-          {/* Left side content */}
-          <div className="flex flex-col justify-center text-center text-white lg:col-span-9 lg:text-left">
-            <h1
-              className="mb-4 text-5xl leading-tight font-bold md:text-6xl lg:text-7xl"
-            >
-              Private Jeep Safaris in Habarana &amp; Minneriya
-            </h1>
-
-            <p
-              className="mx-auto mb-8 max-w-2xl text-lg md:text-xl lg:mx-0"
-            >
-              Explore Minneriya, Kaudulla, and Hurulu Eco Park with a local
-              Ceylon Safari guide, or pair your safari with an authentic
-              Habarana village experience.
-            </p>
-
-            <div
-              className="flex flex-col justify-center gap-4 sm:flex-row lg:justify-start"
-            >
-              <a href="#packages">
-                <Button size="lg">View Packages</Button>
-              </a>
-              <Link href="/book-now" className="group">
-                <Button variant="secondary" size="lg" className="">
-                  Book Now
-                  <ArrowRight className="ml-1 transition-all group-hover:translate-x-1" />
-                </Button>
-              </Link>
-            </div>
-          </div>
-
-          {/* Right side social media links */}
-          <div className="flex items-center justify-center lg:col-span-3 lg:justify-end">
-            <div
-              className="mt-8 flex flex-row gap-4 md:flex-row lg:mt-0 lg:flex-col"
-            >
-              <SocialIcon
-                href={siteConfig.links.facebook}
-                icon={FacebookLogo}
-                label="Facebook"
-              />
-              <SocialIcon
-                href={siteConfig.links.instagram}
-                icon={InstagramLogo}
-                label="Instagram"
-              />
-              <SocialIcon
-                href={siteConfig.links.tiktok}
-                icon={TiktokLogo}
-                label="TikTok"
-              />
-              <SocialIcon
-                href={siteConfig.links.whatsapp}
-                icon={WhatsappLogo}
-                label="WhatsApp"
-              />
-              <SocialIcon
-                href={`mailto:${siteConfig.contact.email}`}
-                icon={EnvelopeOpen}
-                label="Email"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Scroll indicator at the bottom */}
-        <div
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 transform"
-        >
-          <div className="animate-bounce">
-            <CaretDoubleDown size={24} className="text-white" />
-          </div>
+          {safaris.length > 0 && (
+            <ul className="grid max-w-md gap-1.5" aria-label="Safaris">
+              {safaris.map((pkg) => (
+                <li key={pkg._id} data-quick-pick>
+                  <Link
+                    href={`/packages/${pkg.slug}`}
+                    className="flex items-center gap-3 rounded bg-black/35 px-3 py-2 backdrop-blur-sm hover:bg-black/50"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span
+                        data-qp-name
+                        className="block leading-snug font-semibold"
+                      >
+                        {pkg.name}
+                      </span>
+                      <span className="block text-sm text-white/85">
+                        <span data-fact="duration">{pkg.duration}</span> ·{" "}
+                        <span data-price>
+                          {formatPrice(pkg) ?? PRICE_ON_REQUEST}
+                        </span>
+                      </span>
+                    </span>
+                    <ArrowRight
+                      className="size-4 shrink-0"
+                      aria-hidden="true"
+                    />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="max-w-xl text-white/90">
+            Message us your date and hotel. We&apos;ll reply within 24 hours
+            with the park, the time and the current price.
+          </p>
         </div>
       </div>
     </section>
   )
 }
-
-export default HeroSection

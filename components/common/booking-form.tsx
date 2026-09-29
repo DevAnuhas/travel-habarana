@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { CalendarDots } from "@phosphor-icons/react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { inquirySchema } from "@/lib/types";
+import { isSelectableBookingDate } from "@/lib/booking-dates";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -47,14 +47,14 @@ type FormValues = z.infer<typeof inquirySchema>;
 
 export default function BookingForm({
 	packages,
+	initialPackageId = "",
 }: {
 	packages: PackageOption[];
+	/** Resolved on the server (see lib/booking-prefill.ts), so the form needs no useSearchParams. */
+	initialPackageId?: string;
 }) {
 	const router = useRouter();
-	const searchParams = useSearchParams();
 
-	// Safely access the packageId from searchParams
-	const packageIdFromUrl = searchParams ? searchParams.get("packageId") : null;
 
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [idempotencyKey, setIdempotencyKey] = useState<string | null>(null);
@@ -66,7 +66,7 @@ export default function BookingForm({
 			name: "",
 			email: "",
 			phone: "",
-			packageId: packageIdFromUrl || "",
+			packageId: initialPackageId,
 			specialRequests: "",
 			website: "",
 		},
@@ -118,12 +118,7 @@ export default function BookingForm({
 	};
 
 	return (
-		<motion.div
-			initial={{ opacity: 0, y: 20 }}
-			animate={{ opacity: 1, y: 0 }}
-			transition={{ duration: 0.5 }}
-			className="bg-white rounded-xl shadow-lg p-6 md:p-8"
-		>
+		<div className="bg-white rounded-xl shadow-lg p-6 md:p-8">
 			<h2 className="text-2xl font-bold mb-6">Send an Inquiry</h2>
 
 			<Form {...form}>
@@ -195,7 +190,7 @@ export default function BookingForm({
 									<FormLabel>Select Package *</FormLabel>
 									<Select
 										onValueChange={field.onChange}
-										defaultValue={field.value}
+										value={field.value}
 									>
 										<FormControl>
 											<SelectTrigger className="w-full">
@@ -254,7 +249,9 @@ export default function BookingForm({
 												}
 												onSelect={(date) => field.onChange(date)}
 												autoFocus
-												disabled={(date) => date < new Date()}
+												disabled={(date) =>
+													!isSelectableBookingDate(date, new Date())
+												}
 											/>
 										</PopoverContent>
 									</Popover>
@@ -325,6 +322,6 @@ export default function BookingForm({
 					</Button>
 				</form>
 			</Form>
-		</motion.div>
+		</div>
 	);
 }

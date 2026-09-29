@@ -1,7 +1,10 @@
 import type { Metadata } from "next"
 import { Suspense } from "react"
 import BookingForm from "@/components/common/booking-form"
+import { ContactActions } from "@/components/common/contact-actions"
 import FAQSection from "@/components/common/faq-section"
+import { MobileContactBar } from "@/components/common/mobile-contact-bar"
+import { resolveInitialPackageId } from "@/lib/booking-prefill"
 import { siteConfig } from "@/config/site"
 import { getPackages } from "@/lib/packages"
 
@@ -12,7 +15,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: `Book a Safari with ${siteConfig.name}`,
     description:
-      "Request current pricing and availability for a private jeep safari or village experience.",
+      "Request current pricing and availability for a jeep safari or village experience.",
     url: "/book-now",
     images: [
       {
@@ -25,8 +28,20 @@ export const metadata: Metadata = {
   },
 }
 
-export default async function BookNowPage() {
-  const packages = await getPackages()
+type SearchParams = Promise<{ packageId?: string | string[] }>
+type PackageOption = { _id: string; name: string }
+
+export default async function BookNowPage({
+  searchParams,
+}: {
+  searchParams: SearchParams
+}) {
+  // Cached, so this stays in the static shell. searchParams is request data
+  // and is only read inside <Suspense> below (Cache Components rule).
+  const packages = (await getPackages()).map(({ _id, name }) => ({
+    _id,
+    name,
+  }))
 
   return (
     <main className="pt-20">
@@ -47,22 +62,44 @@ export default async function BookNowPage() {
       <section className="bg-gray-50 py-16">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl">
-            <Suspense
-              fallback={
-                <div className="flex min-h-[400px] items-center justify-center rounded-xl bg-white p-6 shadow-lg md:p-8">
-                  <span className="ml-2 text-primary">Loading form...</span>
-                </div>
-              }
-            >
-              <BookingForm
-                packages={packages.map(({ _id, name }) => ({ _id, name }))}
+            <div className="mb-8 grid gap-3 rounded-lg border bg-card p-6">
+              <h2 className="text-2xl">Fastest: message us on WhatsApp</h2>
+              <p className="text-muted-foreground">
+                We reply within 24 hours with availability and the current
+                price.
+              </p>
+              <ContactActions />
+            </div>
+            {/* The fallback is the complete form without prefill, so the
+                static HTML is a working form, never a loading message. */}
+            <Suspense fallback={<BookingForm packages={packages} />}>
+              <PrefilledBookingForm
+                packages={packages}
+                searchParams={searchParams}
               />
             </Suspense>
           </div>
         </div>
       </section>
 
-      <FAQSection />
+      <FAQSection variant="booking" />
+      <MobileContactBar />
     </main>
+  )
+}
+
+async function PrefilledBookingForm({
+  packages,
+  searchParams,
+}: {
+  packages: PackageOption[]
+  searchParams: SearchParams
+}) {
+  const { packageId } = await searchParams
+  return (
+    <BookingForm
+      packages={packages}
+      initialPackageId={resolveInitialPackageId(packageId, packages)}
+    />
   )
 }

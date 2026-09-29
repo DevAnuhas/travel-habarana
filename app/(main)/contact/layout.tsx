@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/contact" },
   openGraph: {
     title: `Contact ${siteConfig.name}`,
-    description: `Plan a private Habarana safari or village experience with our local team.`,
+    description: `Plan a Habarana safari or village experience with our local team.`,
     url: "/contact",
     images: [
       {

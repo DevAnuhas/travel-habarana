@@ -2,7 +2,6 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { motion } from "framer-motion"
 import {
   EnvelopeOpen,
   WhatsappLogo,
@@ -13,7 +12,9 @@ import {
 } from "@phosphor-icons/react/dist/ssr"
 import { Button } from "@/components/ui/button"
 import FAQSection from "@/components/common/faq-section"
+import { MobileContactBar } from "@/components/common/mobile-contact-bar"
 import { siteConfig } from "@/config/site"
+import { buildWhatsAppUrl, TEL_HREF } from "@/lib/contact-links"
 
 // Social media link component
 function SocialLink({
@@ -61,12 +62,7 @@ export default function ContactPage() {
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-4xl">
             {/* Contact Card */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="overflow-hidden rounded-xl bg-white shadow-lg"
-            >
+            <div className="overflow-hidden rounded-xl bg-white shadow-lg">
               <div className="grid grid-cols-1 md:grid-cols-2">
                 <div className="relative h-64 bg-primary/10 md:h-full">
                   <Image
@@ -91,10 +87,18 @@ export default function ContactPage() {
                       <div>
                         <h3 className="text-lg font-bold">WhatsApp</h3>
                         <a
-                          href={siteConfig.links.whatsapp}
+                          href={buildWhatsAppUrl()}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="text-gray-600 hover:text-primary hover:underline"
                         >
                           {siteConfig.contact.phone}
+                        </a>
+                        <a
+                          href={TEL_HREF}
+                          className="block text-sm text-gray-600 hover:text-primary hover:underline"
+                        >
+                          Call {siteConfig.contact.phone}
                         </a>
                       </div>
                     </div>
@@ -169,12 +173,13 @@ export default function ContactPage() {
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </div>
           </div>
         </div>
       </section>
 
-      <FAQSection />
+      <FAQSection variant="booking" />
+      <MobileContactBar />
     </main>
   )
 }

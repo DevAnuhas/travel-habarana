@@ -10,6 +10,7 @@ import {
   Phone,
 } from "@phosphor-icons/react/dist/ssr"
 import { siteConfig } from "@/config/site"
+import { buildWhatsAppUrl } from "@/lib/contact-links"
 
 const COPYRIGHT_YEAR = 2026
 
@@ -63,7 +64,7 @@ export default function Footer() {
                 <TiktokLogo size={20} />
               </a>
               <a
-                href={siteConfig.links.whatsapp}
+                href={buildWhatsAppUrl()}
                 className="text-gray-300 transition-colors hover:text-secondary"
                 aria-label="WhatsApp"
               >

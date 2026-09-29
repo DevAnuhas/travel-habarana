@@ -3,6 +3,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { CheckCircle } from "@phosphor-icons/react/dist/ssr"
 import { siteConfig } from "@/config/site"
+import { buildWhatsAppUrl } from "@/lib/contact-links"
 
 export const metadata: Metadata = {
   title: "Thank You",
@@ -41,7 +42,7 @@ export default function ThankYouPage() {
                 <p className="text-sm font-medium">
                   WhatsApp:{" "}
                   <a
-                    href={siteConfig.links.whatsapp}
+                    href={buildWhatsAppUrl()}
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="WhatsApp"

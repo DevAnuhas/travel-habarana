@@ -1,10 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { revalidatePath, revalidateTag } from "next/cache";
 import connectMongoDB from "@/lib/mongodb";
 import Package from "@/models/Package";
 import { packageSchema } from "@/lib/types";
 import { withAdminAuth, withErrorHandler } from "@/middleware/error-handler";
-import { generateSlug } from "@/utils/slug";
+import { findAvailableSlug } from "@/lib/package-slug-store";
+import { revalidatePackages } from "@/lib/package-revalidation";
 import { parseJsonBody } from "@/lib/api";
 
 // Get all packages
@@ -29,26 +29,13 @@ export async function POST(request: NextRequest) {
 
 			await connectMongoDB();
 
-			// Generate slug from name
-			let slug = generateSlug(packageItem.name);
-
-			// Check if the slug already exists
-			const existingWithSlug = await Package.findOne({ slug });
-
-			// If slug exists, add a timestamp suffix to make it unique
-			if (existingWithSlug) {
-				slug = `${slug}-${Date.now().toString().slice(-4)}`;
-			}
-
 			const packageWithSlug = {
 				...packageItem,
-				slug,
+				slug: await findAvailableSlug(packageItem.name),
 			};
 
 			const newPackage = await Package.create(packageWithSlug);
-			revalidateTag("package", "max");
-			revalidatePath("/packages");
-			revalidatePath("/sitemap.xml");
+			revalidatePackages(newPackage.slug);
 			return NextResponse.json(newPackage, { status: 201 });
 		});
 	});

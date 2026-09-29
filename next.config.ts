@@ -1,5 +1,5 @@
 import type { NextConfig } from "next"
-import { siteConfig } from "./config/site"
+import { contentRedirects } from "./config/redirects"
 
 const isDevelopment = process.env.NODE_ENV === "development"
 
@@ -45,29 +45,7 @@ const nextConfig: NextConfig = {
     ],
   },
   async redirects() {
-    return [
-      ...[
-        "habarana-safari-jeep",
-        "habarana-elephant-jeep-safari",
-        "habaranaelephantjeepsafari",
-      ].map((slug) => ({
-        source: `/blogs/${slug}`,
-        destination: "/blogs/habarana-jeep-safari",
-        permanent: true,
-      })),
-      {
-        source: "/:path*",
-        has: [{ type: "host", value: "travelhabarana.com" }],
-        destination: `${siteConfig.url}/:path*`,
-        permanent: true,
-      },
-      {
-        source: "/:path*",
-        has: [{ type: "host", value: "www.travelhabarana.com" }],
-        destination: `${siteConfig.url}/:path*`,
-        permanent: true,
-      },
-    ]
+    return contentRedirects
   },
   async headers() {
     return [
