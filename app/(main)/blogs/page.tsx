@@ -1,4 +1,5 @@
 import { Suspense } from "react"
+import { MobileContactBar } from "@/components/common/mobile-contact-bar"
 import Link from "next/link"
 import type { Metadata } from "next"
 import { MagnifyingGlass } from "@phosphor-icons/react/dist/ssr"
@@ -319,6 +320,7 @@ export default function BlogsPage({
       <Suspense fallback={<BlogGridSkeleton />}>
         <BlogResults searchParams={searchParams} />
       </Suspense>
+      <MobileContactBar />
     </main>
   )
 }

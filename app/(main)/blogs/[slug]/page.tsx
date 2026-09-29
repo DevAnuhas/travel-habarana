@@ -16,6 +16,8 @@ import type { Metadata } from "next"
 import { siteConfig } from "@/config/site"
 import WriteComment from "@/components/ui/write-comment"
 import ShareArticle from "@/components/ui/share-article"
+import { FinalCta } from "@/components/common/final-cta"
+import { MobileContactBar } from "@/components/common/mobile-contact-bar"
 import { JsonLd } from "@/components/seo/json-ld"
 
 interface BlogPostPageProps {
@@ -108,7 +110,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <main className="min-h-screen bg-white">
       <JsonLd data={structuredData} />
       {/* Article Content */}
       <article className="container mx-auto px-4 pt-20">
@@ -294,6 +296,10 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           <hr />
         </div>
 
+        <div className="-mx-4 mt-16">
+          <FinalCta title="Planning a safari from Habarana?" />
+        </div>
+
         {/* Comments Section */}
         {post?.comments?.length > 0 && (
           <div className="mt-16">
@@ -345,7 +351,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           </div>
         </section>
       )}
-    </div>
+      <MobileContactBar />
+    </main>
   )
 }
 

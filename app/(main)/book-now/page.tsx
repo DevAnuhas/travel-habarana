@@ -1,7 +1,9 @@
 import type { Metadata } from "next"
-import { Suspense } from "react"
 import BookingForm from "@/components/common/booking-form"
+import { ContactActions } from "@/components/common/contact-actions"
 import FAQSection from "@/components/common/faq-section"
+import { MobileContactBar } from "@/components/common/mobile-contact-bar"
+import { resolveInitialPackageId } from "@/lib/booking-prefill"
 import { siteConfig } from "@/config/site"
 import { getPackages } from "@/lib/packages"
 
@@ -25,8 +27,16 @@ export const metadata: Metadata = {
   },
 }
 
-export default async function BookNowPage() {
-  const packages = await getPackages()
+export default async function BookNowPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ packageId?: string | string[] }>
+}) {
+  const [packages, { packageId }] = await Promise.all([
+    getPackages(),
+    searchParams,
+  ])
+  const initialPackageId = resolveInitialPackageId(packageId, packages)
 
   return (
     <main className="pt-20">
@@ -47,22 +57,24 @@ export default async function BookNowPage() {
       <section className="bg-gray-50 py-16">
         <div className="container mx-auto px-4">
           <div className="mx-auto max-w-2xl">
-            <Suspense
-              fallback={
-                <div className="flex min-h-[400px] items-center justify-center rounded-xl bg-white p-6 shadow-lg md:p-8">
-                  <span className="ml-2 text-primary">Loading form...</span>
-                </div>
-              }
-            >
-              <BookingForm
-                packages={packages.map(({ _id, name }) => ({ _id, name }))}
-              />
-            </Suspense>
+            <div className="mb-8 grid gap-3 rounded-lg border bg-card p-6">
+              <h2 className="text-2xl">Fastest: message us on WhatsApp</h2>
+              <p className="text-muted-foreground">
+                We reply within 24 hours with availability and the current
+                price.
+              </p>
+              <ContactActions />
+            </div>
+            <BookingForm
+              packages={packages.map(({ _id, name }) => ({ _id, name }))}
+              initialPackageId={initialPackageId}
+            />
           </div>
         </div>
       </section>
 
       <FAQSection variant="booking" />
+      <MobileContactBar />
     </main>
   )
 }

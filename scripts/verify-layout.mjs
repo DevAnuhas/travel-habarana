@@ -167,9 +167,10 @@ const endOfPage = () =>
       overflowX: document.documentElement.scrollWidth - innerWidth,
     } })()`)
 
+// FormControl overwrites the trigger's data-slot, so read the rendered value span.
 const selectedPackage = () =>
   evaluate(
-    `document.querySelector("[data-slot=select-trigger]")?.textContent?.trim() ?? null`
+    `(document.querySelector("[data-slot=select-value]") ?? document.querySelector("button[role=combobox]"))?.textContent?.trim() ?? null`
   )
 
 // Expected and control names come from the public package API, not from the page under test.
