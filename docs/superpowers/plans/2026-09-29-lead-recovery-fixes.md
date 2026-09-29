@@ -1,5 +1,11 @@
 # Lead Recovery Fixes Implementation Plan
 
+> **Revision, 29 Sep 2026 (user decisions):**
+> - **Analytics dropped for now.** Client cost approval is pending, and PostHog is preferred when approved. **Task 9 is cancelled**, and no `trackAttrs`/`trackEvent`/`data-umami-*` anywhere.
+> - **The old domain will not be re-registered.** Task 7 removes the `travelhabarana.com` host redirects instead of refactoring them.
+> - **Tasks 8, 10 and 11 are superseded** by `docs/superpowers/plans/2026-09-29-landing-page-revamp.md`, which redesigns the same components. Doing them here would build them twice.
+> - Tasks 1–7 proceed as written, with Task 7 amended.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Remove the booking-flow defects and add the conversion paths and measurement that the 29 Sep 2026 audit found missing, so visitors who reach ceylonsafari.com can actually contact the business and every contact is counted.
@@ -1250,7 +1256,7 @@ Track E. Consolidates duplicate content and recovers dead URLs. **Owner-side pre
 - Modify: `next.config.ts` (`redirects()`)
 
 **Interfaces:**
-- Produces: `contentRedirects: PermanentRedirect[]`, `legacyHostRedirects(siteUrl: string): PermanentRedirect[]`.
+- Produces: `contentRedirects: PermanentRedirect[]`. (The old-host redirects are deleted: the domain is gone for good.)
 
 - [ ] **Step 1: Failing tests**
 
@@ -1259,7 +1265,7 @@ Create `config/redirects.test.ts`:
 ```ts
 import { describe, expect, it } from "vitest"
 
-import { contentRedirects, legacyHostRedirects } from "./redirects"
+import { contentRedirects } from "./redirects"
 
 describe("contentRedirects", () => {
   it("has unique sources", () => {
@@ -1289,21 +1295,6 @@ describe("contentRedirects", () => {
           "/packages/habarana-safari-tour-minneriya-and-kaudulla-nationalpark"
       )?.destination
     ).toBe("/packages/minneriya-national-park-safari")
-  })
-})
-
-describe("legacyHostRedirects", () => {
-  it("sends both former hosts to the same path on the new origin", () => {
-    const redirects = legacyHostRedirects("https://www.ceylonsafari.com")
-    expect(redirects.map((r) => r.has?.[0]?.value)).toEqual([
-      "travelhabarana.com",
-      "www.travelhabarana.com",
-    ])
-    for (const redirect of redirects) {
-      expect(redirect.source).toBe("/:path*")
-      expect(redirect.destination).toBe("https://www.ceylonsafari.com/:path*")
-      expect(redirect.permanent).toBe(true)
-    }
   })
 })
 ```
@@ -1346,26 +1337,15 @@ export const contentRedirects: PermanentRedirect[] = [
     "/packages/srilankan-day-and-multi-day-tours"
   ),
 ]
-
-const LEGACY_HOSTS = ["travelhabarana.com", "www.travelhabarana.com"] as const
-
-export function legacyHostRedirects(siteUrl: string): PermanentRedirect[] {
-  return LEGACY_HOSTS.map((host) => ({
-    source: "/:path*",
-    has: [{ type: "host", value: host }],
-    destination: `${siteUrl}/:path*`,
-    permanent: true,
-  }))
-}
 ```
 
 In `next.config.ts` replace the body of `redirects()` with:
 
 ```ts
-    return [...contentRedirects, ...legacyHostRedirects(siteConfig.url)]
+    return contentRedirects
 ```
 
-(import both from `./config/redirects`).
+(import from `./config/redirects`). This also deletes the two `travelhabarana.com` host rules; drop the now-unused `siteConfig` import from `next.config.ts` if nothing else uses it.
 
 - [ ] **Step 3: Verify and commit**
 
