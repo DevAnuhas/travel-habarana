@@ -40,6 +40,14 @@ That plan's Tasks 8–11 are superseded, and analytics is dropped.
 | 9 | Contrast, alts, duplicate lead image | The WhatsApp token becomes `oklch(0.5 0.12 158)` (5.63:1) with a darker hover, and a contrast regression test parses `globals.css`. An `imageAlts` field is added. The gallery is **one** markup list, so the lead image is requested once, which the browser verifies. | Tasks 1, 3, 8, 12 |
 | — | "Compact" experience cards | The spec now reuses `PackageCard`, which is DRY. | Task 9 |
 
+## Revision 2: response to review round 2
+
+| # | Reviewer point | Change | Where |
+|---|---|---|---|
+| 1 | `imageAlts` via `parseLines` breaks index alignment | Alts are **keyed by image URL**, not position. Mongo stores `imageAlts: [{src, alt}]`, since URLs contain dots and can't be object keys. The serializer builds `imageAlts: Record<src, alt>`, dropping alts whose image was removed (last one wins for a duplicate `src`). The admin edits one description input **next to each photo** in the Images tab. Tests cover an empty first alt with a populated second, reorder and removal. | Tasks 1, 2, 7, 8 |
+| 2 | Browser checks too weak | `firstViewport` checks **every** `[data-quick-pick]` row: its name, duration and price must each be hit-test visible at 390×844, or the check fails with the row index. For preselection, the tool fetches the expected name from the public `GET /api/packages/{id}` and asserts the trigger text **equals** it. It also asserts the text **differs** from another package's name, a negative control that fails on a wrong selection. | Task 6 (tool), Task 12 |
+| 3 | Homepage and shared metadata still say "Private…" | `siteConfig.description`, the root layout description, the homepage and packages-layout descriptions and their OG copy become neutral service names. A **claim-audit test** scans the metadata-bearing source files for claim words. Pre-existing owner-published copy (FAQ answers, package descriptions) is kept, but its service claims are listed for owner confirmation in Task 11; they're not rewritten by us. | Tasks 9, 11, Global Constraints |
+
 ## Global Constraints
 
 - Formatting: `.prettierrc` (no semicolons, double quotes, 2 spaces). Tab-indented legacy files keep their style.
@@ -52,6 +60,7 @@ That plan's Tasks 8–11 are superseded, and analytics is dropped.
   - Service facts (price, cancellation, times, pickup, private jeep, season, what's included) render only from that package's admin fields.
   - Fixed copy may describe only the booking process: message us; we reply within 24 hours, which is the site's existing promise; no payment is needed to ask.
   - No schema property asserts state that isn't in the data.
+  - **Pre-existing owner-published copy** (the FAQ answers, package `description` text) is kept as the owner wrote it. Its service claims (complimentary pickup, jeep capacity, snacks provided) are listed in Task 11 for the owner to confirm. We don't silently rewrite owner copy, and we don't repeat those claims in new copy or metadata.
 - Every section is complete in server HTML: no `opacity:0` mounts and no `<a>` wrapping `<button>`.
 - Text on coloured buttons meets WCAG AA (≥ 4.5:1).
 - Never write to production data. Local verification uses `travelHabaranaDB-Dev`.
@@ -78,7 +87,8 @@ That plan's Tasks 8–11 are superseded, and analytics is dropped.
   - `interface ItineraryStep { time?: string; title: string; detail?: string }`, `interface PackageFaq { question: string; answer: string }`, `interface Season { peak: number[]; good: number[] }`
   - `normalizeSeason(season?: { peak?: number[] | null; good?: number[] | null } | null): Season | undefined`
   - `inferCategory(slug: string, name: string): PackageCategory | undefined`
-  - `PublicPackage` gains `summary?`, `seoTitle?`, `seoDescription?`, `groupSize?`, `highlights?`, `notIncluded?`, `timeSlots?`, `pickupAreas?`, `whatToBring?`, `itinerary?`, `faqs?`, `season?`, `imageAlts?`. Each is `undefined` when unset or empty. `category` is the admin value, else inferred.
+  - `PublicPackage` gains `summary?`, `seoTitle?`, `seoDescription?`, `groupSize?`, `highlights?`, `notIncluded?`, `timeSlots?`, `pickupAreas?`, `whatToBring?`, `itinerary?`, `faqs?`, `season?`, and `imageAlts?: Record<string, string>` (image URL → description, only for images still in `images`). Each is `undefined` when unset or empty. `category` is the admin value, else inferred.
+  - `interface ImageAlt { src: string; alt: string }` (stored shape)
   - `serializePackage(doc: PackageDocument): PublicPackage` in the pure module `lib/package-serialize.ts`. `lib/packages.ts` re-exports `PublicPackage`.
   - `export type PackageInput = z.infer<typeof packageSchema>` from `lib/types.ts`.
 
@@ -99,7 +109,7 @@ describe("packageSchema landing fields", () => {
     itinerary: [{ time: "2:30 pm", title: "Hotel pickup", detail: "In an open jeep" }],
     faqs: [{ question: "Is it private?", answer: "Yes, the jeep is only for your group." }],
     season: { peak: [8, 9], good: [7, 10] },
-    imageAlts: ["Elephants at the Minneriya tank at sunset"],
+    imageAlts: [{ src: "https://res.cloudinary.com/demo/image/upload/hurulu.jpg", alt: "Elephants at the tank at sunset" }],
   }
 
   it("accepts a full landing payload and keeps it", () => {
@@ -120,7 +130,9 @@ describe("packageSchema landing fields", () => {
     ["peak and good overlap", { season: { peak: [8], good: [8] } }],
     ["FAQ without answer", { faqs: [{ question: "Is it private?", answer: "" }] }],
     ["summary over 220 chars", { summary: "a".repeat(221) }],
-    ["alt over 150 chars", { imageAlts: ["a".repeat(151)] }],
+    ["alt over 150 chars", { imageAlts: [{ src: "https://res.cloudinary.com/x.jpg", alt: "a".repeat(151) }] }],
+    ["alt with blank text", { imageAlts: [{ src: "https://res.cloudinary.com/x.jpg", alt: "  " }] }],
+    ["alt with a non-URL src", { imageAlts: [{ src: "not a url", alt: "Elephants" }] }],
   ])("rejects %s", (_label, extra) => {
     expect(packageSchema.safeParse({ ...legacyPackage, ...extra }).success).toBe(false)
   })
@@ -244,6 +256,36 @@ describe("serializePackage", () => {
     expect(result.imageAlts).toBeUndefined()
   })
 
+  it("keys image descriptions by URL, so order and gaps never mislabel a photo", () => {
+    const a = "https://res.cloudinary.com/demo/a.jpg"
+    const b = "https://res.cloudinary.com/demo/b.jpg"
+    const c = "https://res.cloudinary.com/demo/c.jpg"
+    // Photo A has no description; B does. Then the admin reorders to [B, A] and removes C.
+    const result = serializePackage({
+      ...base,
+      images: [b, a],
+      imageAlts: [
+        { src: b, alt: "Herd at the tank" },
+        { src: c, alt: "Removed photo" },
+      ],
+    })
+    expect(result.imageAlts).toEqual({ [b]: "Herd at the tank" })
+    expect(result.imageAlts?.[a]).toBeUndefined()
+  })
+
+  it("uses the last description when the same image appears twice", () => {
+    const a = "https://res.cloudinary.com/demo/a.jpg"
+    const result = serializePackage({
+      ...base,
+      images: [a],
+      imageAlts: [
+        { src: a, alt: "Old" },
+        { src: a, alt: "New" },
+      ],
+    })
+    expect(result.imageAlts).toEqual({ [a]: "New" })
+  })
+
   it("normalises season and itinerary", () => {
     const result = serializePackage({
       ...base,
@@ -283,7 +325,16 @@ add inside the `packageSchema` object:
 	timeSlots: listOf(4, 40, "Time slot"),
 	pickupAreas: listOf(10, 60, "Pickup area"),
 	whatToBring: listOf(10, 100, "What to bring item"),
-	imageAlts: listOf(30, 150, "Image description"),
+	imageAlts: z
+		.array(
+			z.object({
+				src: z.url("Each described image must be a valid URL"),
+				alt: trimmedString(1, 150, "Image description"),
+			})
+		)
+		.max(30)
+		.nullable()
+		.optional(),
 	itinerary: z
 		.array(
 			z.object({
@@ -417,7 +468,8 @@ export interface PublicPackage {
   timeSlots?: string[]
   pickupAreas?: string[]
   whatToBring?: string[]
-  imageAlts?: string[]
+  /** Image URL → description, only for images still in `images`. */
+  imageAlts?: Record<string, string>
   itinerary?: ItineraryStep[]
   faqs?: PackageFaq[]
   season?: Season
@@ -426,7 +478,7 @@ export interface PublicPackage {
 type Nullable<T> = { [K in keyof T]?: T[K] | null }
 
 export interface PackageDocument
-  extends Nullable<Omit<PublicPackage, "_id" | "createdAt" | "updatedAt" | "itinerary" | "season">> {
+  extends Nullable<Omit<PublicPackage, "_id" | "createdAt" | "updatedAt" | "itinerary" | "season" | "imageAlts">> {
   _id: { toString(): string } | string
   slug: string
   name: string
@@ -439,6 +491,22 @@ export interface PackageDocument
   previousSlugs?: string[] | null
   itinerary?: Array<{ time?: string | null; title: string; detail?: string | null }> | null
   season?: { peak?: number[] | null; good?: number[] | null } | null
+  imageAlts?: ImageAlt[] | null
+}
+
+export interface ImageAlt {
+  src: string
+  alt: string
+}
+
+/** URL-keyed so reordering or removing photos can never shift a description onto another photo. */
+function imageAltMap(images: string[], alts?: ImageAlt[] | null): Record<string, string> | undefined {
+  const current = new Set(images)
+  const map: Record<string, string> = {}
+  for (const { src, alt } of alts ?? []) {
+    if (current.has(src) && alt.trim()) map[src] = alt.trim()
+  }
+  return Object.keys(map).length ? map : undefined
 }
 
 const text = (value?: string | null) => value?.trim() || undefined
@@ -476,7 +544,7 @@ export function serializePackage(doc: PackageDocument): PublicPackage {
     timeSlots: list(doc.timeSlots),
     pickupAreas: list(doc.pickupAreas),
     whatToBring: list(doc.whatToBring),
-    imageAlts: list(doc.imageAlts),
+    imageAlts: imageAltMap(doc.images ?? [], doc.imageAlts),
     itinerary,
     faqs: list(doc.faqs),
     season: normalizeSeason(doc.season),
@@ -498,7 +566,10 @@ export function serializePackage(doc: PackageDocument): PublicPackage {
 		timeSlots: { type: [String], default: undefined },
 		pickupAreas: { type: [String], default: undefined },
 		whatToBring: { type: [String], default: undefined },
-		imageAlts: { type: [String], default: undefined },
+		imageAlts: {
+			type: [new mongoose.Schema({ src: { type: String, required: true }, alt: { type: String, required: true } }, { _id: false })],
+			default: undefined,
+		},
 		itinerary: {
 			type: [
 				new mongoose.Schema(
@@ -907,7 +978,7 @@ import { formatFaqs, formatItinerary, formatLines, parseFaqs, parseItinerary, pa
 import type { PackageInput } from "@/lib/types"
 
 type TextKey = "summary" | "seoTitle" | "seoDescription" | "groupSize"
-type ListKey = "highlights" | "notIncluded" | "timeSlots" | "pickupAreas" | "whatToBring" | "imageAlts"
+type ListKey = "highlights" | "notIncluded" | "timeSlots" | "pickupAreas" | "whatToBring"
 
 const TEXT_FIELDS: Array<{ name: TextKey; label: string; hint: string; multiline?: boolean; placeholder: string }> = [
   { name: "summary", label: "Summary", hint: "Shown on cards and under the page title. Up to 220 characters.", multiline: true, placeholder: "See the elephant gathering at Minneriya tank with a local guide." },
@@ -922,7 +993,6 @@ const LIST_FIELDS: Array<{ name: ListKey; label: string; hint: string; placehold
   { name: "timeSlots", label: "Start times", hint: "One per line.", placeholder: "6:00 am" },
   { name: "pickupAreas", label: "Hotel pickup areas", hint: "One per line. Shown as 'Hotel pickup from…'. Mention any charge in the price note.", placeholder: "Habarana" },
   { name: "whatToBring", label: "What to bring", hint: "One per line.", placeholder: "Hat and sunscreen" },
-  { name: "imageAlts", label: "Photo descriptions", hint: "One per photo, in the same order as the images. Describe what the photo shows.", placeholder: "Elephants drinking at the Minneriya tank" },
 ]
 
 export function PackageLandingFields({ control }: { control: Control<PackageInput> }) {
@@ -1046,10 +1116,91 @@ export function PackageLandingFields({ control }: { control: Control<PackageInpu
 }
 ```
 
+Create `components/admin/image-alt-fields.tsx`. It sits **in the Images tab, one description input beside each photo**, so a description can only ever belong to the photo it's next to:
+
+```tsx
+"use client"
+
+import Image from "next/image"
+import { useWatch, type Control, type UseFormSetValue } from "react-hook-form"
+
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import type { PackageInput } from "@/lib/types"
+
+type Alt = { src: string; alt: string }
+
+/** Pure: set, replace or clear the description for one image; drop entries for images no longer present. */
+export function withImageAlt(images: string[], alts: Alt[] | null | undefined, src: string, alt: string): Alt[] | null {
+  const kept = (alts ?? []).filter((entry) => entry.src !== src && images.includes(entry.src))
+  const next = alt.trim() ? [...kept, { src, alt }] : kept
+  return next.length ? next : null
+}
+
+export function ImageAltFields({ control, setValue }: { control: Control<PackageInput>; setValue: UseFormSetValue<PackageInput> }) {
+  const images = useWatch({ control, name: "images" }) ?? []
+  const alts = useWatch({ control, name: "imageAlts" })
+  if (!images.length) return null
+
+  return (
+    <fieldset className="grid gap-3">
+      <legend className="text-sm font-medium">Photo descriptions (for screen readers and Google)</legend>
+      {images.map((src, index) => (
+        <div key={src} className="grid grid-cols-[64px_minmax(0,1fr)] items-center gap-3">
+          <div className="relative size-16 overflow-hidden rounded">
+            <Image src={src} alt="" fill sizes="64px" className="object-cover" />
+          </div>
+          <div className="grid gap-1">
+            <Label htmlFor={`image-alt-${index}`}>Photo {index + 1}</Label>
+            <Input
+              id={`image-alt-${index}`}
+              maxLength={150}
+              placeholder="What does this photo show? e.g. Elephants drinking at the Minneriya tank"
+              value={alts?.find((entry) => entry.src === src)?.alt ?? ""}
+              onChange={(event) =>
+                setValue("imageAlts", withImageAlt(images, alts, src, event.target.value), { shouldDirty: true })
+              }
+            />
+          </div>
+        </div>
+      ))}
+    </fieldset>
+  )
+}
+```
+
+Test `withImageAlt` in `lib/package-landing.test.ts`. (Import it from the component file: it's a pure export, and the component isn't rendered in the test.)
+
+```ts
+import { withImageAlt } from "@/components/admin/image-alt-fields"
+
+describe("withImageAlt", () => {
+  const a = "https://x/a.jpg"
+  const b = "https://x/b.jpg"
+
+  it("describes the second photo without touching the undescribed first", () => {
+    expect(withImageAlt([a, b], null, b, "Herd")).toEqual([{ src: b, alt: "Herd" }])
+  })
+
+  it("replaces and clears one photo's description", () => {
+    const one = withImageAlt([a, b], null, a, "Old")
+    expect(withImageAlt([a, b], one, a, "New")).toEqual([{ src: a, alt: "New" }])
+    expect(withImageAlt([a, b], one, a, "  ")).toBeNull()
+  })
+
+  it("drops descriptions of removed photos on the next edit", () => {
+    const both = [{ src: a, alt: "A" }, { src: b, alt: "B" }]
+    expect(withImageAlt([b], both, b, "B2")).toEqual([{ src: b, alt: "B2" }])
+  })
+})
+```
+
+Also, when images are removed in the uploader, prune on submit: `imageAlts: data.imageAlts?.filter((entry) => data.images.includes(entry.src)) ?? null`. The serializer ignores stale entries too (Task 1 test), so this is defence in depth.
+
 - [ ] **Step 4: Wire the tab.** In `app/admin/(dashboard)/packages/page.tsx`:
 1. Switch the form type to `PackageInput`.
 2. Add `<TabsTrigger value="landing">Landing page</TabsTrigger>` after "Included".
-3. Render `<PackageLandingFields key={editingPackage?._id ?? "new"} control={form.control} />` when `activeTab === "landing"`. The `key` resets the textareas' local text per package.
+3. Render `<PackageLandingFields key={editingPackage?._id ?? "new"} control={form.control} />` when `activeTab === "landing"`. The `key` resets the textareas' local text per package. Render `<ImageAltFields control={form.control} setValue={form.setValue} />` under the image uploader in the **Images** tab.
 4. Add the 13 landing keys to the `Package` type, both `form.reset(...)` calls and `defaultValues` (as `editingPackage.x ?? null`, or `null`), extending `emptyMerchandising` into `emptyOptionalFields`.
 5. Add them to the `JSON.stringify` body as `x: data.x ?? null`.
 6. The Included tab's "Next" goes to `landing`; the landing tab gets Previous/Save.
@@ -1831,6 +1982,13 @@ const firstViewport = () =>
     whatsapp: anyShown('a[href^="https://wa.me/"]'),
     duration: anyShown("[data-fact=duration]"),
     price: anyShown("[data-price]"),
+    // Every homepage quick-pick row must show its own name, duration and price.
+    quickPicks: [...document.querySelectorAll("[data-quick-pick]")].map((row, index) => ({
+      index,
+      name: shown(row.querySelector("[data-qp-name]")),
+      duration: shown(row.querySelector("[data-fact=duration]")),
+      price: shown(row.querySelector("[data-price]")),
+    })),
     overflowX: document.documentElement.scrollWidth - innerWidth,
   } })()`)
 
@@ -1849,6 +2007,14 @@ const endOfPage = () =>
     } })()`)
 
 const selectedPackage = () => evaluate(`document.querySelector("[data-slot=select-trigger]")?.textContent?.trim() ?? null`)
+
+// Expected and control names come from the public package API, not from the page under test.
+async function packageNames(id) {
+  const expected = (await (await fetch(new URL(`/api/packages/${id}`, base))).json())?.name?.trim() ?? null
+  const all = await (await fetch(new URL("/api/packages", base))).json()
+  const other = (Array.isArray(all) ? all : []).map((p) => p.name?.trim()).find((name) => name && name !== expected) ?? null
+  return { expected, other }
+}
 
 const failures = []
 const check = (label, ok, detail) => {
@@ -1871,6 +2037,9 @@ for (const target of targets) {
         check(`${tag} trust in first viewport`, first.trust)
         check(`${tag} duration in first viewport`, first.duration)
         check(`${tag} price in first viewport`, first.price)
+        for (const row of first.quickPicks) {
+          check(`${tag} quick-pick row ${row.index}: name, duration, price in first viewport`, row.name && row.duration && row.price, row)
+        }
       }
       const lead = await evaluate(`document.querySelector("[data-lead-image] img, img[data-lead-image]")?.currentSrc ?? null`)
       if (lead) {
@@ -1879,8 +2048,12 @@ for (const target of targets) {
         check(`${tag} lead image requested once`, hits === 1, { hits, totalImageRequests: images.length })
       }
       if (path.startsWith("/book-now?packageId=")) {
+        const id = new URL(path, base).searchParams.get("packageId")
+        const { expected, other } = await packageNames(id)
         const selected = await selectedPackage()
-        check(`${tag} package preselected`, !!selected && selected !== "Select a package", selected)
+        check(`${tag} requested package is preselected`, !!expected && selected === expected, { selected, expected })
+        // Negative control: the same comparison must reject a different package's name.
+        check(`${tag} preselection check discriminates`, !!other && selected !== other, { selected, other })
       }
     }
     for (const zoom of ["100%", "125%"]) {
@@ -1901,7 +2074,12 @@ console.log(failures.length ? `\n${failures.length} check(s) failed` : "\nall ch
 process.exit(failures.length ? 1 : 0)
 ```
 
-- [ ] **Step 5: Verify and commit.**
+- [ ] **Step 5: Prove the preselection check can fail.** With `pnpm dev` running, temporarily hard-code the booking form's `packageId` default to the *second* package's id. Then run `node scripts/verify-layout.mjs http://localhost:3000 "/book-now?packageId=<first id>"`.
+  - Expected: FAIL on "requested package is preselected".
+  - Revert the hard-code.
+  - This runs in Task 10, once the form takes `initialPackageId`. Record it there.
+
+- [ ] **Step 6: Verify and commit.**
 
 Run: `pnpm test && pnpm typecheck && pnpm lint && grep -rn "whatsapp-button" app components`
 Expected: PASS / clean / no grep output.
@@ -2000,7 +2178,7 @@ describe("PackageCard", () => {
   })
 
   it("uses the admin photo description as alt text", () => {
-    const html = renderToStaticMarkup(<PackageCard pkg={{ ...pkg, imageAlts: ["Elephants drinking at the tank"] }} />)
+    const html = renderToStaticMarkup(<PackageCard pkg={{ ...pkg, imageAlts: { [pkg.images[0]]: "Elephants drinking at the tank" } }} />)
     expect(html).toContain('alt="Elephants drinking at the tank"')
   })
 
@@ -2076,7 +2254,7 @@ export default function PackageCard({ pkg, priority = false }: { pkg: PublicPack
           {pkg.images[0] ? (
             <Image
               src={pkg.images[0]}
-              alt={pkg.imageAlts?.[0] ?? pkg.name}
+              alt={pkg.imageAlts?.[pkg.images[0]] ?? pkg.name}
               fill
               priority={priority}
               sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
@@ -2221,7 +2399,7 @@ git commit -m "feat: price-first package cards and category-grouped listing"
 **Interfaces:**
 - Produces:
   - `resolvePackageMeta(pkg): { title; description }`
-  - `<PackageGallery images; name; alts? />` and `spanFor(index, count)`
+  - `<PackageGallery images; name; alts?: Record<string, string> />` and `spanFor(index, count)`
   - `<BookingPanel pkg />`
   - `<PackageHeader pkg />` (H1, price, trust, chips, compact CTAs)
   - Sections: `FactChips`, `Highlights`, `WhenToGo`, `Itinerary`, `IncludedList`, `PickupAndTimes`, `WhatToBring`, `AboutExperience`, `PackageFaqs`. Each returns `null` without usable data.
@@ -2386,11 +2564,15 @@ describe("PackageGallery", () => {
   })
 
   it("renders the lead image once, marked as lead, with admin alt text", () => {
-    const out = html(<PackageGallery images={["https://res.cloudinary.com/a.jpg", "https://res.cloudinary.com/b.jpg"]} name="X" alts={["Elephants at the tank"]} />)
+    const a = "https://res.cloudinary.com/a.jpg"
+    const b = "https://res.cloudinary.com/b.jpg"
+    // Only the SECOND photo is described: it must not shift onto the first.
+    const out = html(<PackageGallery images={[a, b]} name="X" alts={{ [b]: "Elephants at the tank" }} />)
     expect(out.match(/<img/g)).toHaveLength(2)
     expect(out.match(/data-lead-image/g)).toHaveLength(1)
+    expect(out).toContain('alt="X, photo 1"')
     expect(out).toContain('alt="Elephants at the tank"')
-    expect(out).toContain('alt="X, photo 2"')
+    expect(out.indexOf('alt="X, photo 1"')).toBeLessThan(out.indexOf('alt="Elephants at the tank"'))
   })
 
   it.each([2, 3, 4, 5])("mosaic spans fill 8 cells with %i images", (count) => {
@@ -2680,7 +2862,7 @@ export function spanFor(index: number, count: number): string {
   return ""
 }
 
-export function PackageGallery({ images, name, alts }: { images: string[]; name: string; alts?: string[] }) {
+export function PackageGallery({ images, name, alts }: { images: string[]; name: string; alts?: Record<string, string> }) {
   if (images.length === 0) {
     return (
       <div
@@ -2719,7 +2901,7 @@ export function PackageGallery({ images, name, alts }: { images: string[]; name:
           >
             <Image
               src={src}
-              alt={alts?.[index] ?? `${name}, photo ${index + 1}`}
+              alt={alts?.[src] ?? `${name}, photo ${index + 1}`}
               fill
               priority={index === 0}
               sizes={index === 0 ? "(min-width: 768px) 50vw, 85vw" : "(min-width: 768px) 25vw, 85vw"}
@@ -2836,6 +3018,8 @@ git commit -m "feat: rebuild package pages as conversion-first landing pages"
 - Rewrite: `app/(main)/page.tsx`
 - Delete: `components/home/features-section.tsx`, `components/home/plan-visit-section.tsx`, `components/home/cta-banner-section.tsx`, `components/home/packages-section.tsx`, `components/home/testimonials-section.tsx`
 - Modify: `components/home/featured-blogs-section.tsx` (fix `Link`+`Button` nesting)
+- Modify (neutral metadata): `config/site.ts`, `app/layout.tsx`, `app/(main)/page.tsx`, `app/(main)/packages/layout.tsx`, `app/(main)/contact/layout.tsx`, `app/(main)/book-now/page.tsx`
+- Create: `app/claim-audit.test.ts`
 
 **Interfaces:**
 - Produces:
@@ -2879,6 +3063,8 @@ describe("HeroSection", () => {
     expect(html).toContain("data-trust")
     expect(html).toContain("wa.me")
     expect(html.match(/data-fact="duration"/g)).toHaveLength(2)
+    expect(html.match(/data-quick-pick/g)).toHaveLength(2)
+    expect(html.match(/data-qp-name/g)).toHaveLength(2)
     expect(html).toContain("From US$45 per jeep")
     expect(html).toContain("Price on request")
     expect(html).toContain('href="/packages/hurulu"')
@@ -2925,7 +3111,59 @@ it("how booking works describes the process only", () => {
 Run: `pnpm test components/home/home-sections.test.tsx`
 Expected: FAIL, modules not found or wrong props.
 
-- [ ] **Step 2: Implement.** Rewrite `components/home/hero-section.tsx`:
+Create `app/claim-audit.test.ts`. It scans every metadata-bearing and new-copy source file for service claims that only admin data may make. It excludes owner-published copy (`faq-data.ts`, which Task 11 lists for confirmation) and the privacy policy.
+
+```ts
+import { globSync, readFileSync } from "node:fs"
+import { describe, expect, it } from "vitest"
+
+const CLAIM = /\bprivate\b|\bfree\b|complimentary|instant confirmation|free cancellation/i
+const files = globSync(
+  [
+    "config/site.ts",
+    "app/layout.tsx",
+    "app/(main)/**/{page,layout}.tsx",
+    "components/home/**/*.tsx",
+    "components/packages/**/*.tsx",
+    "components/common/**/*.tsx",
+    "components/layout/**/*.tsx",
+  ],
+  { exclude: (path) => /privacy|\.test\.|faq-data/.test(String(path)) }
+)
+
+describe("no service claims in copy or metadata we write", () => {
+  it("scans a non-trivial set of files", () => {
+    expect(files.length).toBeGreaterThan(15)
+  })
+
+  it.each(files)("%s", (file) => {
+    const offending = readFileSync(file, "utf8")
+      .split("\n")
+      .map((line, index) => ({ line: index + 1, text: line.trim() }))
+      .filter(({ text }) => CLAIM.test(text))
+    expect(offending).toEqual([])
+  })
+})
+```
+
+Run: `pnpm test app/claim-audit.test.ts`
+Expected: FAIL on seven metadata strings: `config/site.ts:8`, `app/layout.tsx:31`, `app/(main)/page.tsx:16`, `app/(main)/contact/layout.tsx:10`, `app/(main)/book-now/page.tsx:15`, and `app/(main)/packages/layout.tsx:8` and `:13`. It also fails on the old hero's H1, which this task rewrites. (`package-details.tsx` was already deleted in Task 8.)
+
+- [ ] **Step 2: Neutral metadata.** Replace each string, keeping the service names and dropping the claims:
+
+| File | New text |
+|---|---|
+| `config/site.ts` `description` | "Jeep safaris to Minneriya, Kaudulla and Hurulu Eco Park, and village experiences, from a local Habarana team." |
+| `app/layout.tsx` `description` | "Jeep safaris from Habarana to Minneriya, Kaudulla and Hurulu Eco Park, plus village and Sri Lankan cooking experiences." |
+| `app/(main)/page.tsx` `description` | "Jeep safaris from Habarana to Minneriya, Kaudulla and Hurulu Eco Park, plus village tours and Sri Lankan cooking experiences." |
+| `app/(main)/packages/layout.tsx` `description` | "Compare Minneriya, Kaudulla and Hurulu Eco Park jeep safaris from Habarana, plus village and cooking experiences." |
+| `app/(main)/packages/layout.tsx` OG `description` | "Jeep safaris and cultural experiences from Habarana, Sri Lanka." |
+| `app/(main)/contact/layout.tsx` OG `description` | "Plan a Habarana safari or village experience with our local team." |
+| `app/(main)/book-now/page.tsx` OG `description` | "Request current pricing and availability for a jeep safari or village experience." |
+
+"Local Habarana team" states where the business is (its published address), not a service claim.
+
+- [ ] **Step 3: Implement the sections.** Rewrite `components/home/hero-section.tsx`:
 
 ```tsx
 import Image from "next/image"
@@ -2952,13 +3190,13 @@ export default function HeroSection({ safaris }: { safaris: PublicPackage[] }) {
           {safaris.length > 0 && (
             <ul className="grid max-w-md gap-1.5" aria-label="Safaris">
               {safaris.map((pkg) => (
-                <li key={pkg._id}>
+                <li key={pkg._id} data-quick-pick>
                   <Link
                     href={`/packages/${pkg.slug}`}
                     className="flex items-center gap-3 rounded bg-black/35 px-3 py-2 backdrop-blur-sm hover:bg-black/50"
                   >
                     <span className="min-w-0 flex-1">
-                      <span className="block leading-snug font-semibold">{pkg.name}</span>
+                      <span data-qp-name className="block leading-snug font-semibold">{pkg.name}</span>
                       <span className="block text-sm text-white/85">
                         <span data-fact="duration">{pkg.duration}</span> ·{" "}
                         <span data-price>{formatPrice(pkg) ?? PRICE_ON_REQUEST}</span>
@@ -3112,10 +3350,10 @@ export function MoreExperiences({ packages }: { packages: PublicPackage[] }) {
 }
 ```
 
-Run: `pnpm test components/home/home-sections.test.tsx`
+Run: `pnpm test components/home/home-sections.test.tsx app/claim-audit.test.ts`
 Expected: PASS.
 
-- [ ] **Step 3: Compose the homepage.** `app/(main)/page.tsx`, keeping the existing `metadata` export:
+- [ ] **Step 4: Compose the homepage.** `app/(main)/page.tsx`, keeping the existing `metadata` export:
 
 ```tsx
 export default async function Home() {
@@ -3140,7 +3378,7 @@ export default async function Home() {
 
 Delete the five replaced home components after `grep -rn` confirms no importer. In `featured-blogs-section.tsx`, change the `Link` + `Button` to `Button asChild`.
 
-- [ ] **Step 4: Verify and commit.**
+- [ ] **Step 5: Verify and commit.**
 
 Run: `pnpm test && pnpm typecheck && pnpm lint`
 Expected: PASS / clean.
@@ -3149,7 +3387,7 @@ With `pnpm dev`: `node scripts/verify-layout.mjs http://localhost:3000 "/:facts"
 Expected: all PASS.
 
 ```bash
-git add components/home "app/(main)/page.tsx"
+git add components/home "app/(main)/page.tsx" app/claim-audit.test.ts config/site.ts app/layout.tsx "app/(main)/packages/layout.tsx" "app/(main)/contact/layout.tsx" "app/(main)/book-now/page.tsx"
 git commit -m "feat: rebuild the homepage around parks, real guests and WhatsApp"
 ```
 
@@ -3256,6 +3494,10 @@ export function resolveInitialPackageId(
 Run: `pnpm test && pnpm typecheck && pnpm lint`
 Expected: PASS / clean.
 
+Browser, with `pnpm dev`:
+- Run `node scripts/verify-layout.mjs http://localhost:3000 "/book-now?packageId=<id>"`. Expected: "requested package is preselected" PASS and "discriminates" PASS.
+- Then do the Task 6 Step 5 negative run: temporarily default the form to a different id, and expect FAIL on "requested package is preselected". Revert, and rerun to PASS.
+
 - [ ] **Step 3: Commit.**
 
 ```bash
@@ -3274,6 +3516,10 @@ git commit -m "feat: server-rendered inquiry form, WhatsApp-first contact and bl
   - **Paste-ready.** Every landing field in the exact admin format from Task 2, using **only statements that already appear in live copy**: the live package descriptions, the five live blog posts and the live FAQ. There are no markers inside this block; the source URLs are listed under it.
   - **Owner to confirm before publishing.** A question list: every price, start time, ticket inclusion, pickup area and charge, group size, and season month, plus each contradiction between sources (season: "May–Oct" vs "Apr–Sep" vs "Aug–Dec"; herd size: "200–300" vs "300–700"), each as a question with the conflicting quotes. Nothing from this list appears in the paste-ready block.
   - Add typo fixes for each `description` as before/after pairs.
+  - Add a **"Claims already on the site to confirm"** section. These are claims in owner-published copy that we kept as written:
+    - FAQ: "complimentary pickup and drop-off from hotels in Habarana, Sigiriya, and Dambulla"; "up to 6 passengers plus the driver and guide"; "Water bottles and snacks are provided on all our safaris"; "major credit cards… small processing fee"; "peak season (December-January and July-August)".
+    - Package descriptions: "Luxury Jeep with Seatbelts", "Insurance Covered", "per jeep" on non-safari packages.
+    - For each, the owner either confirms it (and it can then move into admin fields) or it gets removed.
   - Add a note that the 500-unique-word gate (Task 12) is met only once the confirmed content is in.
 
 - [ ] **Step 2: Commit.**
@@ -3343,6 +3589,7 @@ curl -s $B$PKG | grep -oiE 'free cancellation|instant confirmation|free hotel pi
 curl -s $B$PKG | grep -o '"availability"' | wc -l                                # 0
 curl -s $B/definitely-missing | grep -oE '<meta name="robots"[^>]*>'             # exactly one noindex
 grep -rn "umami\|posthog" app components lib config                             # no output
+curl -s $B/ | grep -oE '<meta[^>]+(description|og:description)[^>]*>' | grep -ciE 'private|free'   # 0 (metadata claim audit, rendered)
 ```
 
 - [ ] **Step 4: Browser checks.**
