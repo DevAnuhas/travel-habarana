@@ -12,8 +12,6 @@ export const siteConfig = {
   logoDark: "/assets/ceylon-safari-logo-white.png",
   ogImage: "/assets/ceylon-safari-opengraph.jpg",
   links: {
-    whatsapp:
-      "https://wa.me/94766675883?text=Hello%2C%20I%E2%80%99m%20interested%20in%20a%20Ceylon%20Safari%20package.%20Could%20you%20share%20pricing%20and%20availability%3F",
     email: "mailto:habaranatravel@gmail.com",
     facebook:
       "https://facebook.com/people/Jeep-safari-habarana/61557160063166/",
@@ -21,6 +19,14 @@ export const siteConfig = {
     tiktok: "https://www.tiktok.com/@travel.in.habaran",
     googleMaps: "https://maps.app.goo.gl/jtjd3mUANDnH3rRu5",
     googleReview: "https://g.page/r/CZ1tTFd1xJQtEBM/review",
+  },
+  // Google Business Profile rating shown as a trust line. Update it when the
+  // count changes; never round it up.
+  reviews: {
+    rating: 5,
+    count: 27,
+    source: "Google",
+    url: "https://maps.app.goo.gl/jtjd3mUANDnH3rRu5",
   },
   author: "Ceylon Safari",
   contact: {

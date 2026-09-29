@@ -12,6 +12,7 @@ import {
 import type { IconProps } from "@phosphor-icons/react"
 import { Button } from "@/components/ui/button"
 import { siteConfig } from "@/config/site"
+import { buildWhatsAppUrl } from "@/lib/contact-links"
 
 function SocialIcon({
   href,
@@ -105,7 +106,7 @@ function HeroSection() {
                 label="TikTok"
               />
               <SocialIcon
-                href={siteConfig.links.whatsapp}
+                href={buildWhatsAppUrl()}
                 icon={WhatsappLogo}
                 label="WhatsApp"
               />

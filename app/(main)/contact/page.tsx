@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button"
 import FAQSection from "@/components/common/faq-section"
 import { siteConfig } from "@/config/site"
+import { buildWhatsAppUrl, TEL_HREF } from "@/lib/contact-links"
 
 // Social media link component
 function SocialLink({
@@ -91,10 +92,18 @@ export default function ContactPage() {
                       <div>
                         <h3 className="text-lg font-bold">WhatsApp</h3>
                         <a
-                          href={siteConfig.links.whatsapp}
+                          href={buildWhatsAppUrl()}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="text-gray-600 hover:text-primary hover:underline"
                         >
                           {siteConfig.contact.phone}
+                        </a>
+                        <a
+                          href={TEL_HREF}
+                          className="block text-sm text-gray-600 hover:text-primary hover:underline"
+                        >
+                          Call {siteConfig.contact.phone}
                         </a>
                       </div>
                     </div>
