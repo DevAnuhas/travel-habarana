@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isAcceptableSubmittedDate } from "./booking-dates";
 
 const trimmedString = (minimum: number, maximum: number, label: string) =>
 	z
@@ -86,7 +87,7 @@ export const inquiryRequestSchema = inquirySchema
 		date: z.coerce
 			.date({ error: "Please select a valid date" })
 			.refine(
-				(date) => date.getTime() >= new Date().setHours(0, 0, 0, 0),
+				(date) => isAcceptableSubmittedDate(date, new Date()),
 				"Preferred date cannot be in the past"
 			),
 	});

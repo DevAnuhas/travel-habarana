@@ -75,7 +75,7 @@ export default defineConfig({
   resolve: {
     alias: [{ find: /^@\/(.*)$/, replacement: `${root}$1` }],
   },
-  esbuild: { jsx: "automatic" },
+  // Vitest 5 transforms with oxc, whose default JSX runtime is automatic.
   test: {
     environment: "node",
     include: ["**/*.test.{ts,tsx}"],

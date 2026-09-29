@@ -7,6 +7,7 @@ import { CalendarDots } from "@phosphor-icons/react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { inquirySchema } from "@/lib/types";
+import { isSelectableBookingDate } from "@/lib/booking-dates";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -254,7 +255,9 @@ export default function BookingForm({
 												}
 												onSelect={(date) => field.onChange(date)}
 												autoFocus
-												disabled={(date) => date < new Date()}
+												disabled={(date) =>
+													!isSelectableBookingDate(date, new Date())
+												}
 											/>
 										</PopoverContent>
 									</Popover>
