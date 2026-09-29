@@ -13,6 +13,7 @@ const packageSchema = new mongoose.Schema(
 		duration: { type: String, required: true },
 		included: { type: [String], required: true },
 		images: { type: [String], default: [] },
+		previousSlugs: { type: [String], default: [], index: true },
 	},
 	{
 		timestamps: true,

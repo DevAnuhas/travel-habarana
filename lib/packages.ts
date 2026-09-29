@@ -70,6 +70,14 @@ export async function getPackage(
 		slug: identifier,
 	}).lean()) as PackageDocument | null;
 
+	// A renamed package keeps its old URLs; the page 308s them to the current slug.
+	// The current-slug lookup runs first, so a live slug always wins over history.
+	if (!packageItem) {
+		packageItem = (await PackageModel.findOne({
+			previousSlugs: identifier,
+		}).lean()) as PackageDocument | null;
+	}
+
 	if (!packageItem && mongoose.Types.ObjectId.isValid(identifier)) {
 		packageItem = (await PackageModel.findById(
 			identifier

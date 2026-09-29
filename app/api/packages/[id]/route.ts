@@ -7,6 +7,7 @@ import { packageIdentifierSchema, packageSchema } from "@/lib/types";
 import { NotFoundError } from "@/lib/errors";
 import { withErrorHandler, withAdminAuth } from "@/middleware/error-handler";
 import { generateSlug } from "@/utils/slug";
+import { planSlugChange } from "@/lib/package-slugs";
 import { parseJsonBody } from "@/lib/api";
 
 // Get a package by id or slug
@@ -73,23 +74,32 @@ export async function PUT(
 				throw new NotFoundError("Package not found");
 			}
 
-			// If name changed, update the slug too
-			const packageData = { ...updatedPackage };
+			const packageData: Record<string, unknown> = { ...updatedPackage };
 
-			if (packageData.name !== packageItem.name) {
-				packageData.slug = generateSlug(packageData.name);
+			// A rename regenerates the slug; the old one goes into previousSlugs so
+			// indexed URLs keep resolving (the page 308s them to the new slug).
+			if (updatedPackage.name !== packageItem.name) {
+				let nextSlug = generateSlug(updatedPackage.name);
 
 				const existingWithSlug = await Package.findOne({
-					slug: packageData.slug,
+					slug: nextSlug,
 					_id: { $ne: packageItem._id },
 				});
 
 				// If slug exists, add a timestamp suffix to make it unique
 				if (existingWithSlug) {
-					packageData.slug = `${packageData.slug}-${Date.now()
-						.toString()
-						.slice(-4)}`;
+					nextSlug = `${nextSlug}-${Date.now().toString().slice(-4)}`;
 				}
+
+				const slugState = planSlugChange(
+					{
+						slug: packageItem.slug,
+						previousSlugs: packageItem.previousSlugs ?? [],
+					},
+					nextSlug
+				);
+				packageData.slug = slugState.slug;
+				packageData.previousSlugs = slugState.previousSlugs;
 			}
 
 			const savedPackage = await Package.findByIdAndUpdate(
