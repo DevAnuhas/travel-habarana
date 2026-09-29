@@ -2,11 +2,14 @@ import { globSync, readFileSync } from "node:fs"
 import { describe, expect, it } from "vitest"
 
 // Keyboard users need to see where focus is (WCAG 2.4.7). `focus:outline-none`
-// hides the outline for every focus, keyboard included, so it must come with a
-// focus-visible replacement on the same element. Inline `outline: none` has no
-// such escape hatch at all.
+// hides the outline for every focus, keyboard included. A focus-visible
+// *outline* cannot bring it back: in Tailwind 4, outline-none also sets
+// --tw-outline-style: none, which focus-visible:outline-2 then reads (verified
+// in Chrome: 2px wide, style none). Drop focus:outline-none and style
+// focus-visible directly, or replace it with a ring (a box-shadow). Inline
+// `outline: none` has no escape hatch at all.
 const REMOVES_FOCUS = /\bfocus:outline-none\b/
-const HAS_REPLACEMENT = /\bfocus-visible:/
+const HAS_REPLACEMENT = /\bfocus-visible:ring\b/
 const INLINE_NONE = /outline:\s*["']none["']/
 
 const files = globSync(["app/**/*.tsx", "components/**/*.tsx"], {

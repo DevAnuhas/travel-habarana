@@ -312,7 +312,7 @@ export function ImageUpload({
 			{/* Dropzone */}
 			<div
 				{...getRootProps()}
-				className={`border-2 border-dashed rounded-lg p-8 cursor-pointer flex flex-col items-center justify-center transition-all duration-300 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+				className={`border-2 border-dashed rounded-lg p-8 cursor-pointer flex flex-col items-center justify-center transition-all duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
 					isDragActive
 						? "border-primary bg-primary/5"
 						: isDisabled
