@@ -8,6 +8,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr"
 
 import { ContactActions } from "@/components/common/contact-actions"
+import { FaqList } from "@/components/common/faq-list"
 import { TrustLine } from "@/components/common/trust-line"
 import { SeasonStrip } from "@/components/packages/season-strip"
 import { splitParagraphs } from "@/lib/package-landing"
@@ -253,19 +254,7 @@ export function PackageFaqs({ faqs }: { faqs?: PackageFaq[] }) {
   if (!faqs?.length) return null
   return (
     <Section title="Questions travellers ask">
-      <div className="grid gap-3">
-        {faqs.map((faq) => (
-          <details
-            key={faq.question}
-            className="rounded-lg border bg-card p-4 open:shadow-sm"
-          >
-            <summary className="cursor-pointer font-semibold">
-              {faq.question}
-            </summary>
-            <p className="mt-2 text-muted-foreground">{faq.answer}</p>
-          </details>
-        ))}
-      </div>
+      <FaqList faqs={faqs} />
     </Section>
   )
 }

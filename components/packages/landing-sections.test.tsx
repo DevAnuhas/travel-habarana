@@ -77,6 +77,21 @@ describe("sections with data", () => {
     ).toContain("Yes, only your group.")
   })
 
+  it("renders package FAQs as closed native disclosures", () => {
+    const out = html(
+      <PackageFaqs
+        faqs={[
+          { question: "Private?", answer: "Yes, only your group." },
+          { question: "Pickup?", answer: "From Habarana hotels." },
+        ]}
+      />
+    )
+    expect(out.match(/<details/g)).toHaveLength(2)
+    // The open attribute, not the `open:` class variant.
+    expect(out).not.toMatch(/<details[^>]*\sopen(?:[=\s>])/)
+    expect(out).not.toContain("aria-expanded")
+  })
+
   it("pickup never claims to be free", () => {
     const out = html(<PickupAndTimes pickupAreas={["Habarana"]} />)
     expect(out).toContain("Hotel pickup from")

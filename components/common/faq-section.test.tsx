@@ -1,3 +1,4 @@
+// @vitest-environment happy-dom
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it } from "vitest"
 
@@ -9,6 +10,9 @@ const decode = (html: string) =>
     .replace(/&#x27;/g, "'")
     .replace(/&quot;/g, '"')
     .replace(/&amp;/g, "&")
+
+const parse = (element: React.ReactElement) =>
+  new DOMParser().parseFromString(renderToStaticMarkup(element), "text/html")
 
 describe.each<FaqVariant>(["safari", "booking"])("%s FAQ", (variant) => {
   it("has only complete sentences", () => {
@@ -22,6 +26,25 @@ describe.each<FaqVariant>(["safari", "booking"])("%s FAQ", (variant) => {
     for (const faq of getFaqs(variant)) {
       expect(html).toContain(faq.answer)
     }
+  })
+
+  // A closed answer must actually be closed: Radix forceMount left collapsed
+  // answers on screen while their triggers announced aria-expanded="false".
+  it("gives each answer its own native disclosure, first one open", () => {
+    const faqs = getFaqs(variant)
+    const doc = parse(<FAQSection variant={variant} />)
+    const items = [...doc.querySelectorAll("details")]
+
+    expect(
+      items.map((item) => item.querySelector("summary")?.textContent)
+    ).toEqual(faqs.map((faq) => faq.question))
+    items.forEach((item, index) =>
+      expect(item.textContent).toContain(faqs[index].answer)
+    )
+    expect(items.map((item) => item.open)).toEqual(
+      faqs.map((_, index) => index === 0)
+    )
+    expect(doc.querySelector("[aria-expanded]")).toBeNull()
   })
 })
 
