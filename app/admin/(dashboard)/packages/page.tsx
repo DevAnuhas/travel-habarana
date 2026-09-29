@@ -60,6 +60,22 @@ import {
 } from "@phosphor-icons/react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { packageSchema } from "@/lib/types";
+import {
+	PACKAGE_CATEGORIES,
+	PACKAGE_CATEGORY_LABELS,
+	PRICE_CURRENCIES,
+	PRICE_UNITS,
+	type PackageCategory,
+	type PriceCurrency,
+	type PriceUnit,
+} from "@/lib/package-catalog";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { motion, AnimatePresence } from "framer-motion";
 
 type PackageFormValues = z.infer<typeof packageSchema>;
@@ -72,7 +88,22 @@ type Package = {
 	images: string[];
 	createdAt: string;
 	updatedAt: string;
+	category?: PackageCategory | null;
+	sortOrder?: number | null;
+	priceFrom?: number | null;
+	priceCurrency?: PriceCurrency | null;
+	priceUnit?: PriceUnit | null;
+	priceNote?: string | null;
 };
+
+const emptyMerchandising = {
+	category: null,
+	sortOrder: null,
+	priceFrom: null,
+	priceCurrency: null,
+	priceUnit: null,
+	priceNote: null,
+} as const;
 
 // TODO: This component should be refactored
 export default function PackagesPage() {
@@ -91,6 +122,7 @@ export default function PackagesPage() {
 			duration: "",
 			included: [],
 			images: [],
+			...emptyMerchandising,
 		},
 	});
 
@@ -106,6 +138,12 @@ export default function PackagesPage() {
 				duration: editingPackage.duration,
 				included: editingPackage.included,
 				images: editingPackage.images,
+				category: editingPackage.category ?? null,
+				sortOrder: editingPackage.sortOrder ?? null,
+				priceFrom: editingPackage.priceFrom ?? null,
+				priceCurrency: editingPackage.priceCurrency ?? null,
+				priceUnit: editingPackage.priceUnit ?? null,
+				priceNote: editingPackage.priceNote ?? null,
 			});
 		} else {
 			form.reset({
@@ -114,6 +152,7 @@ export default function PackagesPage() {
 				duration: "",
 				included: [],
 				images: [],
+				...emptyMerchandising,
 			});
 		}
 	}, [editingPackage, form]);
@@ -152,6 +191,12 @@ export default function PackagesPage() {
 					duration: data.duration,
 					included: data.included,
 					images: data.images,
+					category: data.category ?? null,
+					sortOrder: data.sortOrder ?? null,
+					priceFrom: data.priceFrom ?? null,
+					priceCurrency: data.priceCurrency ?? null,
+					priceUnit: data.priceUnit ?? null,
+					priceNote: data.priceNote?.trim() || null,
 				}),
 			});
 
@@ -215,6 +260,12 @@ export default function PackagesPage() {
 				"name",
 				"description",
 				"duration",
+				"category",
+				"sortOrder",
+				"priceFrom",
+				"priceCurrency",
+				"priceUnit",
+				"priceNote",
 			]);
 			if (generalValid) {
 				setActiveTab("images");
@@ -344,6 +395,168 @@ export default function PackagesPage() {
 																<FormLabel>Duration</FormLabel>
 																<FormControl>
 																	<Input placeholder="3 hours" {...field} />
+																</FormControl>
+																<FormMessage />
+															</FormItem>
+														)}
+													/>
+													<div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+														<FormField
+															control={form.control}
+															name="category"
+															render={({ field }) => (
+																<FormItem>
+																	<FormLabel>Category</FormLabel>
+																	<Select
+																		value={field.value ?? ""}
+																		onValueChange={(value) =>
+																			field.onChange(value || null)
+																		}
+																	>
+																		<FormControl>
+																			<SelectTrigger className="w-full">
+																				<SelectValue placeholder="Choose a category" />
+																			</SelectTrigger>
+																		</FormControl>
+																		<SelectContent>
+																			{PACKAGE_CATEGORIES.map((category) => (
+																				<SelectItem key={category} value={category}>
+																					{PACKAGE_CATEGORY_LABELS[category]}
+																				</SelectItem>
+																			))}
+																		</SelectContent>
+																	</Select>
+																	<FormMessage />
+																</FormItem>
+															)}
+														/>
+														<FormField
+															control={form.control}
+															name="sortOrder"
+															render={({ field }) => (
+																<FormItem>
+																	<FormLabel>Display order (1 shows first)</FormLabel>
+																	<FormControl>
+																		<Input
+																			type="number"
+																			min={0}
+																			max={999}
+																			step={1}
+																			value={field.value ?? ""}
+																			onChange={(event) =>
+																				field.onChange(
+																					event.target.value === ""
+																						? null
+																						: Number(event.target.value)
+																				)
+																			}
+																		/>
+																	</FormControl>
+																	<FormMessage />
+																</FormItem>
+															)}
+														/>
+													</div>
+													<div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+														<FormField
+															control={form.control}
+															name="priceFrom"
+															render={({ field }) => (
+																<FormItem>
+																	<FormLabel>Price from (optional)</FormLabel>
+																	<FormControl>
+																		<Input
+																			type="number"
+																			min={0}
+																			step="any"
+																			placeholder="45"
+																			value={field.value ?? ""}
+																			onChange={(event) =>
+																				field.onChange(
+																					event.target.value === ""
+																						? null
+																						: Number(event.target.value)
+																				)
+																			}
+																		/>
+																	</FormControl>
+																	<FormMessage />
+																</FormItem>
+															)}
+														/>
+														<FormField
+															control={form.control}
+															name="priceCurrency"
+															render={({ field }) => (
+																<FormItem>
+																	<FormLabel>Currency</FormLabel>
+																	<Select
+																		value={field.value ?? ""}
+																		onValueChange={(value) =>
+																			field.onChange(value || null)
+																		}
+																	>
+																		<FormControl>
+																			<SelectTrigger className="w-full">
+																				<SelectValue placeholder="USD / LKR" />
+																			</SelectTrigger>
+																		</FormControl>
+																		<SelectContent>
+																			{PRICE_CURRENCIES.map((currency) => (
+																				<SelectItem key={currency} value={currency}>
+																					{currency}
+																				</SelectItem>
+																			))}
+																		</SelectContent>
+																	</Select>
+																	<FormMessage />
+																</FormItem>
+															)}
+														/>
+														<FormField
+															control={form.control}
+															name="priceUnit"
+															render={({ field }) => (
+																<FormItem>
+																	<FormLabel>Price covers</FormLabel>
+																	<Select
+																		value={field.value ?? ""}
+																		onValueChange={(value) =>
+																			field.onChange(value || null)
+																		}
+																	>
+																		<FormControl>
+																			<SelectTrigger className="w-full">
+																				<SelectValue placeholder="per jeep" />
+																			</SelectTrigger>
+																		</FormControl>
+																		<SelectContent>
+																			{PRICE_UNITS.map((unit) => (
+																				<SelectItem key={unit} value={unit}>
+																					{unit}
+																				</SelectItem>
+																			))}
+																		</SelectContent>
+																	</Select>
+																	<FormMessage />
+																</FormItem>
+															)}
+														/>
+													</div>
+													<FormField
+														control={form.control}
+														name="priceNote"
+														render={({ field }) => (
+															<FormItem>
+																<FormLabel>Price note (optional)</FormLabel>
+																<FormControl>
+																	<Input
+																		placeholder="Park tickets not included"
+																		value={field.value ?? ""}
+																		onChange={(event) =>
+																			field.onChange(event.target.value || null)
+																		}
+																	/>
 																</FormControl>
 																<FormMessage />
 															</FormItem>

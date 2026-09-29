@@ -1,5 +1,10 @@
 import { z } from "zod";
 import { isAcceptableSubmittedDate } from "./booking-dates";
+import {
+	PACKAGE_CATEGORIES,
+	PRICE_CURRENCIES,
+	PRICE_UNITS,
+} from "./package-catalog";
 
 const trimmedString = (minimum: number, maximum: number, label: string) =>
 	z
@@ -55,6 +60,29 @@ export const packageSchema = z.object({
 		.array(z.url("Each image must be a valid URL"))
 		.min(1, "At least one image is required")
 		.max(30, "No more than 30 images are allowed"),
+	// Optional merchandising fields. `null` lets the admin clear a value.
+	category: z.enum(PACKAGE_CATEGORIES).nullable().optional(),
+	sortOrder: z.number().int().min(0).max(999).nullable().optional(),
+	priceFrom: z.number().positive().max(100_000).nullable().optional(),
+	priceCurrency: z.enum(PRICE_CURRENCIES).nullable().optional(),
+	priceUnit: z.enum(PRICE_UNITS).nullable().optional(),
+	priceNote: z.string().trim().max(160).nullable().optional(),
+}).superRefine((value, context) => {
+	if (value.priceFrom == null) return;
+	if (!value.priceCurrency) {
+		context.addIssue({
+			code: "custom",
+			path: ["priceCurrency"],
+			message: "Choose a currency for the price",
+		});
+	}
+	if (!value.priceUnit) {
+		context.addIssue({
+			code: "custom",
+			path: ["priceUnit"],
+			message: "Choose what the price covers",
+		});
+	}
 });
 
 // Inquiry Schema

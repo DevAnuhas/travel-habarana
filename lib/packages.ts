@@ -5,6 +5,11 @@ import mongoose from "mongoose";
 
 import connectMongoDB from "@/lib/mongodb";
 import PackageModel from "@/models/Package";
+import type {
+	PackageCategory,
+	PriceCurrency,
+	PriceUnit,
+} from "@/lib/package-catalog";
 
 export interface PublicPackage {
 	_id: string;
@@ -16,6 +21,12 @@ export interface PublicPackage {
 	images: string[];
 	createdAt?: string;
 	updatedAt?: string;
+	category?: PackageCategory;
+	sortOrder?: number;
+	priceFrom?: number;
+	priceCurrency?: PriceCurrency;
+	priceUnit?: PriceUnit;
+	priceNote?: string;
 }
 
 interface PackageDocument {
@@ -28,19 +39,32 @@ interface PackageDocument {
 	images?: string[];
 	createdAt?: Date;
 	updatedAt?: Date;
+	previousSlugs?: string[];
+	category?: PackageCategory | null;
+	sortOrder?: number | null;
+	priceFrom?: number | null;
+	priceCurrency?: PriceCurrency | null;
+	priceUnit?: PriceUnit | null;
+	priceNote?: string | null;
 }
 
 function serializePackage(packageItem: PackageDocument): PublicPackage {
 	return {
 		_id: packageItem._id.toString(),
 		slug: packageItem.slug,
-		name: packageItem.name,
+		name: packageItem.name.trim(),
 		description: packageItem.description,
 		duration: packageItem.duration,
 		included: packageItem.included,
 		images: packageItem.images ?? [],
 		createdAt: packageItem.createdAt?.toISOString(),
 		updatedAt: packageItem.updatedAt?.toISOString(),
+		category: packageItem.category ?? undefined,
+		sortOrder: packageItem.sortOrder ?? undefined,
+		priceFrom: packageItem.priceFrom ?? undefined,
+		priceCurrency: packageItem.priceCurrency ?? undefined,
+		priceUnit: packageItem.priceUnit ?? undefined,
+		priceNote: packageItem.priceNote?.trim() || undefined,
 	};
 }
 
