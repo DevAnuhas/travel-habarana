@@ -1,5 +1,4 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { revalidatePath, revalidateTag } from "next/cache";
 import mongoose from "mongoose";
 import connectMongoDB from "@/lib/mongodb";
 import Package from "@/models/Package";
@@ -8,6 +7,7 @@ import { NotFoundError } from "@/lib/errors";
 import { withErrorHandler, withAdminAuth } from "@/middleware/error-handler";
 import { findAvailableSlug } from "@/lib/package-slug-store";
 import { planSlugChange } from "@/lib/package-slugs";
+import { revalidatePackages } from "@/lib/package-revalidation";
 import { parseJsonBody } from "@/lib/api";
 
 // Get a package by id or slug
@@ -100,13 +100,7 @@ export async function PUT(
 				packageData,
 				{ returnDocument: "after", runValidators: true }
 			);
-			revalidateTag("package", "max");
-			revalidatePath("/packages");
-			revalidatePath(`/packages/${packageItem.slug}`);
-			if (savedPackage?.slug && savedPackage.slug !== packageItem.slug) {
-				revalidatePath(`/packages/${savedPackage.slug}`);
-			}
-			revalidatePath("/sitemap.xml");
+			revalidatePackages(packageItem.slug, savedPackage?.slug);
 			return NextResponse.json(savedPackage, { status: 200 });
 		});
 	});
@@ -135,10 +129,7 @@ export async function DELETE(
 				throw new NotFoundError("Package not found");
 			}
 
-			revalidateTag("package", "max");
-			revalidatePath("/packages");
-			revalidatePath(`/packages/${packageItem.slug}`);
-			revalidatePath("/sitemap.xml");
+			revalidatePackages(packageItem.slug);
 			return NextResponse.json({ success: true }, { status: 200 });
 		});
 	});

@@ -1,10 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { revalidatePath, revalidateTag } from "next/cache";
 import connectMongoDB from "@/lib/mongodb";
 import Package from "@/models/Package";
 import { packageSchema } from "@/lib/types";
 import { withAdminAuth, withErrorHandler } from "@/middleware/error-handler";
 import { findAvailableSlug } from "@/lib/package-slug-store";
+import { revalidatePackages } from "@/lib/package-revalidation";
 import { parseJsonBody } from "@/lib/api";
 
 // Get all packages
@@ -35,9 +35,7 @@ export async function POST(request: NextRequest) {
 			};
 
 			const newPackage = await Package.create(packageWithSlug);
-			revalidateTag("package", "max");
-			revalidatePath("/packages");
-			revalidatePath("/sitemap.xml");
+			revalidatePackages(newPackage.slug);
 			return NextResponse.json(newPackage, { status: 201 });
 		});
 	});
