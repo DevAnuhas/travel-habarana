@@ -88,6 +88,10 @@ const evaluate = async (expression) =>
 
 await send("Page.enable")
 await send("Network.enable")
+// Measure every page like a first-time visitor. With a warm cache the browser
+// may reuse a larger srcset candidate cached by an earlier (desktop-width) page,
+// which shows up as an extra request that no real phone would make.
+await send("Network.setCacheDisabled", { cacheDisabled: true })
 
 async function load(url, viewport) {
   await send("Emulation.setDeviceMetricsOverride", {
@@ -96,11 +100,13 @@ async function load(url, viewport) {
     deviceScaleFactor: 2,
     mobile: viewport.mobile,
   })
-  const images = []
+  // Record the loader of each image request: late requests from the previous
+  // page (lazy images finishing a scroll) must not count against this one.
+  const requests = []
   const onRequest = (m) =>
     m.method === "Network.requestWillBeSent" &&
     m.params.type === "Image" &&
-    images.push(m.params.request.url)
+    requests.push({ url: m.params.request.url, loaderId: m.params.loaderId })
   listeners.add(onRequest)
   const loaded = new Promise((resolve) => {
     const onLoad = (m) =>
@@ -108,11 +114,11 @@ async function load(url, viewport) {
       (listeners.delete(onLoad), resolve())
     listeners.add(onLoad)
   })
-  await send("Page.navigate", { url })
+  const { loaderId } = await send("Page.navigate", { url })
   await loaded
   await sleep(1500)
   listeners.delete(onRequest)
-  return images
+  return requests.filter((r) => r.loaderId === loaderId).map((r) => r.url)
 }
 
 // Visible = on screen AND not covered (hit-test at the element's centre).
@@ -231,12 +237,20 @@ for (const target of targets) {
         const leadKey = decodeURIComponent(
           new URL(lead).searchParams.get("url") ?? lead
         )
-        const hits = images.filter((u) =>
+        const leadRequests = images.filter((u) =>
           decodeURIComponent(u).includes(leadKey)
-        ).length
+        )
+        const hits = leadRequests.length
         check(`${tag} lead image requested once`, hits === 1, {
           hits,
           totalImageRequests: images.length,
+          ...(hits > 1
+            ? {
+                widths: leadRequests.map((u) =>
+                  new URL(u).searchParams.get("w")
+                ),
+              }
+            : {}),
         })
       }
       if (path.startsWith("/book-now?packageId=")) {
