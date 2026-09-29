@@ -4,6 +4,7 @@ import { notFound, permanentRedirect } from "next/navigation"
 import { siteConfig } from "@/config/site"
 import { JsonLd } from "@/components/seo/json-ld"
 import { selectRelatedPackages } from "@/lib/package-catalog"
+import { buildOffer } from "@/lib/pricing"
 import { buildPackageTitle, truncateAtWord } from "@/lib/seo"
 import { getPackage, getPackages } from "@/lib/packages"
 import { PackageDetails } from "./package-details"
@@ -98,6 +99,7 @@ export default async function PackageDetailsPage({
       image: packageData.images,
       serviceType: packageData.name,
       provider: { "@id": `${siteConfig.url}/#business` },
+      offers: buildOffer(packageData, canonicalUrl),
       areaServed: siteConfig.serviceAreas.map((name) => ({
         "@type": "Place",
         name,
