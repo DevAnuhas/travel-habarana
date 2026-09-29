@@ -2,13 +2,19 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Turn the homepage and every package page into conversion-first landing pages. Each first screen answers what, how long, how much and why trust, and puts one-tap WhatsApp contact within reach on every phone screen.
+**Goal:** Turn the homepage and every package page into conversion-first landing pages. On a 390×844 phone, the first viewport answers what, how long, how much and why trust, and a WhatsApp action is always within reach.
 
-**Architecture:** Optional structured "landing" fields on the Mongo `Package` feed one server-rendered template. The template renders a section only when its data exists. All behaviour lives in pure modules under `lib/` with Vitest suites. Server components get `renderToStaticMarkup` tests that pin omission rules and markup validity. The existing brand tokens are extended, not replaced.
+**Architecture:**
+- Optional structured "landing" fields on the Mongo `Package` feed one server-rendered template, which renders a section only when its data exists.
+- The serializer normalises data once: it infers a category when unset, cleans season months and drops empty values.
+- All behaviour lives in pure modules under `lib/` with Vitest suites.
+- Server components get `renderToStaticMarkup` tests.
+- A dependency-free Chrome DevTools-protocol script verifies first-viewport facts, overflow and contact-bar clearance in a real browser.
+- The existing brand tokens are extended, not replaced.
 
-**Tech Stack:** Next.js 16 App Router (Cache Components), React 19, TypeScript 6, Tailwind 4, shadcn/Radix, Mongoose 9, Zod 4, react-hook-form, Vitest 5 (oxc transform), pnpm 11.
+**Tech Stack:** Next.js 16 App Router (Cache Components), React 19, TypeScript 6, Tailwind 4, shadcn/Radix, Mongoose 9, Zod 4, react-hook-form, Vitest 5 (oxc transform, TZ=UTC), Node 26 (global `WebSocket`), pnpm 11.
 
-**Spec:** `docs/superpowers/specs/2026-09-29-landing-page-revamp-design.md`
+**Spec:** `docs/superpowers/specs/2026-09-29-landing-page-revamp-design.md` (revision 1)
 
 **Prerequisite:** `docs/superpowers/plans/2026-09-29-lead-recovery-fixes.md` Tasks 1–7 are complete. This plan consumes:
 - `planSlugChange` / `previousSlugs`;
@@ -17,53 +23,73 @@
 - `getFaqs` / `FAQSection variant`;
 - `contentRedirects`.
 
-That plan's Tasks 8–11 are **superseded** by this plan, and analytics is dropped.
+That plan's Tasks 8–11 are superseded, and analytics is dropped.
+
+## Revision 1: response to review round 1
+
+| # | Reviewer point | Change | Where |
+|---|---|---|---|
+| 1 | First viewport lacks decision facts | The homepage hero carries safari quick-pick rows (name, duration, price or "Price on request"), with no viewport-height hero. The package page drops the gallery to a 16:9 strip and puts price, trust, duration and WhatsApp right under the H1. `ContactActions compact` sits side by side on mobile. Real-browser first-viewport assertions at 390×844 cover the short and long names. | Tasks 3, 8, 9, 12 |
+| 2 | No categories on live packages means an empty park chooser | `inferCategory(slug, name)`, applied in the serializer when `category` is null, is unit-tested against all 11 live slugs and the 5 dev slugs. The admin value wins. | Task 1 |
+| 3 | 500–800 words not delivered | Content is now an explicit **release gate** that depends on owner edits. `scripts/landing-word-report.mjs` measures unique words per safari page. The drafts separate paste-ready text from owner questions. | Tasks 11, 12 |
+| 4 | Fixed claims outside admin data | Pickup reads "Hotel pickup from", never "free". The hero and how-it-works copy describe only the process. Category intros are neutral. The private-jeep line is removed. `FinalCta` is generic with a per-page title. There's no "quieter" month label. | Tasks 5, 7, 8, 9 |
+| 5 | `availability: InStock` asserted from price | Removed. A test asserts it's absent. | Task 4 |
+| 6 | Breakpoint gap and spacer guess | The bar is `lg:hidden`, matching the navbar's `lg`, and uses **`position: sticky; bottom: 0`** as the last child of `<main>`, so no spacer is needed and it can't cover the footer. It's also added to `/book-now`. Browser checks cover 125% text. | Tasks 6, 10, 12 |
+| 7 | Invalid season means an empty "When to go" | `normalizeSeason` runs in the serializer, and `WhenToGo` renders only when `buildSeasonCells` returns cells. Tests cover fully invalid and overlapping data. | Tasks 1, 2, 8 |
+| 8 | Tests don't pin behaviour | `resolveInitialPackageId` is unit-tested, and the browser verifies the selected value. Footer clearance is checked in the browser. Gallery no-image markup is tested. Counts use `grep -o … \| wc -l`. | Tasks 8, 10, 12 |
+| 9 | Contrast, alts, duplicate lead image | The WhatsApp token becomes `oklch(0.5 0.12 158)` (5.63:1) with a darker hover, and a contrast regression test parses `globals.css`. An `imageAlts` field is added. The gallery is **one** markup list, so the lead image is requested once, which the browser verifies. | Tasks 1, 3, 8, 12 |
+| — | "Compact" experience cards | The spec now reuses `PackageCard`, which is DRY. | Task 9 |
 
 ## Global Constraints
 
 - Formatting: `.prettierrc` (no semicolons, double quotes, 2 spaces). Tab-indented legacy files keep their style.
 - One commit per task, with a direct message and **no AI attribution trailer**.
-- **No analytics or tracking code of any kind** (PostHog is pending client approval). No `data-umami-*`, no event helpers.
-- No new runtime dependencies. Dev dependencies: none beyond Vitest.
-- Brand stays: logo files, `--primary` jeep green, `--secondary` dry grass, DM Serif Display (H1/H2) and Inter (everything else), `--radius: 0.25rem`.
+- **No analytics or tracking code of any kind** (PostHog is pending client approval).
+- No new dependencies of any kind.
+- Brand stays: logo files, `--primary` jeep green, `--secondary` dry grass, DM Serif Display (H1/H2) and Inter, `--radius: 0.25rem`.
 - WhatsApp number `+94 76 667 5883` (`siteConfig.contact.phoneE164`). Canonical origin `https://www.ceylonsafari.com`.
-- Never invent facts. Price, cancellation, times, season and pickup render only from admin data. The single existing claim reused in static copy is hotel pickup from Habarana, Sigiriya and Dambulla, which is already in the live FAQ.
-- Every section must be complete in server HTML: no `opacity:0` mounts and no `<a>` wrapping `<button>`.
-- Never write to production data. Local verification uses `travelHabaranaDB-Dev` via `.env.local`.
+- **Never invent or strengthen a business claim.**
+  - Service facts (price, cancellation, times, pickup, private jeep, season, what's included) render only from that package's admin fields.
+  - Fixed copy may describe only the booking process: message us; we reply within 24 hours, which is the site's existing promise; no payment is needed to ask.
+  - No schema property asserts state that isn't in the data.
+- Every section is complete in server HTML: no `opacity:0` mounts and no `<a>` wrapping `<button>`.
+- Text on coloured buttons meets WCAG AA (≥ 4.5:1).
+- Never write to production data. Local verification uses `travelHabaranaDB-Dev`.
 
 ## Review Focus
 
-1. **A package with no landing data**, which describes every live package today, must render as a complete page with no empty headings. Pinned by the omission tests in Tasks 8 and 9.
-2. **Admin editing a list textarea.** Typing a newline must not be eaten mid-edit, and clearing a textarea must save `null`. Pinned in Task 2 (parse tests) with the manual step in Task 2.
-3. **Season data with bad months** (0, 13, duplicates, peak/good overlap) from legacy or hand-edited records must be rejected on save and ignored on render. Pinned in Tasks 1 and 5.
-4. **The mobile contact bar covering content** (footer links, the last FAQ). Its spacer is pinned in Task 6, with the screenshot check in Task 12.
-5. **Long or odd package names** (`&`, quotes, trailing spaces) in WhatsApp prefill, titles and aria labels. Pinned in Tasks 3 and 8.
+1. **Every live package today has no landing data and no category.** Pages must render complete, categorised and first-viewport-compliant. Pinned by the `inferCategory` live-slug test (Task 1), the omission tests (Task 8) and the browser checks (Task 12).
+2. **Admin editing a list textarea.** Newlines must survive typing, and clearing must save `null`. Pinned by the parse tests (Task 2) and the manual step.
+3. **Bad season data** (0, 13, duplicates, peak/good overlap) is rejected on save and normalised on read, so there's never an empty "When to go". Pinned in Tasks 1, 2 and 8.
+4. **Contact bar vs footer and last content**, at 125% text and with a safe-area inset. Pinned by the browser clearance check (Task 12).
+5. **Long or odd package names** (`&`, quotes, trailing spaces, the 54-character "Explore Sri Lanka…" title) in WhatsApp prefill, titles and the first viewport. Pinned in Tasks 3, 8 and 12.
 
 ---
 
-### Task 1: Landing content fields on the package
+### Task 1: Landing content fields, category inference, season normalisation
 
 **Files:**
-- Create: `lib/package-serialize.ts`, `lib/package-serialize.test.ts`
-- Modify: `lib/types.ts` (`packageSchema`), `lib/types.test.ts`, `models/Package.ts`, `lib/packages.ts`
+- Create: `lib/package-serialize.ts`, `lib/package-serialize.test.ts`, `lib/season.ts`, `lib/season.test.ts`
+- Modify: `lib/package-catalog.ts` (+`inferCategory`), `lib/package-catalog.test.ts` (create if absent), `lib/types.ts`, `lib/types.test.ts`, `models/Package.ts`, `lib/packages.ts`
 
 **Interfaces:**
-- Consumes: Task 3 of the lead-recovery plan (merchandising fields, `superRefine` on `packageSchema`).
+- Consumes: lead-recovery Task 3 (merchandising fields, `superRefine` on `packageSchema`).
 - Produces:
-  - `interface ItineraryStep { time?: string; title: string; detail?: string }`
-  - `interface PackageFaq { question: string; answer: string }`
-  - `interface Season { peak: number[]; good: number[] }`
-  - `PublicPackage` gains `summary?`, `seoTitle?`, `seoDescription?`, `groupSize?`, `highlights?`, `notIncluded?`, `timeSlots?`, `pickupAreas?`, `whatToBring?`, `itinerary?`, `faqs?`, `season?`. Each is `undefined` when unset or empty.
-  - `serializePackage(doc: PackageDocument): PublicPackage`, exported from the pure module `lib/package-serialize.ts`. `lib/packages.ts` re-exports `PublicPackage`.
+  - `interface ItineraryStep { time?: string; title: string; detail?: string }`, `interface PackageFaq { question: string; answer: string }`, `interface Season { peak: number[]; good: number[] }`
+  - `normalizeSeason(season?: { peak?: number[] | null; good?: number[] | null } | null): Season | undefined`
+  - `inferCategory(slug: string, name: string): PackageCategory | undefined`
+  - `PublicPackage` gains `summary?`, `seoTitle?`, `seoDescription?`, `groupSize?`, `highlights?`, `notIncluded?`, `timeSlots?`, `pickupAreas?`, `whatToBring?`, `itinerary?`, `faqs?`, `season?`, `imageAlts?`. Each is `undefined` when unset or empty. `category` is the admin value, else inferred.
+  - `serializePackage(doc: PackageDocument): PublicPackage` in the pure module `lib/package-serialize.ts`. `lib/packages.ts` re-exports `PublicPackage`.
+  - `export type PackageInput = z.infer<typeof packageSchema>` from `lib/types.ts`.
 
-- [ ] **Step 1: Failing schema tests.** Append to `lib/types.test.ts`:
+- [ ] **Step 1: Failing tests, part 1 (schema).** Append to `lib/types.test.ts`:
 
 ```ts
 describe("packageSchema landing fields", () => {
   const landing = {
-    summary: "See the elephant gathering at Minneriya tank in a private jeep.",
+    summary: "See the elephant gathering at Minneriya tank in a jeep with a local guide.",
     seoTitle: "Minneriya National Park Jeep Safari from Habarana",
-    seoDescription: "Private Minneriya jeep safari with hotel pickup.",
+    seoDescription: "Minneriya jeep safari from Habarana.",
     groupSize: "Up to 6 per jeep",
     highlights: ["Elephant herds at the tank"],
     notIncluded: ["Park entrance tickets"],
@@ -73,10 +99,12 @@ describe("packageSchema landing fields", () => {
     itinerary: [{ time: "2:30 pm", title: "Hotel pickup", detail: "In an open jeep" }],
     faqs: [{ question: "Is it private?", answer: "Yes, the jeep is only for your group." }],
     season: { peak: [8, 9], good: [7, 10] },
+    imageAlts: ["Elephants at the Minneriya tank at sunset"],
   }
 
-  it("accepts a full landing payload", () => {
-    expect(packageSchema.safeParse({ ...legacyPackage, ...landing }).success).toBe(true)
+  it("accepts a full landing payload and keeps it", () => {
+    const result = packageSchema.parse({ ...legacyPackage, ...landing })
+    expect(result).toMatchObject(landing)
   })
 
   it("accepts null for every landing field", () => {
@@ -85,13 +113,14 @@ describe("packageSchema landing fields", () => {
   })
 
   it.each([
-    ["too many highlights", { highlights: Array.from({ length: 9 }, (_, i) => `H${i}`) }],
+    ["too many highlights", { highlights: Array.from({ length: 9 }, (_, i) => `Highlight ${i}`) }],
     ["month 13", { season: { peak: [13], good: [] } }],
     ["month 0", { season: { peak: [], good: [0] } }],
     ["duplicate month", { season: { peak: [8, 8], good: [] } }],
     ["peak and good overlap", { season: { peak: [8], good: [8] } }],
     ["FAQ without answer", { faqs: [{ question: "Is it private?", answer: "" }] }],
     ["summary over 220 chars", { summary: "a".repeat(221) }],
+    ["alt over 150 chars", { imageAlts: ["a".repeat(151)] }],
   ])("rejects %s", (_label, extra) => {
     expect(packageSchema.safeParse({ ...legacyPackage, ...extra }).success).toBe(false)
   })
@@ -99,9 +128,138 @@ describe("packageSchema landing fields", () => {
 ```
 
 Run: `pnpm test lib/types.test.ts`
-Expected: FAIL on every "rejects" case except "FAQ without answer". Unknown keys are stripped, so they parse.
+Expected: FAIL. The "keeps it" case fails, since unknown keys are stripped, and most "rejects" cases pass parsing.
 
-- [ ] **Step 2: Implement the schema.** In `lib/types.ts` add above `packageSchema`:
+- [ ] **Step 2: Failing tests, part 2 (season, category, serializer).** Create `lib/season.test.ts`:
+
+```ts
+import { describe, expect, it } from "vitest"
+
+import { normalizeSeason } from "./season"
+
+describe("normalizeSeason", () => {
+  it("returns undefined without usable months", () => {
+    expect(normalizeSeason(undefined)).toBeUndefined()
+    expect(normalizeSeason(null)).toBeUndefined()
+    expect(normalizeSeason({ peak: [], good: [] })).toBeUndefined()
+    expect(normalizeSeason({ peak: [0, 13, 8.5], good: [-1] })).toBeUndefined()
+  })
+
+  it("drops invalid and duplicate months, sorts, and lets peak win over good", () => {
+    expect(normalizeSeason({ peak: [9, 8, 8, 13], good: [8, 7, 7] })).toEqual({ peak: [8, 9], good: [7] })
+  })
+
+  it("tolerates null arrays from legacy documents", () => {
+    expect(normalizeSeason({ peak: null, good: [10] })).toEqual({ peak: [], good: [10] })
+  })
+})
+```
+
+Create or append `lib/package-catalog.test.ts`:
+
+```ts
+import { describe, expect, it } from "vitest"
+
+import { inferCategory } from "./package-catalog"
+
+describe("inferCategory", () => {
+  // The 11 live slugs (www.ceylonsafari.com/packages, 29 Sep 2026) and the 5 dev slugs.
+  it.each([
+    ["hurulu-eco-park-safari", "safari"],
+    ["minneriya-national-park-safari", "safari"],
+    ["kaudulla-national-park-safari", "safari"],
+    ["village-experience-tour", "experience"],
+    ["sri-lankan-culinary-journey", "experience"],
+    ["polonnaruwa-city-tours", "tour"],
+    ["sigiriya-city-tours", "tour"],
+    ["medirigiriya-vatadageya-tour", "tour"],
+    ["srilankan-day-and-multi-day-tours", "tour"],
+    ["explore-sri-lanka-a-complete-guide-to-every-city-tour", "tour"],
+    ["habarana-cottages-and-rooms", "stay"],
+  ])("%s → %s", (slug, expected) => {
+    expect(inferCategory(slug, slug.replace(/-/g, " "))).toBe(expected)
+  })
+
+  it("uses the name when the slug says nothing", () => {
+    expect(inferCategory("package-7", "Habarana Cooking Class")).toBe("experience")
+  })
+
+  it("returns undefined when nothing matches", () => {
+    expect(inferCategory("misc", "Airport transfer")).toBeUndefined()
+  })
+})
+```
+
+Create `lib/package-serialize.test.ts`:
+
+```ts
+import { describe, expect, it } from "vitest"
+
+import { serializePackage, type PackageDocument } from "./package-serialize"
+
+const base: PackageDocument = {
+  _id: "a".repeat(24),
+  slug: "hurulu-eco-park-safari",
+  name: "Hurulu Eco Park Safari ",
+  description: "A jeep safari.",
+  duration: "3 hours",
+  included: ["Jeep"],
+  images: ["https://res.cloudinary.com/demo/hurulu.jpg"],
+  createdAt: new Date("2026-01-01T00:00:00.000Z"),
+  updatedAt: new Date("2026-02-01T00:00:00.000Z"),
+}
+
+describe("serializePackage", () => {
+  it("keeps a legacy package intact, trims the name and infers its category", () => {
+    const result = serializePackage(base)
+    expect(result).toMatchObject({
+      _id: "a".repeat(24),
+      name: "Hurulu Eco Park Safari",
+      category: "safari",
+      createdAt: "2026-01-01T00:00:00.000Z",
+    })
+    expect(result.summary).toBeUndefined()
+    expect(result.season).toBeUndefined()
+  })
+
+  it("prefers the admin category over the inferred one", () => {
+    expect(serializePackage({ ...base, category: "tour" }).category).toBe("tour")
+  })
+
+  it("maps null, blank strings and empty lists to undefined", () => {
+    const result = serializePackage({
+      ...base,
+      summary: "  ",
+      highlights: [],
+      faqs: null,
+      season: { peak: [], good: [] },
+      priceFrom: null,
+      imageAlts: [],
+    })
+    expect(result.summary).toBeUndefined()
+    expect(result.highlights).toBeUndefined()
+    expect(result.faqs).toBeUndefined()
+    expect(result.season).toBeUndefined()
+    expect(result.priceFrom).toBeUndefined()
+    expect(result.imageAlts).toBeUndefined()
+  })
+
+  it("normalises season and itinerary", () => {
+    const result = serializePackage({
+      ...base,
+      itinerary: [{ time: null, title: " Pickup ", detail: null }],
+      season: { peak: [8, 13], good: [8, 7] },
+    })
+    expect(result.itinerary).toEqual([{ title: "Pickup" }])
+    expect(result.season).toEqual({ peak: [8], good: [7] })
+  })
+})
+```
+
+Run: `pnpm test lib/season.test.ts lib/package-catalog.test.ts lib/package-serialize.test.ts`
+Expected: FAIL, missing exports and modules.
+
+- [ ] **Step 3: Implement the schema.** In `lib/types.ts` add above `packageSchema`:
 
 ```ts
 const optionalText = (maximum: number) =>
@@ -113,7 +271,7 @@ const listOf = (maxItems: number, maxLength: number, label: string) =>
 const monthSchema = z.number().int().min(1).max(12);
 ```
 
-add these keys inside the `packageSchema` object:
+add inside the `packageSchema` object:
 
 ```ts
 	summary: optionalText(220),
@@ -125,6 +283,7 @@ add these keys inside the `packageSchema` object:
 	timeSlots: listOf(4, 40, "Time slot"),
 	pickupAreas: listOf(10, 60, "Pickup area"),
 	whatToBring: listOf(10, 100, "What to bring item"),
+	imageAlts: listOf(30, 150, "Image description"),
 	itinerary: z
 		.array(
 			z.object({
@@ -152,7 +311,7 @@ add these keys inside the `packageSchema` object:
 		.optional(),
 ```
 
-and extend the existing `superRefine` body with:
+extend the existing `superRefine` body (keep the price checks) with:
 
 ```ts
 	if (value.season) {
@@ -161,89 +320,66 @@ and extend the existing `superRefine` body with:
 			context.addIssue({
 				code: "custom",
 				path: ["season"],
-				message: "Each month can be marked once, as peak or good",
+				message: "Each month can be marked once, as best or good",
 			});
 		}
 	}
 ```
 
-Run: `pnpm test lib/types.test.ts`
-Expected: PASS.
+and export `export type PackageInput = z.infer<typeof packageSchema>;`.
 
-- [ ] **Step 3: Failing serializer tests.** Create `lib/package-serialize.test.ts`:
+- [ ] **Step 4: Implement the season, category and serializer modules.** Create `lib/season.ts`:
 
 ```ts
-import { describe, expect, it } from "vitest"
-
-import { serializePackage, type PackageDocument } from "./package-serialize"
-
-const base: PackageDocument = {
-  _id: "a".repeat(24),
-  slug: "hurulu-eco-park-safari",
-  name: "Hurulu Eco Park Safari ",
-  description: "A private jeep safari.",
-  duration: "3 hours",
-  included: ["Private jeep"],
-  images: ["https://res.cloudinary.com/demo/hurulu.jpg"],
-  createdAt: new Date("2026-01-01T00:00:00.000Z"),
-  updatedAt: new Date("2026-02-01T00:00:00.000Z"),
+export interface Season {
+  peak: number[]
+  good: number[]
 }
 
-describe("serializePackage", () => {
-  it("keeps a legacy package intact and trims the name", () => {
-    const result = serializePackage(base)
-    expect(result).toMatchObject({
-      _id: "a".repeat(24),
-      slug: "hurulu-eco-park-safari",
-      name: "Hurulu Eco Park Safari",
-      images: ["https://res.cloudinary.com/demo/hurulu.jpg"],
-      createdAt: "2026-01-01T00:00:00.000Z",
-    })
-    expect(result.summary).toBeUndefined()
-    expect(result.season).toBeUndefined()
-  })
+type RawSeason = { peak?: number[] | null; good?: number[] | null } | null | undefined
 
-  it("maps null, blank strings and empty lists to undefined", () => {
-    const result = serializePackage({
-      ...base,
-      summary: "  ",
-      highlights: [],
-      faqs: null,
-      season: { peak: [], good: [] },
-      priceFrom: null,
-    })
-    expect(result.summary).toBeUndefined()
-    expect(result.highlights).toBeUndefined()
-    expect(result.faqs).toBeUndefined()
-    expect(result.season).toBeUndefined()
-    expect(result.priceFrom).toBeUndefined()
-  })
+const isMonth = (value: number) => Number.isInteger(value) && value >= 1 && value <= 12
+const sortedUnique = (values: Iterable<number>) => [...new Set(values)].sort((a, b) => a - b)
 
-  it("passes landing data through as plain values", () => {
-    const result = serializePackage({
-      ...base,
-      summary: " Elephants at the tank. ",
-      itinerary: [{ time: null, title: "Pickup", detail: null }],
-      season: { peak: [8], good: [7] },
-    })
-    expect(result.summary).toBe("Elephants at the tank.")
-    expect(result.itinerary).toEqual([{ title: "Pickup" }])
-    expect(result.season).toEqual({ peak: [8], good: [7] })
-  })
-})
+/** Clean legacy or hand-edited season data: valid unique months, peak wins over good. */
+export function normalizeSeason(season: RawSeason): Season | undefined {
+  const peak = sortedUnique((season?.peak ?? []).filter(isMonth))
+  const good = sortedUnique((season?.good ?? []).filter((m) => isMonth(m) && !peak.includes(m)))
+  return peak.length || good.length ? { peak, good } : undefined
+}
 ```
 
-Run: `pnpm test lib/package-serialize.test.ts`
-Expected: FAIL, module not found.
-
-- [ ] **Step 4: Implement the serializer.** Create `lib/package-serialize.ts`. Move `PublicPackage`, `PackageDocument` and `serializePackage` here from `lib/packages.ts`, with no `server-only` import, and extend them:
+Append to `lib/package-catalog.ts`:
 
 ```ts
-import type {
-  PackageCategory,
-  PriceCurrency,
-  PriceUnit,
+// Explicit keyword fallback for packages whose admin category is unset
+// (every live package as of 29 Sep 2026). Order matters: "village-experience-tour"
+// must be an experience, not a tour. The admin's category always wins.
+const CATEGORY_RULES: ReadonlyArray<readonly [RegExp, PackageCategory]> = [
+  [/safari/, "safari"],
+  [/village|cooking|culinary/, "experience"],
+  [/cottage|room|stay|hotel/, "stay"],
+  [/tour/, "tour"],
+]
+
+export function inferCategory(slug: string, name: string): PackageCategory | undefined {
+  const haystack = `${slug} ${name}`.toLowerCase()
+  return CATEGORY_RULES.find(([pattern]) => pattern.test(haystack))?.[1]
+}
+```
+
+Create `lib/package-serialize.ts`. There's no `server-only` import; move `PublicPackage`, `PackageDocument` and `serializePackage` here from `lib/packages.ts`.
+
+```ts
+import {
+  inferCategory,
+  type PackageCategory,
+  type PriceCurrency,
+  type PriceUnit,
 } from "@/lib/package-catalog"
+import { normalizeSeason, type Season } from "@/lib/season"
+
+export type { Season } from "@/lib/season"
 
 export interface ItineraryStep {
   time?: string
@@ -254,11 +390,6 @@ export interface ItineraryStep {
 export interface PackageFaq {
   question: string
   answer: string
-}
-
-export interface Season {
-  peak: number[]
-  good: number[]
 }
 
 export interface PublicPackage {
@@ -286,6 +417,7 @@ export interface PublicPackage {
   timeSlots?: string[]
   pickupAreas?: string[]
   whatToBring?: string[]
+  imageAlts?: string[]
   itinerary?: ItineraryStep[]
   faqs?: PackageFaq[]
   season?: Season
@@ -294,12 +426,7 @@ export interface PublicPackage {
 type Nullable<T> = { [K in keyof T]?: T[K] | null }
 
 export interface PackageDocument
-  extends Nullable<
-    Omit<
-      PublicPackage,
-      "_id" | "createdAt" | "updatedAt" | "itinerary" | "season"
-    >
-  > {
+  extends Nullable<Omit<PublicPackage, "_id" | "createdAt" | "updatedAt" | "itinerary" | "season">> {
   _id: { toString(): string } | string
   slug: string
   name: string
@@ -309,17 +436,13 @@ export interface PackageDocument
   images?: string[] | null
   createdAt?: Date | null
   updatedAt?: Date | null
-  itinerary?: Array<{
-    time?: string | null
-    title: string
-    detail?: string | null
-  }> | null
+  previousSlugs?: string[] | null
+  itinerary?: Array<{ time?: string | null; title: string; detail?: string | null }> | null
   season?: { peak?: number[] | null; good?: number[] | null } | null
 }
 
 const text = (value?: string | null) => value?.trim() || undefined
-const list = <T>(value?: T[] | null) =>
-  value && value.length > 0 ? value : undefined
+const list = <T>(value?: T[] | null) => (value && value.length > 0 ? value : undefined)
 
 export function serializePackage(doc: PackageDocument): PublicPackage {
   const itinerary = list(doc.itinerary)?.map((step) => ({
@@ -327,8 +450,6 @@ export function serializePackage(doc: PackageDocument): PublicPackage {
     ...(text(step.time) ? { time: text(step.time) } : {}),
     ...(text(step.detail) ? { detail: text(step.detail) } : {}),
   }))
-  const peak = doc.season?.peak ?? []
-  const good = doc.season?.good ?? []
 
   return {
     _id: doc._id.toString(),
@@ -340,7 +461,7 @@ export function serializePackage(doc: PackageDocument): PublicPackage {
     images: doc.images ?? [],
     createdAt: doc.createdAt?.toISOString(),
     updatedAt: doc.updatedAt?.toISOString(),
-    category: doc.category ?? undefined,
+    category: doc.category ?? inferCategory(doc.slug, doc.name),
     sortOrder: doc.sortOrder ?? undefined,
     priceFrom: doc.priceFrom ?? undefined,
     priceCurrency: doc.priceCurrency ?? undefined,
@@ -355,24 +476,15 @@ export function serializePackage(doc: PackageDocument): PublicPackage {
     timeSlots: list(doc.timeSlots),
     pickupAreas: list(doc.pickupAreas),
     whatToBring: list(doc.whatToBring),
+    imageAlts: list(doc.imageAlts),
     itinerary,
     faqs: list(doc.faqs),
-    season:
-      peak.length > 0 || good.length > 0
-        ? { peak: [...peak], good: [...good] }
-        : undefined,
+    season: normalizeSeason(doc.season),
   }
 }
 ```
 
-`lib/packages.ts`: delete the moved interfaces and function, then add
-
-```ts
-import { serializePackage, type PackageDocument } from "@/lib/package-serialize";
-export type { PublicPackage } from "@/lib/package-serialize";
-```
-
-and keep `getPackages` / `getPackage` casting `.lean()` results to `PackageDocument`.
+`lib/packages.ts`: delete the moved interfaces and function, then import `serializePackage` and `PackageDocument` from `@/lib/package-serialize` and add `export type { PublicPackage } from "@/lib/package-serialize";`.
 
 `models/Package.ts`: add
 
@@ -386,12 +498,23 @@ and keep `getPackages` / `getPackage` casting `.lean()` results to `PackageDocum
 		timeSlots: { type: [String], default: undefined },
 		pickupAreas: { type: [String], default: undefined },
 		whatToBring: { type: [String], default: undefined },
+		imageAlts: { type: [String], default: undefined },
 		itinerary: {
-			type: [new mongoose.Schema({ time: String, title: { type: String, required: true }, detail: String }, { _id: false })],
+			type: [
+				new mongoose.Schema(
+					{ time: String, title: { type: String, required: true }, detail: String },
+					{ _id: false }
+				),
+			],
 			default: undefined,
 		},
 		faqs: {
-			type: [new mongoose.Schema({ question: { type: String, required: true }, answer: { type: String, required: true } }, { _id: false })],
+			type: [
+				new mongoose.Schema(
+					{ question: { type: String, required: true }, answer: { type: String, required: true } },
+					{ _id: false }
+				),
+			],
 			default: undefined,
 		},
 		season: {
@@ -406,8 +529,8 @@ Run: `pnpm test && pnpm typecheck`
 Expected: PASS / clean.
 
 ```bash
-git add lib/package-serialize.ts lib/package-serialize.test.ts lib/types.ts lib/types.test.ts models/Package.ts lib/packages.ts
-git commit -m "feat: add optional landing-page content fields to packages"
+git add lib/package-serialize.ts lib/package-serialize.test.ts lib/season.ts lib/season.test.ts lib/package-catalog.ts lib/package-catalog.test.ts lib/types.ts lib/types.test.ts models/Package.ts lib/packages.ts
+git commit -m "feat: add landing-page fields, category inference, and season normalisation"
 ```
 
 ---
@@ -416,19 +539,17 @@ git commit -m "feat: add optional landing-page content fields to packages"
 
 **Files:**
 - Create: `lib/package-landing.ts`, `lib/package-landing.test.ts`
-- Create: `lib/season.ts`, `lib/season.test.ts`
+- Modify: `lib/season.ts` (+`buildSeasonCells`, `cycleMonth`, `describeSeason`, month labels), `lib/season.test.ts`
 - Create: `components/admin/lines-textarea.tsx`, `components/admin/season-picker.tsx`, `components/admin/package-landing-fields.tsx`
 - Modify: `app/admin/(dashboard)/packages/page.tsx`
 
 **Interfaces:**
 - Produces:
-  - `parseLines(text: string): string[]`, `formatLines(items?: readonly string[] | null): string`
-  - `parseItinerary(text: string): ItineraryStep[]`, `formatItinerary(steps?: readonly ItineraryStep[] | null): string`
-  - `parseFaqs(text: string): { faqs: PackageFaq[]; dropped: number }`, `formatFaqs(faqs?: readonly PackageFaq[] | null): string`
-  - `splitParagraphs(text: string): string[]`
-  - `MONTH_LABELS: readonly string[]` (12), `MONTH_INITIALS: readonly string[]` (12)
-  - `type SeasonLevel = "peak" | "good" | "off"`, `SeasonCell = { month: number; label: string; initial: string; level: SeasonLevel }`
-  - `buildSeasonCells(season?: Season | null): SeasonCell[] | null`, `cycleMonth(season: Season | null | undefined, month: number): Season | null`, `describeSeason(season?: Season | null): string | null`
+  - `parseLines`, `formatLines`, `parseItinerary`, `formatItinerary`, `parseFaqs` (→ `{ faqs, dropped }`), `formatFaqs`, `splitParagraphs`
+  - `MONTH_LABELS`, `MONTH_INITIALS`, `type SeasonLevel = "peak" | "good" | "off"`, `SeasonCell`
+  - `buildSeasonCells(season?: Season | null): SeasonCell[] | null` (applies `normalizeSeason`)
+  - `cycleMonth(season: Season | null | undefined, month: number): Season | null`
+  - `describeSeason(season?: Season | null): string | null`
 
 - [ ] **Step 1: Failing tests.** Create `lib/package-landing.test.ts`:
 
@@ -489,8 +610,9 @@ describe("parseItinerary", () => {
 
 describe("parseFaqs", () => {
   it("reads blocks separated by blank lines", () => {
-    const result = parseFaqs("Is it private?\nYes, only your group.\n\nDo you pick up?\nYes, from Habarana.\nAnd Sigiriya.")
-    expect(result).toEqual({
+    expect(
+      parseFaqs("Is it private?\nYes, only your group.\n\nDo you pick up?\nYes, from Habarana.\nAnd Sigiriya.")
+    ).toEqual({
       faqs: [
         { question: "Is it private?", answer: "Yes, only your group." },
         { question: "Do you pick up?", answer: "Yes, from Habarana. And Sigiriya." },
@@ -500,14 +622,17 @@ describe("parseFaqs", () => {
   })
 
   it("drops and counts blocks with no answer", () => {
-    expect(parseFaqs("Lonely question?\n\nQ?\nA.")).toEqual({
-      faqs: [{ question: "Q?", answer: "A." }],
+    expect(parseFaqs("Lonely question?\n\nQ one?\nA one.")).toEqual({
+      faqs: [{ question: "Q one?", answer: "A one." }],
       dropped: 1,
     })
   })
 
   it("round-trips through formatFaqs", () => {
-    const faqs = [{ question: "Q one?", answer: "A one." }, { question: "Q two?", answer: "A two." }]
+    const faqs = [
+      { question: "Q one?", answer: "A one." },
+      { question: "Q two?", answer: "A two." },
+    ]
     expect(parseFaqs(formatFaqs(faqs)).faqs).toEqual(faqs)
   })
 })
@@ -517,31 +642,22 @@ it("splitParagraphs splits on blank lines and collapses inner whitespace", () =>
 })
 ```
 
-Create `lib/season.test.ts`:
+Append to `lib/season.test.ts`:
 
 ```ts
-import { describe, expect, it } from "vitest"
-
 import { buildSeasonCells, cycleMonth, describeSeason } from "./season"
 
 describe("buildSeasonCells", () => {
-  it("returns null when there is no season data", () => {
+  it("returns null without usable data", () => {
     expect(buildSeasonCells(undefined)).toBeNull()
-    expect(buildSeasonCells({ peak: [], good: [] })).toBeNull()
+    expect(buildSeasonCells({ peak: [0, 13], good: [] })).toBeNull()
   })
 
-  it("marks 12 months with peak winning over good", () => {
-    const cells = buildSeasonCells({ peak: [8, 9], good: [7, 10] })!
+  it("marks 12 months, peak winning over good", () => {
+    const cells = buildSeasonCells({ peak: [8, 9], good: [7, 10, 8] })!
     expect(cells).toHaveLength(12)
-    expect(cells.map((c) => c.level).join(",")).toBe(
-      "off,off,off,off,off,off,good,peak,peak,good,off,off"
-    )
+    expect(cells.map((c) => c.level).join(",")).toBe("off,off,off,off,off,off,good,peak,peak,good,off,off")
     expect(cells[0]).toMatchObject({ month: 1, label: "Jan", initial: "J" })
-  })
-
-  it("ignores invalid months from legacy data", () => {
-    const cells = buildSeasonCells({ peak: [0, 13, 8.5, 8], good: [] })!
-    expect(cells.filter((c) => c.level !== "off").map((c) => c.month)).toEqual([8])
   })
 })
 
@@ -560,10 +676,8 @@ describe("cycleMonth", () => {
 })
 
 describe("describeSeason", () => {
-  it("summarises runs of months for screen readers and captions", () => {
-    expect(describeSeason({ peak: [7, 8, 9], good: [6, 10, 12] })).toBe(
-      "Best: Jul–Sep. Good: Jun, Oct, Dec."
-    )
+  it("summarises runs of months", () => {
+    expect(describeSeason({ peak: [7, 8, 9], good: [6, 10, 12] })).toBe("Best: Jul–Sep. Good: Jun, Oct, Dec.")
   })
 
   it("returns null without data", () => {
@@ -573,7 +687,7 @@ describe("describeSeason", () => {
 ```
 
 Run: `pnpm test lib/package-landing.test.ts lib/season.test.ts`
-Expected: FAIL, modules not found.
+Expected: FAIL, missing exports.
 
 - [ ] **Step 2: Implement.** Create `lib/package-landing.ts`:
 
@@ -597,20 +711,15 @@ export function parseItinerary(text: string): ItineraryStep[] {
     const [first = "", second = "", ...rest] = line.split("|").map((part) => part.trim())
     if (!second) return { title: first }
     const detail = rest.join(" | ").trim()
-    return {
-      ...(first ? { time: first } : {}),
-      title: second,
-      ...(detail ? { detail } : {}),
-    }
+    return { ...(first ? { time: first } : {}), title: second, ...(detail ? { detail } : {}) }
   })
 }
 
 export function formatItinerary(steps?: readonly ItineraryStep[] | null): string {
   return (steps ?? [])
-    .map(({ time, title, detail }) => {
-      if (!time && !detail) return title
-      return [time ?? "", title, ...(detail ? [detail] : [])].join(" | ")
-    })
+    .map(({ time, title, detail }) =>
+      !time && !detail ? title : [time ?? "", title, ...(detail ? [detail] : [])].join(" | ")
+    )
     .join("\n")
 }
 
@@ -640,15 +749,10 @@ export function splitParagraphs(text: string): string[] {
 }
 ```
 
-Create `lib/season.ts`:
+Append to `lib/season.ts`:
 
 ```ts
-import type { Season } from "@/lib/package-serialize"
-
-export const MONTH_LABELS = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-] as const
+export const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const
 export const MONTH_INITIALS = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"] as const
 
 export type SeasonLevel = "peak" | "good" | "off"
@@ -660,39 +764,27 @@ export interface SeasonCell {
   level: SeasonLevel
 }
 
-const isMonth = (value: number) => Number.isInteger(value) && value >= 1 && value <= 12
-
-function normalise(season?: Season | null) {
-  const peak = new Set((season?.peak ?? []).filter(isMonth))
-  const good = new Set((season?.good ?? []).filter((m) => isMonth(m) && !peak.has(m)))
-  return { peak, good }
-}
-
 export function buildSeasonCells(season?: Season | null): SeasonCell[] | null {
-  const { peak, good } = normalise(season)
-  if (peak.size === 0 && good.size === 0) return null
+  const clean = normalizeSeason(season)
+  if (!clean) return null
   return MONTH_LABELS.map((label, index) => {
     const month = index + 1
-    return {
-      month,
-      label,
-      initial: MONTH_INITIALS[index],
-      level: peak.has(month) ? "peak" : good.has(month) ? "good" : "off",
-    }
+    const level: SeasonLevel = clean.peak.includes(month) ? "peak" : clean.good.includes(month) ? "good" : "off"
+    return { month, label, initial: MONTH_INITIALS[index], level }
   })
 }
 
 /** Admin picker: off → good → peak → off. Returns null when nothing is marked. */
 export function cycleMonth(season: Season | null | undefined, month: number): Season | null {
-  const { peak, good } = normalise(season)
+  const clean = normalizeSeason(season) ?? { peak: [], good: [] }
+  const peak = new Set(clean.peak)
+  const good = new Set(clean.good)
   if (peak.has(month)) peak.delete(month)
   else if (good.has(month)) {
     good.delete(month)
     peak.add(month)
   } else good.add(month)
-  if (peak.size === 0 && good.size === 0) return null
-  const sorted = (set: Set<number>) => [...set].sort((a, b) => a - b)
-  return { peak: sorted(peak), good: sorted(good) }
+  return normalizeSeason({ peak: [...peak], good: [...good] }) ?? null
 }
 
 function describeRuns(months: number[]): string {
@@ -709,18 +801,21 @@ function describeRuns(months: number[]): string {
 }
 
 export function describeSeason(season?: Season | null): string | null {
-  const { peak, good } = normalise(season)
+  const clean = normalizeSeason(season)
+  if (!clean) return null
   const parts: string[] = []
-  if (peak.size) parts.push(`Best: ${describeRuns([...peak].sort((a, b) => a - b))}.`)
-  if (good.size) parts.push(`Good: ${describeRuns([...good].sort((a, b) => a - b))}.`)
-  return parts.length ? parts.join(" ") : null
+  if (clean.peak.length) parts.push(`Best: ${describeRuns(clean.peak)}.`)
+  if (clean.good.length) parts.push(`Good: ${describeRuns(clean.good)}.`)
+  return parts.join(" ")
 }
 ```
 
 Run: `pnpm test lib/package-landing.test.ts lib/season.test.ts`
 Expected: PASS.
 
-- [ ] **Step 3: Admin components.** Create `components/admin/lines-textarea.tsx`. It keeps the raw text locally, so typing a newline never gets reformatted mid-edit. It pushes the parsed value up on every change, and `null` when empty.
+- [ ] **Step 3: Admin components.**
+
+Create `components/admin/lines-textarea.tsx`. It keeps the raw text in local state, so a typed newline is never reformatted mid-edit. It pushes the parsed value up on every change, and `null` when empty.
 
 ```tsx
 "use client"
@@ -738,29 +833,16 @@ interface LinesTextareaProps<T> {
   onChange: (value: T | null) => void
   placeholder?: string
   rows?: number
-  describedBy?: string
 }
 
-export function LinesTextarea<T>({
-  id,
-  value,
-  format,
-  parse,
-  isEmpty,
-  onChange,
-  placeholder,
-  rows = 4,
-  describedBy,
-}: LinesTextareaProps<T>) {
+export function LinesTextarea<T>({ id, value, format, parse, isEmpty, onChange, placeholder, rows = 4 }: LinesTextareaProps<T>) {
   const [text, setText] = useState(() => format(value))
-
   return (
     <Textarea
       id={id}
       rows={rows}
       value={text}
       placeholder={placeholder}
-      aria-describedby={describedBy}
       onChange={(event) => {
         setText(event.target.value)
         const parsed = parse(event.target.value)
@@ -776,8 +858,7 @@ Create `components/admin/season-picker.tsx`:
 ```tsx
 "use client"
 
-import { buildSeasonCells, cycleMonth, MONTH_LABELS } from "@/lib/season"
-import type { Season } from "@/lib/package-serialize"
+import { buildSeasonCells, cycleMonth, MONTH_INITIALS, MONTH_LABELS, type Season } from "@/lib/season"
 import { cn } from "@/lib/utils"
 
 const LEVEL_STYLE = {
@@ -786,16 +867,10 @@ const LEVEL_STYLE = {
   peak: "border-primary bg-primary text-primary-foreground",
 } as const
 
-export function SeasonPicker({
-  value,
-  onChange,
-}: {
-  value: Season | null | undefined
-  onChange: (value: Season | null) => void
-}) {
+export function SeasonPicker({ value, onChange }: { value: Season | null | undefined; onChange: (value: Season | null) => void }) {
   const cells =
     buildSeasonCells(value) ??
-    MONTH_LABELS.map((label, index) => ({ month: index + 1, label, initial: label[0], level: "off" as const }))
+    MONTH_LABELS.map((label, index) => ({ month: index + 1, label, initial: MONTH_INITIALS[index], level: "off" as const }))
 
   return (
     <div className="grid grid-cols-6 gap-2 sm:grid-cols-12" role="group" aria-label="Best months">
@@ -804,7 +879,7 @@ export function SeasonPicker({
           key={cell.month}
           type="button"
           onClick={() => onChange(cycleMonth(value, cell.month))}
-          aria-label={`${cell.label}: ${cell.level === "off" ? "not marked" : cell.level}`}
+          aria-label={`${cell.label}: ${cell.level === "off" ? "not marked" : cell.level === "peak" ? "best" : "good"}`}
           className={cn("rounded border px-1 py-2 text-xs font-medium", LEVEL_STYLE[cell.level])}
         >
           {cell.label}
@@ -815,7 +890,7 @@ export function SeasonPicker({
 }
 ```
 
-Create `components/admin/package-landing-fields.tsx`. First export the form type from `lib/types.ts`: `export type PackageInput = z.infer<typeof packageSchema>;`.
+Create `components/admin/package-landing-fields.tsx`:
 
 ```tsx
 "use client"
@@ -828,32 +903,26 @@ import { SeasonPicker } from "@/components/admin/season-picker"
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import {
-  formatFaqs,
-  formatItinerary,
-  formatLines,
-  parseFaqs,
-  parseItinerary,
-  parseLines,
-} from "@/lib/package-landing"
+import { formatFaqs, formatItinerary, formatLines, parseFaqs, parseItinerary, parseLines } from "@/lib/package-landing"
 import type { PackageInput } from "@/lib/types"
 
 type TextKey = "summary" | "seoTitle" | "seoDescription" | "groupSize"
-type ListKey = "highlights" | "notIncluded" | "timeSlots" | "pickupAreas" | "whatToBring"
+type ListKey = "highlights" | "notIncluded" | "timeSlots" | "pickupAreas" | "whatToBring" | "imageAlts"
 
 const TEXT_FIELDS: Array<{ name: TextKey; label: string; hint: string; multiline?: boolean; placeholder: string }> = [
-  { name: "summary", label: "Summary", hint: "Shown on cards and under the page title. Up to 220 characters.", multiline: true, placeholder: "See the elephant gathering at Minneriya tank in a private jeep with a local guide." },
-  { name: "groupSize", label: "Group size", hint: "Shown as a fact chip.", placeholder: "Up to 6 per jeep" },
+  { name: "summary", label: "Summary", hint: "Shown on cards and under the page title. Up to 220 characters.", multiline: true, placeholder: "See the elephant gathering at Minneriya tank with a local guide." },
+  { name: "groupSize", label: "Group size", hint: "Shown as a fact chip. Only write what you offer.", placeholder: "Up to 6 per jeep" },
   { name: "seoTitle", label: "Search title", hint: "Up to 70 characters. The brand is added automatically.", placeholder: "Minneriya National Park Jeep Safari from Habarana" },
-  { name: "seoDescription", label: "Search description", hint: "Up to 160 characters. Leave blank to use the summary.", multiline: true, placeholder: "Private Minneriya jeep safari with hotel pickup from Habarana, Sigiriya and Dambulla." },
+  { name: "seoDescription", label: "Search description", hint: "Up to 160 characters. Leave blank to use the summary.", multiline: true, placeholder: "Minneriya jeep safari from Habarana with a local guide." },
 ]
 
-const LIST_FIELDS: Array<{ name: ListKey; label: string; placeholder: string }> = [
-  { name: "highlights", label: "Highlights", placeholder: "Herds of wild elephants at the Minneriya tank" },
-  { name: "notIncluded", label: "Not included", placeholder: "Park entrance tickets" },
-  { name: "timeSlots", label: "Start times", placeholder: "6:00 am" },
-  { name: "pickupAreas", label: "Free pickup areas", placeholder: "Habarana" },
-  { name: "whatToBring", label: "What to bring", placeholder: "Hat and sunscreen" },
+const LIST_FIELDS: Array<{ name: ListKey; label: string; hint: string; placeholder: string }> = [
+  { name: "highlights", label: "Highlights", hint: "One per line.", placeholder: "Elephant herds at the Minneriya tank" },
+  { name: "notIncluded", label: "Not included", hint: "One per line.", placeholder: "Park entrance tickets" },
+  { name: "timeSlots", label: "Start times", hint: "One per line.", placeholder: "6:00 am" },
+  { name: "pickupAreas", label: "Hotel pickup areas", hint: "One per line. Shown as 'Hotel pickup from…'. Mention any charge in the price note.", placeholder: "Habarana" },
+  { name: "whatToBring", label: "What to bring", hint: "One per line.", placeholder: "Hat and sunscreen" },
+  { name: "imageAlts", label: "Photo descriptions", hint: "One per photo, in the same order as the images. Describe what the photo shows.", placeholder: "Elephants drinking at the Minneriya tank" },
 ]
 
 export function PackageLandingFields({ control }: { control: Control<PackageInput> }) {
@@ -900,7 +969,7 @@ export function PackageLandingFields({ control }: { control: Control<PackageInpu
                 onChange={field.onChange}
                 placeholder={config.placeholder}
               />
-              <FormDescription>One per line.</FormDescription>
+              <FormDescription>{config.hint}</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -977,25 +1046,25 @@ export function PackageLandingFields({ control }: { control: Control<PackageInpu
 }
 ```
 
-`useForm` in the admin page switches its generic to `PackageInput` (same type, now shared).
-
 - [ ] **Step 4: Wire the tab.** In `app/admin/(dashboard)/packages/page.tsx`:
-1. Add a `<TabsTrigger value="landing">Landing page</TabsTrigger>` after "Included".
-2. Render `<PackageLandingFields key={editingPackage?._id ?? "new"} control={form.control} />` when `activeTab === "landing"`. The `key` resets the textareas' local text when switching packages.
-3. Extend the local `Package` type, both `form.reset(...)` calls and `defaultValues` with the 12 landing keys (`editingPackage.x ?? null`, or `null` for new).
-4. Add them to the `JSON.stringify` body as `x: data.x ?? null`.
-5. Make the Included tab's "Next" button go to `landing`, and add Previous/Save on the landing tab, mirroring the existing tab buttons.
+1. Switch the form type to `PackageInput`.
+2. Add `<TabsTrigger value="landing">Landing page</TabsTrigger>` after "Included".
+3. Render `<PackageLandingFields key={editingPackage?._id ?? "new"} control={form.control} />` when `activeTab === "landing"`. The `key` resets the textareas' local text per package.
+4. Add the 13 landing keys to the `Package` type, both `form.reset(...)` calls and `defaultValues` (as `editingPackage.x ?? null`, or `null`), extending `emptyMerchandising` into `emptyOptionalFields`.
+5. Add them to the `JSON.stringify` body as `x: data.x ?? null`.
+6. The Included tab's "Next" goes to `landing`; the landing tab gets Previous/Save.
 
 - [ ] **Step 5: Verify and commit.**
 
 Run: `pnpm test && pnpm typecheck && pnpm lint`
-Expected: PASS / clean.
+Expected: PASS / clean, with the pre-existing `react-hooks/immutability` warning only.
 
-Manual check (`pnpm dev`, dev DB), in `/admin/packages`:
-- Edit a package and open "Landing page". Type two highlights on separate lines: the newline is kept while typing.
-- Add `2:30 pm | Pickup | Open jeep`, and an FAQ block with no answer: the warning appears.
-- Mark Aug as best (two clicks). Save, then reopen: all values persist.
-- Clear the highlights, save, reopen: the field is empty.
+Manual check (`pnpm dev`, dev DB, admin login):
+- The newline stays while typing.
+- `2:30 pm | Pickup | Open jeep` persists.
+- An FAQ with no answer shows the warning.
+- Clicking Aug twice makes it "best".
+- Clearing highlights makes the field empty after reopening.
 
 ```bash
 git add lib/package-landing.ts lib/package-landing.test.ts lib/season.ts lib/season.test.ts components/admin "app/admin/(dashboard)/packages/page.tsx"
@@ -1004,24 +1073,21 @@ git commit -m "feat: edit landing-page content for packages in the admin"
 
 ---
 
-### Task 3: Contact primitives, trust line, WhatsApp button variant
+### Task 3: Contact primitives, trust line, accessible WhatsApp colour
 
 **Files:**
-- Create: `lib/contact-links.ts`, `lib/contact-links.test.ts`
-- Create: `components/common/contact-actions.tsx`, `components/common/contact-actions.test.tsx`
-- Create: `components/common/trust-line.tsx`, `components/common/trust-line.test.tsx`
-- Create: `config/imagery.ts`
-- Modify: `app/globals.css` (tokens and heading scale), `components/ui/button.tsx` (`whatsapp` variant), `config/site.ts` (`reviews`, drop `links.whatsapp`)
+- Create: `lib/contact-links.ts`, `lib/contact-links.test.ts`, `components/common/contact-actions.tsx`, `components/common/contact-actions.test.tsx`, `components/common/trust-line.tsx`, `components/common/trust-line.test.tsx`, `config/imagery.ts`, `app/theme-contrast.test.ts`
+- Modify: `app/globals.css`, `components/ui/button.tsx`, `config/site.ts`
 - Modify every `siteConfig.links.whatsapp` user: `components/ui/whatsapp-button.tsx`, `components/layout/footer.tsx`, `components/home/hero-section.tsx`, `app/(main)/contact/page.tsx`, `app/(main)/thank-you/page.tsx`
 
 **Interfaces:**
 - Produces:
   - `buildWhatsAppUrl(options?: { packageName?: string }): string`, `TEL_HREF: string`
-  - `<ContactActions packageName? className? stacked? />`
-  - `<TrustLine tone?: "light" | "dark" className? />`
-  - `siteConfig.reviews: { rating: number; count: number; source: "Google"; url: string }`
-  - `imagery: { hero, guests[], jeeps, cooking }`, each `{ src: string; alt: string }`
-  - Tailwind colours `bg-whatsapp`, `text-whatsapp-foreground`, `bg-surface-sunken`
+  - `<ContactActions packageName? compact? stacked? className? />`
+    - `compact`: short labels "WhatsApp" / "Call", side by side at every width, full accessible names via `aria-label`.
+  - `<TrustLine tone?: "light" | "dark"; className? />`, which renders `data-trust`
+  - `siteConfig.reviews`, `imagery`
+  - Tailwind `bg-whatsapp`, `hover:bg-whatsapp-hover`, `text-whatsapp-foreground`, `bg-surface-sunken`
 
 - [ ] **Step 1: Failing tests.** Create `lib/contact-links.test.ts`:
 
@@ -1052,9 +1118,7 @@ describe("buildWhatsAppUrl", () => {
   })
 
   it("ignores a blank package name", () => {
-    expect(messageOf(buildWhatsAppUrl({ packageName: "  " }))).toContain(
-      "I'd like to ask about a safari."
-    )
+    expect(messageOf(buildWhatsAppUrl({ packageName: "  " }))).toContain("I'd like to ask about a safari.")
   })
 })
 
@@ -1085,6 +1149,13 @@ describe("ContactActions", () => {
     expect(html).toContain("+94 76 667 5883")
   })
 
+  it("compact mode keeps full accessible names with short labels", () => {
+    const compact = renderToStaticMarkup(<ContactActions compact />)
+    expect(compact).toContain('aria-label="Ask on WhatsApp"')
+    expect(compact).toContain('aria-label="Call +94 76 667 5883"')
+    expect(compact).not.toContain(">Ask on WhatsApp<")
+  })
+
   it("never nests a button inside a link", () => {
     expect(html).not.toMatch(/<a[^>]*>(?:(?!<\/a>).)*<button/s)
   })
@@ -1099,16 +1170,58 @@ import { expect, it } from "vitest"
 
 import { TrustLine } from "./trust-line"
 
-it("shows the Google rating and review count and links to the listing", () => {
+it("shows the Google rating and review count, links to the listing, and is findable by checks", () => {
   const html = renderToStaticMarkup(<TrustLine />)
   expect(html).toContain("5.0")
   expect(html).toContain("27 Google reviews")
   expect(html).toContain('href="https://maps.app.goo.gl/jtjd3mUANDnH3rRu5"')
+  expect(html).toContain("data-trust")
 })
 ```
 
-Run: `pnpm test lib/contact-links.test.ts components/common`
-Expected: FAIL, modules not found.
+Create `app/theme-contrast.test.ts`. It pins AA contrast for button text by reading the real tokens from `globals.css`.
+
+```ts
+import { readFileSync } from "node:fs"
+import { fileURLToPath } from "node:url"
+import { describe, expect, it } from "vitest"
+
+const css = readFileSync(fileURLToPath(new URL("./globals.css", import.meta.url)), "utf8")
+
+function token(block: ":root" | ".dark", name: string): [number, number, number] {
+  const body = css.match(new RegExp(`${block.replace(".", "\\.")}\\s*\\{([^}]*)\\}`))?.[1] ?? ""
+  const match = body.match(new RegExp(`--${name}:\\s*oklch\\(([\\d.]+)\\s+([\\d.]+)\\s+([\\d.]+)\\)`))
+  if (!match) throw new Error(`token --${name} not found in ${block}`)
+  return [Number(match[1]), Number(match[2]), Number(match[3])]
+}
+
+/** OKLCH → linear-light sRGB relative luminance (WCAG 2.x). */
+function luminance([L, C, h]: [number, number, number]): number {
+  const a = C * Math.cos((h * Math.PI) / 180)
+  const b = C * Math.sin((h * Math.PI) / 180)
+  const l = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3
+  const m = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3
+  const s = (L - 0.0894841775 * a - 1.291485548 * b) ** 3
+  const clamp = (v: number) => Math.min(1, Math.max(0, v))
+  const r = clamp(4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s)
+  const g = clamp(-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s)
+  const bl = clamp(-0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s)
+  return 0.2126 * r + 0.7152 * g + 0.0722 * bl
+}
+
+const ratio = (x: number, y: number) => (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05)
+
+describe("WhatsApp button text contrast (WCAG AA, 4.5:1)", () => {
+  it.each([":root", ".dark"] as const)("%s", (block) => {
+    const text = luminance(token(block, "whatsapp-foreground"))
+    expect(ratio(text, luminance(token(block, "whatsapp")))).toBeGreaterThanOrEqual(4.5)
+    expect(ratio(text, luminance(token(block, "whatsapp-hover")))).toBeGreaterThanOrEqual(4.5)
+  })
+})
+```
+
+Run: `pnpm test lib/contact-links.test.ts components/common app/theme-contrast.test.ts`
+Expected: FAIL, missing modules and tokens.
 
 - [ ] **Step 2: Implement.** Create `lib/contact-links.ts`:
 
@@ -1121,9 +1234,7 @@ export const TEL_HREF = `tel:${siteConfig.contact.phoneE164}`
 
 export function buildWhatsAppUrl({ packageName }: { packageName?: string } = {}): string {
   const name = packageName?.trim()
-  const subject = name
-    ? `I'd like to check availability for "${name}".`
-    : "I'd like to ask about a safari."
+  const subject = name ? `I'd like to check availability for "${name}".` : "I'd like to ask about a safari."
   const text = [`Hi ${siteConfig.name}! ${subject}`, "Date: ", "People: ", "Pickup hotel: "].join("\n")
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`
 }
@@ -1152,27 +1263,26 @@ export const imagery = {
     src: cloudinary("v1747225669/1_s6q0hr.jpg"),
     alt: "A herd of wild elephants grazing beside the Minneriya tank",
   },
-  jeeps: {
-    src: cloudinary("v1747225191/cover_yulgqs.jpg"),
-    alt: "Safari jeeps on a dirt track inside the national park",
-  },
-  cooking: {
-    src: cloudinary("v1747225593/IMG_0515_fagere.jpg"),
-    alt: "Guests learning to cook Sri Lankan dishes in clay pots over a wood fire",
-  },
   guests: [
     { src: cloudinary("v1747400857/IMG_8961_ntttrb.jpg"), alt: "Guests smiling in a safari jeep" },
     { src: cloudinary("v1747400887/IMG_0422_g3orcr.jpg"), alt: "A group of guests standing up in an open jeep" },
     { src: cloudinary("v1747400905/IMG_8953_rirwyz.jpg"), alt: "Guests photographing wildlife from the jeep" },
-    { src: cloudinary("v1747225191/cover_yulgqs.jpg"), alt: "Jeeps lined up for the evening safari" },
+    { src: cloudinary("v1747225191/cover_yulgqs.jpg"), alt: "Safari jeeps lined up on a park track" },
   ],
 } as const
 ```
 
 `app/globals.css`:
-- In `@theme inline` add `--color-whatsapp: var(--whatsapp); --color-whatsapp-foreground: var(--whatsapp-foreground); --color-surface-sunken: var(--surface-sunken);`.
-- In `:root` add `--whatsapp: oklch(0.72 0.17 150); --whatsapp-foreground: oklch(0.99 0 0); --surface-sunken: oklch(0.935 0.012 100);`.
-- In `.dark` add `--whatsapp: oklch(0.7 0.16 150); --whatsapp-foreground: oklch(0.13 0.02 150); --surface-sunken: oklch(0.19 0.03 125);`.
+- In `@theme inline` add `--color-whatsapp: var(--whatsapp); --color-whatsapp-hover: var(--whatsapp-hover); --color-whatsapp-foreground: var(--whatsapp-foreground); --color-surface-sunken: var(--surface-sunken);`.
+- In `:root` **and** `.dark` add:
+
+```css
+	--whatsapp: oklch(0.5 0.12 158);
+	--whatsapp-hover: oklch(0.44 0.1 160);
+	--whatsapp-foreground: oklch(0.99 0 0);
+```
+
+- Add `--surface-sunken: oklch(0.935 0.012 100);` in `:root` and `--surface-sunken: oklch(0.19 0.03 125);` in `.dark`.
 - Replace the `h1`/`h2`/`h3` base rules with:
 
 ```css
@@ -1187,11 +1297,11 @@ export const imagery = {
 	}
 ```
 
-`components/ui/button.tsx`: add to `variant`
+`components/ui/button.tsx`: add the variant
 
 ```ts
 				whatsapp:
-					"bg-whatsapp text-whatsapp-foreground shadow-xs hover:bg-whatsapp/90",
+					"bg-whatsapp text-whatsapp-foreground shadow-xs hover:bg-whatsapp-hover",
 ```
 
 Create `components/common/contact-actions.tsx`:
@@ -1206,23 +1316,40 @@ import { cn } from "@/lib/utils"
 
 interface ContactActionsProps {
   packageName?: string
+  /** Short labels, side by side at every width (first-viewport use). */
+  compact?: boolean
+  /** Full-width buttons stacked at every width (booking panel). */
   stacked?: boolean
   className?: string
 }
 
-export function ContactActions({ packageName, stacked = false, className }: ContactActionsProps) {
+export function ContactActions({ packageName, compact = false, stacked = false, className }: ContactActionsProps) {
+  const whatsappName = "Ask on WhatsApp"
+  const callName = `Call ${siteConfig.contact.phone}`
+
   return (
-    <div className={cn("flex flex-col gap-3", !stacked && "sm:flex-row", className)}>
-      <Button asChild size="lg" variant="whatsapp" className="w-full sm:w-auto">
-        <a href={buildWhatsAppUrl({ packageName })} target="_blank" rel="noopener noreferrer">
+    <div
+      className={cn(
+        "flex gap-3",
+        compact ? "flex-row" : stacked ? "flex-col" : "flex-col sm:flex-row",
+        className
+      )}
+    >
+      <Button asChild size="lg" variant="whatsapp" className={cn(compact ? "flex-1" : "w-full sm:w-auto", stacked && "sm:w-full")}>
+        <a
+          href={buildWhatsAppUrl({ packageName })}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={compact ? whatsappName : undefined}
+        >
           <WhatsappLogo weight="fill" className="size-5" aria-hidden="true" />
-          Ask on WhatsApp
+          {compact ? "WhatsApp" : whatsappName}
         </a>
       </Button>
-      <Button asChild size="lg" variant="outline" className="w-full sm:w-auto">
-        <a href={TEL_HREF}>
+      <Button asChild size="lg" variant="outline" className={cn(compact ? "flex-1" : "w-full sm:w-auto", stacked && "sm:w-full")}>
+        <a href={TEL_HREF} aria-label={compact ? callName : undefined}>
           <Phone className="size-5" aria-hidden="true" />
-          Call {siteConfig.contact.phone}
+          {compact ? "Call" : callName}
         </a>
       </Button>
     </div>
@@ -1245,8 +1372,9 @@ export function TrustLine({ tone = "dark", className }: { tone?: "light" | "dark
       href={url}
       target="_blank"
       rel="noopener noreferrer"
+      data-trust
       className={cn(
-        "inline-flex items-center gap-1.5 text-sm font-medium underline-offset-4 hover:underline",
+        "inline-flex w-fit items-center gap-1.5 text-sm font-medium underline-offset-4 hover:underline",
         tone === "light" ? "text-white" : "text-foreground",
         className
       )}
@@ -1258,7 +1386,7 @@ export function TrustLine({ tone = "dark", className }: { tone?: "light" | "dark
 }
 ```
 
-Replace each `siteConfig.links.whatsapp` with `buildWhatsAppUrl()`. `pnpm typecheck` lists every remaining use. The contact page's plain phone number becomes `<a href={TEL_HREF}>`.
+Replace each `siteConfig.links.whatsapp` with `buildWhatsAppUrl()`; `pnpm typecheck` lists every remaining use. On the contact page, the plain phone number becomes `<a href={TEL_HREF}>`.
 
 Run: `pnpm test && pnpm typecheck`
 Expected: PASS / clean.
@@ -1266,8 +1394,8 @@ Expected: PASS / clean.
 - [ ] **Step 3: Commit.**
 
 ```bash
-git add lib/contact-links.ts lib/contact-links.test.ts components/common/contact-actions.tsx components/common/contact-actions.test.tsx components/common/trust-line.tsx components/common/trust-line.test.tsx config/imagery.ts config/site.ts app/globals.css components/ui/button.tsx components/ui/whatsapp-button.tsx components/layout/footer.tsx components/home/hero-section.tsx "app/(main)/contact/page.tsx" "app/(main)/thank-you/page.tsx"
-git commit -m "feat: add WhatsApp and call primitives, trust line, and brand tokens"
+git add lib/contact-links.ts lib/contact-links.test.ts components/common/contact-actions.tsx components/common/contact-actions.test.tsx components/common/trust-line.tsx components/common/trust-line.test.tsx config/imagery.ts config/site.ts app/globals.css app/theme-contrast.test.ts components/ui/button.tsx components/ui/whatsapp-button.tsx components/layout/footer.tsx components/home/hero-section.tsx "app/(main)/contact/page.tsx" "app/(main)/thank-you/page.tsx"
+git commit -m "feat: add WhatsApp and call primitives, trust line, and accessible brand tokens"
 ```
 
 ---
@@ -1276,10 +1404,10 @@ git commit -m "feat: add WhatsApp and call primitives, trust line, and brand tok
 
 **Files:**
 - Create: `lib/pricing.ts`, `lib/pricing.test.ts`
-- Modify: `app/(main)/packages/[id]/page.tsx` (`offers` in Service JSON-LD)
+- Modify: `app/(main)/packages/[id]/page.tsx` (`offers`)
 
 **Interfaces:**
-- Produces: `interface PriceFields { priceFrom?: number; priceCurrency?: PriceCurrency; priceUnit?: PriceUnit }`, `formatPrice(price: PriceFields): string | null`, `PRICE_ON_REQUEST = "Price on request"`, `buildOffer(price: PriceFields, url: string): Record<string, unknown> | undefined`.
+- Produces: `PriceFields`, `formatPrice(price: PriceFields): string | null`, `PRICE_ON_REQUEST = "Price on request"`, `buildOffer(price: PriceFields, url: string): Record<string, unknown> | undefined`.
 
 - [ ] **Step 1: Failing test.** Create `lib/pricing.test.ts`:
 
@@ -1290,9 +1418,7 @@ import { buildOffer, formatPrice } from "./pricing"
 
 describe("formatPrice", () => {
   it("formats USD per jeep", () => {
-    expect(formatPrice({ priceFrom: 45, priceCurrency: "USD", priceUnit: "per jeep" })).toBe(
-      "From US$45 per jeep"
-    )
+    expect(formatPrice({ priceFrom: 45, priceCurrency: "USD", priceUnit: "per jeep" })).toBe("From US$45 per jeep")
   })
 
   it("groups LKR thousands", () => {
@@ -1317,16 +1443,20 @@ describe("formatPrice", () => {
 
 describe("buildOffer", () => {
   const url = "https://www.ceylonsafari.com/packages/hurulu-eco-park-safari"
+  const price = { priceFrom: 45, priceCurrency: "USD" as const, priceUnit: "per jeep" as const }
 
-  it("builds a schema.org Offer", () => {
-    expect(buildOffer({ priceFrom: 45, priceCurrency: "USD", priceUnit: "per jeep" }, url)).toEqual({
+  it("builds a schema.org Offer from price data", () => {
+    expect(buildOffer(price, url)).toEqual({
       "@type": "Offer",
       price: 45,
       priceCurrency: "USD",
       url,
-      availability: "https://schema.org/InStock",
       description: "From US$45 per jeep",
     })
+  })
+
+  it("never asserts availability, because price does not establish it", () => {
+    expect(buildOffer(price, url)).not.toHaveProperty("availability")
   })
 
   it("is omitted without a complete price", () => {
@@ -1362,17 +1492,11 @@ export function formatPrice({ priceFrom, priceCurrency, priceUnit }: PriceFields
   return `From ${CURRENCY_PREFIX[priceCurrency]}${amount} ${priceUnit}`
 }
 
+/** Offer from price data only. No availability: nothing in the data establishes it. */
 export function buildOffer(price: PriceFields, url: string): Record<string, unknown> | undefined {
   const label = formatPrice(price)
   if (!label) return undefined
-  return {
-    "@type": "Offer",
-    price: price.priceFrom,
-    priceCurrency: price.priceCurrency,
-    url,
-    availability: "https://schema.org/InStock",
-    description: label,
-  }
+  return { "@type": "Offer", price: price.priceFrom, priceCurrency: price.priceCurrency, url, description: label }
 }
 ```
 
@@ -1397,7 +1521,7 @@ git commit -m "feat: format from-prices and publish them as schema.org offers"
 
 **Interfaces:**
 - Consumes: `buildSeasonCells`, `describeSeason` (Task 2).
-- Produces: `<SeasonStrip season?: Season; size?: "sm" | "md"; className? />`. It renders `null` without data.
+- Produces: `<SeasonStrip season?; size?: "sm" | "md"; className? />`, which renders `null` without usable data.
 
 - [ ] **Step 1: Failing test.** Create `components/packages/season-strip.test.tsx`:
 
@@ -1408,9 +1532,9 @@ import { describe, expect, it } from "vitest"
 import { SeasonStrip } from "./season-strip"
 
 describe("SeasonStrip", () => {
-  it("renders nothing without season data", () => {
+  it("renders nothing without usable season data", () => {
     expect(renderToStaticMarkup(<SeasonStrip />)).toBe("")
-    expect(renderToStaticMarkup(<SeasonStrip season={{ peak: [], good: [] }} />)).toBe("")
+    expect(renderToStaticMarkup(<SeasonStrip season={{ peak: [0, 13], good: [] }} />)).toBe("")
   })
 
   it("renders 12 months with an accessible summary", () => {
@@ -1420,9 +1544,10 @@ describe("SeasonStrip", () => {
     expect(html).toContain('aria-label="Best: Aug–Sep. Good: Jul."')
   })
 
-  it("ignores invalid months", () => {
-    const html = renderToStaticMarkup(<SeasonStrip season={{ peak: [13, 8], good: [] }} />)
-    expect(html.match(/data-level="peak"/g)).toHaveLength(1)
+  it("labels unmarked months without a judgement", () => {
+    const html = renderToStaticMarkup(<SeasonStrip season={{ peak: [8], good: [] }} />)
+    expect(html).toContain('title="Jan"')
+    expect(html).not.toMatch(/quiet|low season|avoid/i)
   })
 })
 ```
@@ -1433,8 +1558,7 @@ Expected: FAIL, module not found.
 - [ ] **Step 2: Implement.** Create `components/packages/season-strip.tsx`:
 
 ```tsx
-import type { Season } from "@/lib/package-serialize"
-import { buildSeasonCells, describeSeason } from "@/lib/season"
+import { buildSeasonCells, describeSeason, type Season } from "@/lib/season"
 import { cn } from "@/lib/utils"
 
 const LEVEL = {
@@ -1443,15 +1567,9 @@ const LEVEL = {
   off: "bg-surface-sunken text-muted-foreground",
 } as const
 
-export function SeasonStrip({
-  season,
-  size = "md",
-  className,
-}: {
-  season?: Season
-  size?: "sm" | "md"
-  className?: string
-}) {
+const TITLE = { peak: (m: string) => `${m}: best`, good: (m: string) => `${m}: good`, off: (m: string) => m }
+
+export function SeasonStrip({ season, size = "md", className }: { season?: Season; size?: "sm" | "md"; className?: string }) {
   const cells = buildSeasonCells(season)
   const summary = describeSeason(season)
   if (!cells || !summary) return null
@@ -1463,7 +1581,7 @@ export function SeasonStrip({
           <span
             key={cell.month}
             data-level={cell.level}
-            title={`${cell.label}: ${cell.level === "off" ? "quieter" : cell.level === "peak" ? "best" : "good"}`}
+            title={TITLE[cell.level](cell.label)}
             className={cn(
               "flex items-center justify-center font-medium tabular-nums",
               size === "sm" ? "h-5 text-[10px]" : "h-8 text-xs",
@@ -1492,16 +1610,18 @@ git commit -m "feat: add a season strip showing the best months to visit"
 
 ---
 
-### Task 6: Chrome: mobile contact bar, navbar, layout
+### Task 6: Chrome: sticky contact bar, navbar, layout, browser-check tool
 
 **Files:**
-- Create: `components/common/mobile-contact-bar.tsx`, `components/common/mobile-contact-bar.test.tsx`
+- Create: `components/common/mobile-contact-bar.tsx`, `components/common/mobile-contact-bar.test.tsx`, `scripts/verify-layout.mjs`
 - Modify: `components/layout/navbar.tsx`, `app/(main)/layout.tsx`
 - Delete: `components/ui/whatsapp-button.tsx`
 
 **Interfaces:**
 - Consumes: `buildWhatsAppUrl`, `TEL_HREF`, `formatPrice`, `PRICE_ON_REQUEST`.
-- Produces: `<MobileContactBar packageName? price?: PriceFields />`, which renders its own spacer.
+- Produces:
+  - `<MobileContactBar packageName? price?: PriceFields />`. It **must be the last child** of the page's outermost content element (`<main>`), since sticky positioning is scoped to that container.
+  - `node scripts/verify-layout.mjs <baseUrl> <path[:facts]>...`, exiting non-zero on failure.
 
 - [ ] **Step 1: Failing test.** Create `components/common/mobile-contact-bar.test.tsx`:
 
@@ -1512,32 +1632,31 @@ import { describe, expect, it } from "vitest"
 import { MobileContactBar } from "./mobile-contact-bar"
 
 describe("MobileContactBar", () => {
-  it("renders a spacer so the fixed bar never covers the footer", () => {
-    const html = renderToStaticMarkup(<MobileContactBar />)
-    expect(html).toMatch(/aria-hidden="true"[^>]*class="[^"]*h-20[^"]*md:hidden/)
+  const html = renderToStaticMarkup(<MobileContactBar />)
+
+  it("is sticky in normal flow (never fixed), so it settles above the footer", () => {
+    expect(html).toContain("sticky")
+    expect(html).toContain("bottom-0")
+    expect(html).not.toMatch(/\bfixed\b/)
   })
 
-  it("is hidden from md up and padded for the phone's safe area", () => {
-    const html = renderToStaticMarkup(<MobileContactBar />)
-    expect(html).toContain("md:hidden")
+  it("shows below the navbar breakpoint only and pads for the safe area", () => {
+    expect(html).toContain("lg:hidden")
     expect(html).toContain("env(safe-area-inset-bottom")
+    expect(html).toContain("data-contact-bar")
   })
 
   it("shows the price and prefills the package when given", () => {
-    const html = renderToStaticMarkup(
-      <MobileContactBar
-        packageName="Minneriya Safari"
-        price={{ priceFrom: 45, priceCurrency: "USD", priceUnit: "per jeep" }}
-      />
+    const withPrice = renderToStaticMarkup(
+      <MobileContactBar packageName="Minneriya Safari" price={{ priceFrom: 45, priceCurrency: "USD", priceUnit: "per jeep" }} />
     )
-    expect(html).toContain("From US$45 per jeep")
-    expect(html).toContain(encodeURIComponent("Minneriya Safari"))
+    expect(withPrice).toContain("From US$45 per jeep")
+    expect(withPrice).toContain("data-price")
+    expect(withPrice).toContain(encodeURIComponent("Minneriya Safari"))
   })
 
   it("says price on request for a package without a price", () => {
-    expect(renderToStaticMarkup(<MobileContactBar packageName="Village Tour" price={{}} />)).toContain(
-      "Price on request"
-    )
+    expect(renderToStaticMarkup(<MobileContactBar packageName="Village Tour" price={{}} />)).toContain("Price on request")
   })
 })
 ```
@@ -1555,39 +1674,40 @@ import { buildWhatsAppUrl, TEL_HREF } from "@/lib/contact-links"
 import { formatPrice, PRICE_ON_REQUEST, type PriceFields } from "@/lib/pricing"
 import { cn } from "@/lib/utils"
 
+/**
+ * Sticky, not fixed: as the last child of <main> it rides the viewport bottom
+ * while scrolling and settles into its own space above the footer at the end,
+ * so it can never cover the footer or the last content, whatever its height.
+ */
 export function MobileContactBar({ packageName, price }: { packageName?: string; price?: PriceFields }) {
   const priceLabel = price ? (formatPrice(price) ?? PRICE_ON_REQUEST) : null
 
   return (
-    <>
-      <div aria-hidden="true" className="h-20 md:hidden" />
-      <div
-        className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 px-4 pt-3 backdrop-blur md:hidden"
-        style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))" }}
-      >
-        <div className="flex items-center gap-3">
-          {priceLabel && (
-            <p className="min-w-0 flex-1 text-sm leading-tight font-semibold">{priceLabel}</p>
-          )}
-          <a
-            href={buildWhatsAppUrl({ packageName })}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={cn(buttonVariants({ variant: "whatsapp", size: "lg" }), priceLabel ? "px-5" : "flex-1")}
-          >
-            <WhatsappLogo weight="fill" className="size-5" aria-hidden="true" />
-            WhatsApp
-          </a>
-          <a
-            href={TEL_HREF}
-            aria-label="Call us"
-            className={cn(buttonVariants({ variant: "outline", size: "lg" }), "px-4")}
-          >
-            <Phone className="size-5" aria-hidden="true" />
-          </a>
-        </div>
+    <div
+      data-contact-bar
+      className="sticky bottom-0 z-40 border-t bg-background/95 px-4 pt-3 backdrop-blur lg:hidden"
+      style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))" }}
+    >
+      <div className="flex items-center gap-3">
+        {priceLabel && (
+          <p data-price className="min-w-0 flex-1 text-sm leading-tight font-semibold">
+            {priceLabel}
+          </p>
+        )}
+        <a
+          href={buildWhatsAppUrl({ packageName })}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={cn(buttonVariants({ variant: "whatsapp", size: "lg" }), priceLabel ? "px-5" : "flex-1")}
+        >
+          <WhatsappLogo weight="fill" className="size-5" aria-hidden="true" />
+          WhatsApp
+        </a>
+        <a href={TEL_HREF} aria-label="Call us" className={cn(buttonVariants({ variant: "outline", size: "lg" }), "px-4")}>
+          <Phone className="size-5" aria-hidden="true" />
+        </a>
       </div>
-    </>
+    </div>
   )
 }
 ```
@@ -1598,21 +1718,203 @@ Expected: PASS.
 - [ ] **Step 3: Navbar and layout.**
 
 `components/layout/navbar.tsx`:
-- Desktop: replace the "Send Inquiry" `Button asChild` + `Link` with `<Button asChild variant="whatsapp" className="ml-4"><a href={buildWhatsAppUrl()} target="_blank" rel="noopener noreferrer"><WhatsappLogo weight="fill" /> WhatsApp us</a></Button>`.
-- Mobile: wrap the menu button in `<div className="flex items-center gap-4 lg:hidden">`. Put a call link before it (`<a href={TEL_HREF} aria-label={`Call ${siteConfig.name}`} className="text-2xl"><Phone className="text-current" /></a>`) and drop `lg:hidden` from the button itself.
-- In the mobile menu, replace the single "Send Inquiry" button with two stacked buttons: WhatsApp (`variant="whatsapp"`) and `<Button asChild variant="outline"><Link href="/book-now">Send an inquiry form</Link></Button>`.
-- Import `WhatsappLogo` and `Phone` from `@phosphor-icons/react`.
+- Desktop (`hidden lg:flex`): replace the "Send Inquiry" `Button` with `<Button asChild variant="whatsapp" className="ml-4"><a href={buildWhatsAppUrl()} target="_blank" rel="noopener noreferrer"><WhatsappLogo weight="fill" /> WhatsApp us</a></Button>`.
+- Mobile: wrap the menu button in `<div className="flex items-center gap-4 lg:hidden">`, put `<a href={TEL_HREF} aria-label={`Call ${siteConfig.name}`} className="text-2xl"><Phone className="text-current" /></a>` before it, and drop `lg:hidden` from the button itself.
+- In the mobile menu, replace "Send Inquiry" with two stacked buttons: WhatsApp (`variant="whatsapp"`) and `<Button asChild variant="outline"><Link href="/book-now">Send an inquiry form</Link></Button>`.
 
-`app/(main)/layout.tsx`: remove `WhatsAppButton` and its import, and change the outer `<main className="flex-grow">` to `<div className="flex-grow">`, since pages render their own `<main>`. Delete `components/ui/whatsapp-button.tsx`.
+`app/(main)/layout.tsx`: remove `WhatsAppButton`, and change the outer `<main className="flex-grow">` to `<div className="flex-grow">`. Delete `components/ui/whatsapp-button.tsx`.
 
-- [ ] **Step 4: Verify and commit.**
+- [ ] **Step 4: Browser-check tool.** Create `scripts/verify-layout.mjs`. It uses no dependencies: Chrome DevTools Protocol via Node's global `WebSocket` and `fetch`.
+
+```js
+#!/usr/bin/env node
+// Real-browser layout checks for conversion surfaces.
+//   node scripts/verify-layout.mjs http://localhost:3000 "/:facts" "/packages/x:facts" /contact
+// ":facts" also asserts duration + price in the first mobile viewport.
+// Exits 1 on any failure. CHROME_PATH overrides the Chrome binary.
+import { spawn } from "node:child_process"
+import { mkdtempSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
+
+const CHROME = process.env.CHROME_PATH ?? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+const [base, ...targets] = process.argv.slice(2)
+if (!base || targets.length === 0) {
+  console.error("usage: verify-layout.mjs <baseUrl> <path[:facts]>...")
+  process.exit(2)
+}
+
+const VIEWPORTS = [
+  { name: "phone", width: 390, height: 844, mobile: true },
+  { name: "tablet", width: 800, height: 1100, mobile: true },
+  { name: "laptop", width: 1024, height: 768, mobile: false }, // navbar breakpoint edge
+  { name: "desktop", width: 1280, height: 800, mobile: false },
+]
+
+const port = 9300 + Math.floor(Math.random() * 500)
+const chrome = spawn(
+  CHROME,
+  ["--headless=new", `--remote-debugging-port=${port}`, "--no-first-run", "--disable-gpu", `--user-data-dir=${mkdtempSync(join(tmpdir(), "vl-"))}`, "about:blank"],
+  { stdio: "ignore" }
+)
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
+async function pageSocketUrl() {
+  for (let attempt = 0; attempt < 50; attempt++) {
+    try {
+      const list = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json()
+      const page = list.find((target) => target.type === "page")
+      if (page) return page.webSocketDebuggerUrl
+    } catch {}
+    await sleep(200)
+  }
+  throw new Error("Chrome did not start")
+}
+
+const ws = new WebSocket(await pageSocketUrl())
+await new Promise((resolve) => ws.addEventListener("open", resolve, { once: true }))
+let nextId = 0
+const pending = new Map()
+const listeners = new Set()
+ws.addEventListener("message", (event) => {
+  const message = JSON.parse(event.data)
+  if (message.id && pending.has(message.id)) {
+    const { resolve, reject } = pending.get(message.id)
+    pending.delete(message.id)
+    message.error ? reject(new Error(message.error.message)) : resolve(message.result)
+  } else for (const listener of listeners) listener(message)
+})
+const send = (method, params = {}) =>
+  new Promise((resolve, reject) => {
+    const id = ++nextId
+    pending.set(id, { resolve, reject })
+    ws.send(JSON.stringify({ id, method, params }))
+  })
+const evaluate = async (expression) =>
+  (await send("Runtime.evaluate", { expression, returnByValue: true, awaitPromise: true })).result.value
+
+await send("Page.enable")
+await send("Network.enable")
+
+async function load(url, viewport) {
+  await send("Emulation.setDeviceMetricsOverride", { width: viewport.width, height: viewport.height, deviceScaleFactor: 2, mobile: viewport.mobile })
+  const images = []
+  const onRequest = (m) => m.method === "Network.requestWillBeSent" && m.params.type === "Image" && images.push(m.params.request.url)
+  listeners.add(onRequest)
+  const loaded = new Promise((resolve) => {
+    const onLoad = (m) => m.method === "Page.loadEventFired" && (listeners.delete(onLoad), resolve())
+    listeners.add(onLoad)
+  })
+  await send("Page.navigate", { url })
+  await loaded
+  await sleep(1500)
+  listeners.delete(onRequest)
+  return images
+}
+
+// Visible = on screen AND not covered (hit-test at the element's centre).
+const IN_PAGE = String.raw`
+  const shown = (el) => {
+    if (!el) return false
+    const r = el.getBoundingClientRect()
+    if (!r.width || !r.height || r.bottom <= 0 || r.top >= innerHeight) return false
+    const hit = document.elementFromPoint(Math.min(innerWidth - 1, r.left + r.width / 2), Math.min(innerHeight - 1, r.top + r.height / 2))
+    return hit === el || el.contains(hit) || hit?.contains(el)
+  }
+  const anyShown = (selector) => [...document.querySelectorAll(selector)].some(shown)
+`
+
+const firstViewport = () =>
+  evaluate(`(() => { ${IN_PAGE} scrollTo(0, 0); return {
+    h1: anyShown("h1"),
+    trust: anyShown("[data-trust]"),
+    whatsapp: anyShown('a[href^="https://wa.me/"]'),
+    duration: anyShown("[data-fact=duration]"),
+    price: anyShown("[data-price]"),
+    overflowX: document.documentElement.scrollWidth - innerWidth,
+  } })()`)
+
+const endOfPage = () =>
+  evaluate(`(async () => { ${IN_PAGE}
+    scrollTo(0, document.documentElement.scrollHeight); await new Promise((r) => setTimeout(r, 300))
+    const links = document.querySelectorAll("footer a")
+    const bar = document.querySelector("[data-contact-bar]")
+    const footer = document.querySelector("footer")
+    const before = bar?.previousElementSibling
+    return {
+      lastFooterLinkShown: shown(links[links.length - 1]),
+      barAboveFooter: !bar || !footer || getComputedStyle(bar).display === "none" || bar.getBoundingClientRect().bottom <= footer.getBoundingClientRect().top + 1,
+      contentAboveBar: !bar || !before || getComputedStyle(bar).display === "none" || before.getBoundingClientRect().bottom <= bar.getBoundingClientRect().top + 1,
+      overflowX: document.documentElement.scrollWidth - innerWidth,
+    } })()`)
+
+const selectedPackage = () => evaluate(`document.querySelector("[data-slot=select-trigger]")?.textContent?.trim() ?? null`)
+
+const failures = []
+const check = (label, ok, detail) => {
+  console.log(`${ok ? "PASS" : "FAIL"}  ${label}${detail !== undefined ? `  ${JSON.stringify(detail)}` : ""}`)
+  if (!ok) failures.push(label)
+}
+
+for (const target of targets) {
+  const [path, flags = ""] = target.split(/:(?=facts$)/)
+  const wantFacts = flags === "facts"
+  for (const viewport of VIEWPORTS) {
+    const images = await load(new URL(path, base).toString(), viewport)
+    const tag = `${path} @${viewport.name}`
+    const first = await firstViewport()
+    check(`${tag} no horizontal overflow`, first.overflowX <= 0, first.overflowX)
+    check(`${tag} WhatsApp reachable`, first.whatsapp)
+    if (viewport.name === "phone") {
+      check(`${tag} H1 in first viewport`, first.h1)
+      if (wantFacts) {
+        check(`${tag} trust in first viewport`, first.trust)
+        check(`${tag} duration in first viewport`, first.duration)
+        check(`${tag} price in first viewport`, first.price)
+      }
+      const lead = await evaluate(`document.querySelector("[data-lead-image] img, img[data-lead-image]")?.currentSrc ?? null`)
+      if (lead) {
+        const leadKey = decodeURIComponent(new URL(lead).searchParams.get("url") ?? lead)
+        const hits = images.filter((u) => decodeURIComponent(u).includes(leadKey)).length
+        check(`${tag} lead image requested once`, hits === 1, { hits, totalImageRequests: images.length })
+      }
+      if (path.startsWith("/book-now?packageId=")) {
+        const selected = await selectedPackage()
+        check(`${tag} package preselected`, !!selected && selected !== "Select a package", selected)
+      }
+    }
+    for (const zoom of ["100%", "125%"]) {
+      await evaluate(`document.documentElement.style.fontSize = "${zoom}"`)
+      const end = await endOfPage()
+      check(`${tag} text ${zoom}: footer's last link not covered`, end.lastFooterLinkShown)
+      check(`${tag} text ${zoom}: bar sits above footer`, end.barAboveFooter)
+      check(`${tag} text ${zoom}: content above bar`, end.contentAboveBar)
+      check(`${tag} text ${zoom}: no horizontal overflow`, end.overflowX <= 0, end.overflowX)
+    }
+    await evaluate(`document.documentElement.style.fontSize = ""`)
+  }
+}
+
+ws.close()
+chrome.kill()
+console.log(failures.length ? `\n${failures.length} check(s) failed` : "\nall checks passed")
+process.exit(failures.length ? 1 : 0)
+```
+
+- [ ] **Step 5: Verify and commit.**
 
 Run: `pnpm test && pnpm typecheck && pnpm lint && grep -rn "whatsapp-button" app components`
 Expected: PASS / clean / no grep output.
 
+With `pnpm dev` running: `node scripts/verify-layout.mjs http://localhost:3000 /privacy`
+Expected: the script launches Chrome, prints PASS/FAIL lines for every viewport and zoom, and exits.
+- This is a tool smoke test. Overflow and footer checks should PASS.
+- "WhatsApp reachable" at phone and tablet may FAIL, because `/privacy` has no contact bar. That's accepted: it proves the check can fail.
+- The bar is exercised for real in Tasks 8–10 and 12.
+
 ```bash
-git add components/common/mobile-contact-bar.tsx components/common/mobile-contact-bar.test.tsx components/layout/navbar.tsx "app/(main)/layout.tsx" components/ui/whatsapp-button.tsx
-git commit -m "feat: sticky mobile contact bar and WhatsApp-first navigation"
+git add components/common/mobile-contact-bar.tsx components/common/mobile-contact-bar.test.tsx components/layout/navbar.tsx "app/(main)/layout.tsx" components/ui/whatsapp-button.tsx scripts/verify-layout.mjs
+git commit -m "feat: sticky mobile contact bar, WhatsApp-first navigation, and layout checks"
 ```
 
 ---
@@ -1620,22 +1922,20 @@ git commit -m "feat: sticky mobile contact bar and WhatsApp-first navigation"
 ### Task 7: Package card and grouped listing
 
 **Files:**
-- Modify: `lib/package-catalog.ts` (+`groupPackagesByCategory`, `CATEGORY_SECTIONS`), `lib/package-catalog.test.ts`
+- Modify: `lib/package-catalog.ts` (+`CATEGORY_SECTIONS`, `groupPackagesByCategory`), `lib/package-catalog.test.ts`
 - Rewrite: `components/ui/package-card.tsx`; Create: `components/ui/package-card.test.tsx`
 - Rewrite: `app/(main)/packages/page.tsx`
+- Modify: `components/home/packages-section.tsx` (compile fix; deleted in Task 9)
 
 **Interfaces:**
-- Consumes: `PublicPackage`, `sortPackages`, `formatPrice`, `SeasonStrip`, `buildWhatsAppUrl`.
-- Produces:
-  - `CATEGORY_SECTIONS: ReadonlyArray<{ key: PackageCategory | "other"; title: string; intro: string }>`
-  - `groupPackagesByCategory<T extends OrderablePackage>(items: readonly T[]): Array<{ key: PackageCategory | "other"; title: string; intro: string; items: T[] }>`
-  - `<PackageCard pkg: PublicPackage; priority?: boolean />`
+- Produces: `CATEGORY_SECTIONS`, `groupPackagesByCategory<T extends OrderablePackage>(items): Array<{ key; title; intro; items: T[] }>`, `<PackageCard pkg: PublicPackage; priority?: boolean />`.
 
 - [ ] **Step 1: Failing tests.** Append to `lib/package-catalog.test.ts`:
 
 ```ts
-import { groupPackagesByCategory } from "./package-catalog"
+import { CATEGORY_SECTIONS, groupPackagesByCategory } from "./package-catalog"
 
+// Reuses the file's existing `item(_id, extra: Partial<OrderablePackage>)` helper from lead-recovery Task 4.
 describe("groupPackagesByCategory", () => {
   it("orders groups safari → experience → tour → stay → other and skips empty ones", () => {
     const groups = groupPackagesByCategory([
@@ -1646,6 +1946,12 @@ describe("groupPackagesByCategory", () => {
     ])
     expect(groups.map((g) => g.key)).toEqual(["safari", "stay", "other"])
     expect(groups[0].items.map((p) => p._id)).toEqual(["minneriya", "hurulu"])
+  })
+
+  it("keeps category intros neutral (no service claims)", () => {
+    for (const section of CATEGORY_SECTIONS) {
+      expect(section.intro).not.toMatch(/private|free|pickup|guide|meal|bullock|cart|driver/i)
+    }
   })
 })
 ```
@@ -1675,29 +1981,31 @@ describe("PackageCard", () => {
   it("shows summary, duration and price on request without repeating included or description", () => {
     const html = renderToStaticMarkup(<PackageCard pkg={pkg} />)
     expect(html).toContain("Elephants at the tank.")
-    expect(html).toContain("3 hours")
+    expect(html).toContain('data-fact="duration"')
     expect(html).toContain("Price on request")
     expect(html).not.toContain("Long description")
     expect(html).not.toContain("Water")
   })
 
   it("shows the from-price when set", () => {
-    const html = renderToStaticMarkup(
-      <PackageCard pkg={{ ...pkg, priceFrom: 45, priceCurrency: "USD", priceUnit: "per jeep" }} />
-    )
+    const html = renderToStaticMarkup(<PackageCard pkg={{ ...pkg, priceFrom: 45, priceCurrency: "USD", priceUnit: "per jeep" }} />)
     expect(html).toContain("From US$45 per jeep")
   })
 
-  it("keeps the WhatsApp link outside the card link", () => {
+  it("keeps the WhatsApp link outside the card link and nests no controls", () => {
     const html = renderToStaticMarkup(<PackageCard pkg={pkg} />)
     expect(html).not.toMatch(/<a[^>]*>(?:(?!<\/a>).)*<a /s)
     expect(html).not.toMatch(/<a[^>]*>(?:(?!<\/a>).)*<button/s)
     expect(html).toContain("wa.me")
   })
 
+  it("uses the admin photo description as alt text", () => {
+    const html = renderToStaticMarkup(<PackageCard pkg={{ ...pkg, imageAlts: ["Elephants drinking at the tank"] }} />)
+    expect(html).toContain('alt="Elephants drinking at the tank"')
+  })
+
   it("falls back to a truncated description without a summary", () => {
-    const html = renderToStaticMarkup(<PackageCard pkg={{ ...pkg, summary: undefined }} />)
-    expect(html).toContain("Long description")
+    expect(renderToStaticMarkup(<PackageCard pkg={{ ...pkg, summary: undefined }} />)).toContain("Long description")
   })
 })
 ```
@@ -1705,7 +2013,7 @@ describe("PackageCard", () => {
 Run: `pnpm test lib/package-catalog.test.ts components/ui/package-card.test.tsx`
 Expected: FAIL. `groupPackagesByCategory` is not exported, and `PackageCard` has no `pkg` prop.
 
-**If `next/image` throws under Vitest** because remote host `res.cloudinary.com` isn't configured (it reads `process.env.__NEXT_IMAGE_OPTS`, which only `next build`/`next dev` inject), create `vitest.setup.ts`:
+**If `next/image` throws under Vitest** because the remote host isn't configured (`next/image` reads `process.env.__NEXT_IMAGE_OPTS`, which only `next build`/`next dev` inject), create `vitest.setup.ts` and register it with `test.setupFiles: ["./vitest.setup.ts"]`:
 
 ```ts
 process.env.__NEXT_IMAGE_OPTS = JSON.stringify({
@@ -1722,17 +2030,17 @@ process.env.__NEXT_IMAGE_OPTS = JSON.stringify({
 })
 ```
 
-Register it with `test.setupFiles: ["./vitest.setup.ts"]` in `vitest.config.mts`. Don't mock `next/image`: the tests must exercise the real markup.
+Don't mock `next/image`; the tests must exercise the real markup.
 
 - [ ] **Step 2: Implement.** Append to `lib/package-catalog.ts`:
 
 ```ts
 export const CATEGORY_SECTIONS = [
-  { key: "safari", title: "Jeep safaris", intro: "Private jeep safaris to Minneriya, Kaudulla and Hurulu Eco Park from Habarana." },
-  { key: "experience", title: "Village & food experiences", intro: "Slow afternoons in a Habarana village: farming, a bullock cart ride and a home-cooked meal." },
-  { key: "tour", title: "Day tours", intro: "Ancient cities and temples of the Cultural Triangle with a local driver-guide." },
-  { key: "stay", title: "Stays", intro: "Places to stay in Habarana between safaris." },
-  { key: "other", title: "More tours", intro: "Other experiences we arrange around Habarana." },
+  { key: "safari", title: "Jeep safaris", intro: "Jeep safaris to Minneriya, Kaudulla and Hurulu Eco Park from Habarana." },
+  { key: "experience", title: "Village & food experiences", intro: "Village and food experiences around Habarana." },
+  { key: "tour", title: "Day tours", intro: "Day tours to the ancient cities and temples of the Cultural Triangle." },
+  { key: "stay", title: "Stays", intro: "Places to stay in Habarana." },
+  { key: "other", title: "More tours", intro: "Other experiences around Habarana." },
 ] as const satisfies ReadonlyArray<{ key: PackageCategory | "other"; title: string; intro: string }>
 
 export function groupPackagesByCategory<T extends OrderablePackage>(items: readonly T[]) {
@@ -1743,8 +2051,6 @@ export function groupPackagesByCategory<T extends OrderablePackage>(items: reado
   })).filter((group) => group.items.length > 0)
 }
 ```
-
-The intros describe the category types the site already sells. They make no pricing, timing or policy claims.
 
 Rewrite `components/ui/package-card.tsx`:
 
@@ -1770,7 +2076,7 @@ export default function PackageCard({ pkg, priority = false }: { pkg: PublicPack
           {pkg.images[0] ? (
             <Image
               src={pkg.images[0]}
-              alt={pkg.name}
+              alt={pkg.imageAlts?.[0] ?? pkg.name}
               fill
               priority={priority}
               sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
@@ -1781,21 +2087,21 @@ export default function PackageCard({ pkg, priority = false }: { pkg: PublicPack
               <ImageIcon size={48} aria-hidden="true" />
             </div>
           )}
-          <span className="absolute top-3 left-3 inline-flex items-center gap-1 rounded bg-background/90 px-2 py-1 text-xs font-medium">
+          <span data-fact="duration" className="absolute top-3 left-3 inline-flex items-center gap-1 rounded bg-background/90 px-2 py-1 text-xs font-medium">
             <Clock className="size-3.5" aria-hidden="true" />
             {pkg.duration}
           </span>
         </div>
         <div className="grid gap-2 px-5 pt-5">
           <h3 className="text-xl leading-snug group-hover:underline group-hover:underline-offset-4">{pkg.name}</h3>
-          <p className="line-clamp-2 text-sm text-muted-foreground">
-            {pkg.summary ?? truncateAtWord(pkg.description, 140)}
-          </p>
+          <p className="line-clamp-2 text-sm text-muted-foreground">{pkg.summary ?? truncateAtWord(pkg.description, 140)}</p>
         </div>
       </Link>
       <div className="mt-auto grid gap-4 px-5 pt-4 pb-5">
         {pkg.category === "safari" && <SeasonStrip season={pkg.season} size="sm" />}
-        <p className={price ? "font-semibold" : "text-sm text-muted-foreground"}>{price ?? PRICE_ON_REQUEST}</p>
+        <p data-price className={price ? "font-semibold" : "text-sm text-muted-foreground"}>
+          {price ?? PRICE_ON_REQUEST}
+        </p>
         <div className="flex items-center justify-between gap-3 text-sm font-medium">
           <Link href={href} className="inline-flex items-center gap-1 text-primary underline-offset-4 hover:underline">
             View details <ArrowRight className="size-4" aria-hidden="true" />
@@ -1804,6 +2110,7 @@ export default function PackageCard({ pkg, priority = false }: { pkg: PublicPack
             href={buildWhatsAppUrl({ packageName: pkg.name })}
             target="_blank"
             rel="noopener noreferrer"
+            aria-label={`Ask about ${pkg.name} on WhatsApp`}
             className="inline-flex items-center gap-1 text-foreground underline-offset-4 hover:underline"
           >
             <WhatsappLogo weight="fill" className="size-4 text-whatsapp" aria-hidden="true" />
@@ -1853,8 +2160,7 @@ export default async function PackagesPage() {
         <div className="container mx-auto grid max-w-3xl gap-4">
           <h1>Habarana Safari &amp; Village Tour Packages</h1>
           <p className="text-lg text-primary-foreground/90">
-            Private jeeps, local guides and hotel pickup. Message us your dates and we&apos;ll reply with availability and
-            the current price.
+            Message us your dates and we&apos;ll reply within 24 hours with availability and the current price.
           </p>
           <TrustLine tone="light" />
         </div>
@@ -1891,7 +2197,7 @@ export default async function PackagesPage() {
 }
 ```
 
-Update `components/home/packages-section.tsx` callers to pass `pkg` (it is replaced in Task 9 anyway, so compile-fix only).
+In `components/home/packages-section.tsx`, pass `pkg={packageItem}` (compile fix only).
 
 Run: `pnpm test && pnpm typecheck`
 Expected: PASS / clean.
@@ -1908,18 +2214,17 @@ git commit -m "feat: price-first package cards and category-grouped listing"
 ### Task 8: Package landing page
 
 **Files:**
-- Create: `components/packages/package-gallery.tsx`, `components/packages/booking-panel.tsx`, `components/packages/landing-sections.tsx`, `components/packages/landing-sections.test.tsx`, `components/common/final-cta.tsx`
-- Create: `lib/package-meta.ts`, `lib/package-meta.test.ts`
-- Rewrite: `app/(main)/packages/[id]/page.tsx` (composition + metadata)
-- Delete: `app/(main)/packages/[id]/package-details.tsx`, `components/ui/image-gallery.tsx` (after confirming no other importer via `grep -rn "image-gallery\|package-details" app components`)
+- Create: `components/packages/package-gallery.tsx`, `components/packages/booking-panel.tsx`, `components/packages/landing-sections.tsx`, `components/packages/landing-sections.test.tsx`, `components/common/final-cta.tsx`, `lib/package-meta.ts`, `lib/package-meta.test.ts`
+- Rewrite: `app/(main)/packages/[id]/page.tsx`
+- Delete: `app/(main)/packages/[id]/package-details.tsx`, `components/ui/image-gallery.tsx` (after `grep -rn "image-gallery\|package-details" app components` shows no other importer)
 
 **Interfaces:**
-- Consumes: everything above plus `selectRelatedPackages`, `splitParagraphs`, `TrustLine`, `ContactActions`, `MobileContactBar`.
 - Produces:
-  - `resolvePackageMeta(pkg: PublicPackage): { title: string; description: string }`
-  - `<PackageGallery images: string[]; name: string />`
-  - `<BookingPanel pkg: PublicPackage />`
-  - `<FactChips pkg />`, `<Highlights items? />`, `<WhenToGo season? />`, `<Itinerary steps? />`, `<IncludedList included notIncluded? />`, `<PickupAndTimes pickupAreas? timeSlots? />`, `<WhatToBring items? />`, `<AboutExperience description />`, `<PackageFaqs faqs? />`. Each returns `null` without data.
+  - `resolvePackageMeta(pkg): { title; description }`
+  - `<PackageGallery images; name; alts? />` and `spanFor(index, count)`
+  - `<BookingPanel pkg />`
+  - `<PackageHeader pkg />` (H1, price, trust, chips, compact CTAs)
+  - Sections: `FactChips`, `Highlights`, `WhenToGo`, `Itinerary`, `IncludedList`, `PickupAndTimes`, `WhatToBring`, `AboutExperience`, `PackageFaqs`. Each returns `null` without usable data.
   - `<FinalCta title? packageName? />`
 
 - [ ] **Step 1: Failing tests.** Create `lib/package-meta.test.ts`:
@@ -1935,30 +2240,27 @@ const pkg = {
   slug: "hurulu-eco-park-safari",
   name: "Hurulu Eco Park Safari",
   description:
-    "Embark on a private jeep safari through Hurulu Eco Park, where herds of wild elephants gather near the reservoir and our local guide explains their behaviour along the way.",
+    "Embark on a jeep safari through Hurulu Eco Park, where herds of wild elephants gather near the reservoir and our local guide explains their behaviour along the way for you.",
   duration: "3 hours",
   included: [],
   images: [],
 } satisfies PublicPackage
 
 describe("resolvePackageMeta", () => {
-  it("prefers the admin SEO fields", () => {
-    expect(
-      resolvePackageMeta({ ...pkg, seoTitle: "Hurulu Jeep Safari from Habarana", seoDescription: "Short." })
-    ).toEqual({ title: "Hurulu Jeep Safari from Habarana | Ceylon Safari", description: "Short." })
+  it("prefers the admin SEO fields and adds the brand", () => {
+    expect(resolvePackageMeta({ ...pkg, seoTitle: "Hurulu Jeep Safari from Habarana", seoDescription: "Short." })).toEqual({
+      title: "Hurulu Jeep Safari from Habarana | Ceylon Safari",
+      description: "Short.",
+    })
   })
 
-  it("does not double the brand when the SEO title already has it", () => {
-    expect(resolvePackageMeta({ ...pkg, seoTitle: "Hurulu Safari | Ceylon Safari" }).title).toBe(
-      "Hurulu Safari | Ceylon Safari"
-    )
+  it("does not double the brand", () => {
+    expect(resolvePackageMeta({ ...pkg, seoTitle: "Hurulu Safari | Ceylon Safari" }).title).toBe("Hurulu Safari | Ceylon Safari")
   })
 
   it("falls back to name, then summary, then a word-safe description", () => {
     expect(resolvePackageMeta(pkg).title).toBe("Hurulu Eco Park Safari | Ceylon Safari")
-    expect(resolvePackageMeta({ ...pkg, summary: "Elephants at Hurulu." }).description).toBe(
-      "Elephants at Hurulu."
-    )
+    expect(resolvePackageMeta({ ...pkg, summary: "Elephants at Hurulu." }).description).toBe("Elephants at Hurulu.")
     const description = resolvePackageMeta(pkg).description
     expect(description.length).toBeLessThanOrEqual(160)
     expect(description.endsWith("…")).toBe(true)
@@ -1972,6 +2274,8 @@ Create `components/packages/landing-sections.test.tsx`:
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it } from "vitest"
 
+import type { PublicPackage } from "@/lib/package-serialize"
+import { BookingPanel } from "./booking-panel"
 import {
   AboutExperience,
   FactChips,
@@ -1979,82 +2283,125 @@ import {
   IncludedList,
   Itinerary,
   PackageFaqs,
+  PackageHeader,
   PickupAndTimes,
   WhatToBring,
   WhenToGo,
 } from "./landing-sections"
-import { BookingPanel } from "./booking-panel"
+import { PackageGallery, spanFor } from "./package-gallery"
+import { FinalCta } from "@/components/common/final-cta"
 
 const html = (node: React.ReactElement) => renderToStaticMarkup(node)
+const pkg: PublicPackage = {
+  _id: "a".repeat(24),
+  slug: "village-experience-tour",
+  name: "Village Experience Tour",
+  description: "First paragraph.\n\nSecond paragraph.",
+  duration: "4 hours",
+  included: ["Lunch"],
+  images: [],
+  category: "experience",
+}
 
-describe("landing sections omit themselves without data", () => {
+describe("sections omit themselves without usable data", () => {
   it.each([
     ["Highlights", <Highlights key="h" />],
-    ["WhenToGo", <WhenToGo key="w" />],
+    ["WhenToGo (none)", <WhenToGo key="w1" />],
+    ["WhenToGo (all months invalid)", <WhenToGo key="w2" season={{ peak: [0, 13], good: [] }} />],
     ["Itinerary", <Itinerary key="i" steps={[]} />],
     ["PickupAndTimes", <PickupAndTimes key="p" />],
     ["WhatToBring", <WhatToBring key="b" />],
     ["PackageFaqs", <PackageFaqs key="f" />],
+    ["IncludedList", <IncludedList key="n" included={[]} />],
   ])("%s", (_name, node) => {
     expect(html(node)).toBe("")
   })
 })
 
-describe("landing sections with data", () => {
+describe("sections with data", () => {
+  it("WhenToGo renders once overlapping or duplicate months are normalised", () => {
+    const out = html(<WhenToGo season={{ peak: [8, 8], good: [8, 7] }} />)
+    expect(out).toContain("When to go")
+    expect(out.match(/data-level="peak"/g)).toHaveLength(1)
+  })
+
   it("renders the itinerary as an ordered list with times", () => {
     const out = html(<Itinerary steps={[{ time: "2:30 pm", title: "Pickup" }, { title: "Game drive" }]} />)
     expect(out).toContain("<ol")
     expect(out).toContain("2:30 pm")
-    expect(out).toContain("Game drive")
   })
 
   it("renders every FAQ answer in server HTML", () => {
-    const out = html(<PackageFaqs faqs={[{ question: "Private?", answer: "Yes, only your group." }]} />)
-    expect(out).toContain("Yes, only your group.")
+    expect(html(<PackageFaqs faqs={[{ question: "Private?", answer: "Yes, only your group." }]} />)).toContain("Yes, only your group.")
   })
 
-  it("shows included and not included side by side", () => {
-    const out = html(<IncludedList included={["Jeep"]} notIncluded={["Tickets"]} />)
-    expect(out).toContain("Jeep")
-    expect(out).toContain("Not included")
-    expect(out).toContain("Tickets")
+  it("pickup never claims to be free", () => {
+    const out = html(<PickupAndTimes pickupAreas={["Habarana"]} />)
+    expect(out).toContain("Hotel pickup from")
+    expect(out).not.toMatch(/free/i)
   })
 
   it("splits the description into paragraphs", () => {
-    expect(html(<AboutExperience description={"First.\n\nSecond."} />).match(/<p/g)).toHaveLength(2)
+    expect(html(<AboutExperience description={pkg.description} />).match(/<p/g)).toHaveLength(2)
   })
 
-  it("fact chips show only known facts", () => {
+  it("fact chips show only known facts and mark duration", () => {
     const out = html(<FactChips duration="3 hours" pickupAreas={["Habarana"]} />)
-    expect(out).toContain("3 hours")
+    expect(out).toContain('data-fact="duration"')
     expect(out).toContain("Hotel pickup")
     expect(out).not.toContain("per jeep")
   })
 })
 
-describe("BookingPanel", () => {
-  const pkg = {
-    _id: "a".repeat(24),
-    slug: "village-experience-tour",
-    name: "Village Experience Tour",
-    description: "x",
-    duration: "4 hours",
-    included: [],
-    images: [],
-  }
+describe("PackageHeader: first-viewport facts", () => {
+  it("has the H1, price (or on request), trust, duration and WhatsApp, in that order", () => {
+    const out = html(<PackageHeader pkg={pkg} />)
+    const order = ["<h1", "data-price", "data-trust", 'data-fact="duration"', "wa.me"].map((needle) => out.indexOf(needle))
+    expect(order.every((index) => index >= 0)).toBe(true)
+    expect([...order].sort((a, b) => a - b)).toEqual(order)
+    expect(out).toContain("Price on request")
+  })
+})
 
-  it("says price on request, offers WhatsApp, call and the form, with no nested controls", () => {
+describe("BookingPanel", () => {
+  it("offers price on request, WhatsApp, call and the form, with no nested controls or opacity", () => {
     const out = html(<BookingPanel pkg={pkg} />)
     expect(out).toContain("Price on request")
-    expect(out).toContain("wa.me")
     expect(out).toContain('href="tel:+94766675883"')
     expect(out).toContain(`/book-now?packageId=${"a".repeat(24)}`)
     expect(out).not.toMatch(/<a[^>]*>(?:(?!<\/a>).)*<button/s)
     expect(out).not.toMatch(/opacity:\s*0/)
   })
 
-  it("never claims free cancellation or instant confirmation", () => {
-    expect(html(<BookingPanel pkg={pkg} />)).not.toMatch(/free cancellation|instant confirmation/i)
+  it("makes no service claims of its own", () => {
+    expect(html(<BookingPanel pkg={{ ...pkg, category: "safari" }} />)).not.toMatch(/free cancellation|instant confirmation|private jeep/i)
+  })
+})
+
+describe("PackageGallery", () => {
+  it("renders a placeholder and no images when there are none", () => {
+    const out = html(<PackageGallery images={[]} name="X" />)
+    expect(out).not.toContain("<img")
+    expect(out).toContain('aria-label="No photos yet"')
+  })
+
+  it("renders the lead image once, marked as lead, with admin alt text", () => {
+    const out = html(<PackageGallery images={["https://res.cloudinary.com/a.jpg", "https://res.cloudinary.com/b.jpg"]} name="X" alts={["Elephants at the tank"]} />)
+    expect(out.match(/<img/g)).toHaveLength(2)
+    expect(out.match(/data-lead-image/g)).toHaveLength(1)
+    expect(out).toContain('alt="Elephants at the tank"')
+    expect(out).toContain('alt="X, photo 2"')
+  })
+
+  it.each([2, 3, 4, 5])("mosaic spans fill 8 cells with %i images", (count) => {
+    const cells = (span: string) => (span.includes("row-span-2") ? 4 : span.includes("col-span-2") ? 2 : 1)
+    expect(Array.from({ length: count }, (_, i) => cells(spanFor(i, count))).reduce((a, b) => a + b, 0)).toBe(8)
+  })
+})
+
+describe("FinalCta", () => {
+  it("is generic by default so non-safari pages promise no park or elephants", () => {
+    expect(html(<FinalCta />)).not.toMatch(/elephant|park|safari/i)
   })
 })
 ```
@@ -2080,20 +2427,26 @@ export function resolvePackageMeta(pkg: PublicPackage): { title: string; descrip
 }
 ```
 
-- [ ] **Step 3: Implement the sections.** Create `components/packages/landing-sections.tsx` as a server component. All sections share a small `Section` wrapper: `<section aria-labelledby={id} className="grid gap-4"><h2 id={id} className="text-2xl md:text-3xl">{title}</h2>{children}</section>`, where `id` comes from a slugified title.
+- [ ] **Step 3: Implement the sections and header.** Create `components/packages/landing-sections.tsx`:
 
 ```tsx
 import { Check, Clock, MapPin, Sun, Users, X } from "@phosphor-icons/react/dist/ssr"
 
+import { ContactActions } from "@/components/common/contact-actions"
+import { TrustLine } from "@/components/common/trust-line"
 import { SeasonStrip } from "@/components/packages/season-strip"
 import { splitParagraphs } from "@/lib/package-landing"
-import type { ItineraryStep, PackageFaq, Season } from "@/lib/package-serialize"
+import type { ItineraryStep, PackageFaq, PublicPackage } from "@/lib/package-serialize"
+import { formatPrice, PRICE_ON_REQUEST } from "@/lib/pricing"
+import { buildSeasonCells, type Season } from "@/lib/season"
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   const id = title.toLowerCase().replace(/[^a-z0-9]+/g, "-")
   return (
     <section aria-labelledby={id} className="grid gap-4">
-      <h2 id={id} className="text-2xl md:text-3xl">{title}</h2>
+      <h2 id={id} className="text-2xl md:text-3xl">
+        {title}
+      </h2>
       {children}
     </section>
   )
@@ -2110,22 +2463,37 @@ export function FactChips({
   timeSlots?: string[]
   pickupAreas?: string[]
 }) {
-  const chips = [
-    { icon: Clock, label: duration },
-    groupSize && { icon: Users, label: groupSize },
-    timeSlots?.length && { icon: Sun, label: timeSlots.join(" · ") },
-    pickupAreas?.length && { icon: MapPin, label: "Hotel pickup" },
-  ].filter(Boolean) as Array<{ icon: typeof Clock; label: string }>
+  const chips: Array<{ icon: typeof Clock; label: string; fact: string }> = [{ icon: Clock, label: duration, fact: "duration" }]
+  if (groupSize) chips.push({ icon: Users, label: groupSize, fact: "group" })
+  if (timeSlots?.length) chips.push({ icon: Sun, label: timeSlots.join(" · "), fact: "times" })
+  if (pickupAreas?.length) chips.push({ icon: MapPin, label: "Hotel pickup", fact: "pickup" })
 
   return (
     <ul className="flex flex-wrap gap-2" aria-label="Key facts">
-      {chips.map(({ icon: Icon, label }) => (
-        <li key={label} className="inline-flex items-center gap-1.5 rounded border bg-card px-3 py-1.5 text-sm">
+      {chips.map(({ icon: Icon, label, fact }) => (
+        <li key={fact} data-fact={fact} className="inline-flex items-center gap-1.5 rounded border bg-card px-3 py-1.5 text-sm">
           <Icon className="size-4 text-primary" aria-hidden="true" />
           {label}
         </li>
       ))}
     </ul>
+  )
+}
+
+/** Mobile first viewport: what, price, trust, duration, WhatsApp. Desktop CTAs live in the booking panel. */
+export function PackageHeader({ pkg }: { pkg: PublicPackage }) {
+  const price = formatPrice(pkg)
+  return (
+    <header className="grid gap-3">
+      <h1 className="text-3xl md:text-5xl">{pkg.name}</h1>
+      <p data-price className={price ? "text-lg font-semibold" : "text-muted-foreground"}>
+        {price ?? `${PRICE_ON_REQUEST} · reply within 24 hours`}
+      </p>
+      <TrustLine />
+      <FactChips duration={pkg.duration} groupSize={pkg.groupSize} timeSlots={pkg.timeSlots} pickupAreas={pkg.pickupAreas} />
+      <ContactActions compact packageName={pkg.name} className="lg:hidden" />
+      {pkg.summary && <p className="max-w-prose text-lg text-muted-foreground">{pkg.summary}</p>}
+    </header>
   )
 }
 
@@ -2152,9 +2520,12 @@ export function Highlights({ items }: { items?: string[] }) {
 }
 
 export function WhenToGo({ season }: { season?: Season }) {
-  if (!season) return null
-  const strip = <SeasonStrip season={season} />
-  return <Section title="When to go">{strip}</Section>
+  if (!buildSeasonCells(season)) return null
+  return (
+    <Section title="When to go">
+      <SeasonStrip season={season} />
+    </Section>
+  )
 }
 
 export function Itinerary({ steps }: { steps?: ItineraryStep[] }) {
@@ -2199,7 +2570,7 @@ export function PickupAndTimes({ pickupAreas, timeSlots }: { pickupAreas?: strin
       <dl className="grid gap-4 sm:grid-cols-2">
         {pickupAreas?.length ? (
           <div>
-            <dt className="text-sm font-medium text-muted-foreground">Free hotel pickup from</dt>
+            <dt className="text-sm font-medium text-muted-foreground">Hotel pickup from</dt>
             <dd>{pickupAreas.join(", ")}</dd>
           </div>
         ) : null}
@@ -2229,8 +2600,8 @@ export function AboutExperience({ description }: { description: string }) {
   return (
     <Section title="About this experience">
       <div className="grid max-w-prose gap-4 leading-relaxed">
-        {paragraphs.map((paragraph) => (
-          <p key={paragraph.slice(0, 40)}>{paragraph}</p>
+        {paragraphs.map((paragraph, index) => (
+          <p key={index}>{paragraph}</p>
         ))}
       </div>
     </Section>
@@ -2243,7 +2614,7 @@ export function PackageFaqs({ faqs }: { faqs?: PackageFaq[] }) {
     <Section title="Questions travellers ask">
       <div className="grid gap-3">
         {faqs.map((faq) => (
-          <details key={faq.question} className="group rounded-lg border bg-card p-4 open:shadow-sm">
+          <details key={faq.question} className="rounded-lg border bg-card p-4 open:shadow-sm">
             <summary className="cursor-pointer font-semibold">{faq.question}</summary>
             <p className="mt-2 text-muted-foreground">{faq.answer}</p>
           </details>
@@ -2254,8 +2625,6 @@ export function PackageFaqs({ faqs }: { faqs?: PackageFaq[] }) {
 }
 ```
 
-The pickup label reads "Free hotel pickup from" **only** because the live FAQ already promises complimentary pickup for Habarana, Sigiriya and Dambulla. If the owner's confirmed facts differ, the owner sets `pickupAreas` accordingly.
-
 - [ ] **Step 4: Booking panel, gallery, final CTA.** Create `components/packages/booking-panel.tsx`:
 
 ```tsx
@@ -2265,6 +2634,7 @@ import { ContactActions } from "@/components/common/contact-actions"
 import type { PublicPackage } from "@/lib/package-serialize"
 import { formatPrice, PRICE_ON_REQUEST } from "@/lib/pricing"
 
+/** Desktop only (sticky right column); on mobile the header CTAs and contact bar replace it. */
 export function BookingPanel({ pkg }: { pkg: PublicPackage }) {
   const price = formatPrice(pkg)
   return (
@@ -2280,26 +2650,13 @@ export function BookingPanel({ pkg }: { pkg: PublicPackage }) {
           Send an inquiry form
         </Link>
       </p>
-      <ul className="grid gap-1 border-t pt-4 text-sm text-muted-foreground">
-        <li>No payment needed to ask</li>
-        {/* Restates the existing "Private Jeep Safaris" promise; safaris only. */}
-        {pkg.category === "safari" && <li>Private jeep for your group only</li>}
-      </ul>
+      <p className="border-t pt-4 text-sm text-muted-foreground">No payment needed to ask.</p>
     </aside>
   )
 }
 ```
 
-Add this case to the `BookingPanel` describe block in `landing-sections.test.tsx`:
-
-```tsx
-  it("promises a private jeep only on safaris", () => {
-    expect(html(<BookingPanel pkg={pkg} />)).not.toContain("Private jeep")
-    expect(html(<BookingPanel pkg={{ ...pkg, category: "safari" }} />)).toContain("Private jeep")
-  })
-```
-
-Create `components/packages/package-gallery.tsx`:
+Create `components/packages/package-gallery.tsx`. It's **one** list of images whose layout changes by breakpoint, so no image is duplicated and the lead is requested once.
 
 ```tsx
 import Image from "next/image"
@@ -2307,97 +2664,78 @@ import { Image as ImageIcon } from "@phosphor-icons/react/dist/ssr"
 
 import { cn } from "@/lib/utils"
 
-export function PackageGallery({ images, name }: { images: string[]; name: string }) {
-  if (images.length === 0) {
-    return (
-      <div className="flex aspect-[16/9] items-center justify-center rounded-lg bg-surface-sunken text-muted-foreground md:aspect-[21/8]">
-        <ImageIcon size={56} aria-hidden="true" />
-      </div>
-    )
-  }
+const MOBILE_LIMIT = 8
+const DESKTOP_LIMIT = 5
 
-  const desktop = images.slice(0, 5)
-
-  return (
-    <>
-      {/* Mobile: swipe strip */}
-      <div className="relative -mx-4 md:hidden">
-        <ul className="flex snap-x snap-mandatory gap-2 overflow-x-auto px-4 pb-2" aria-label={`${name} photos`}>
-          {images.map((src, index) => (
-            <li key={src} className="relative aspect-[4/3] w-[85%] shrink-0 snap-center overflow-hidden rounded-lg">
-              <Image src={src} alt={`${name}, photo ${index + 1}`} fill priority={index === 0} sizes="85vw" className="object-cover" />
-            </li>
-          ))}
-        </ul>
-        {images.length > 1 && (
-          <span className="pointer-events-none absolute top-3 left-7 rounded bg-background/90 px-2 py-1 text-xs font-medium">
-            {images.length} photos · swipe
-          </span>
-        )}
-      </div>
-
-      {/* Desktop: mosaic */}
-      <div
-        className={cn(
-          "hidden h-[420px] gap-2 overflow-hidden rounded-lg md:grid",
-          desktop.length === 1 ? "grid-cols-1" : "grid-cols-4 grid-rows-2"
-        )}
-      >
-        {desktop.map((src, index) => (
-          <div
-            key={src}
-            className={cn("relative bg-surface-sunken", spanFor(index, desktop.length))}
-          >
-            <Image
-              src={src}
-              alt={`${name}, photo ${index + 1}`}
-              fill
-              priority={index === 0}
-              sizes={index === 0 ? "50vw" : "25vw"}
-              className="object-cover"
-            />
-          </div>
-        ))}
-      </div>
-    </>
-  )
-}
-```
-
-With 2–4 images a 4×2 mosaic leaves holes, so the tile spans come from an exported helper in the same file. Use it in place of the inline span above: `className={cn("relative bg-surface-sunken", spanFor(index, desktop.length))}`.
-
-```ts
 /**
  * Tile spans that exactly fill the 4×2 desktop grid.
  * 2 → lead + tall right half · 3 → lead + two wide tiles · 4 → lead + 2 small + 1 wide · 5 → lead + 4 small.
  */
 export function spanFor(index: number, count: number): string {
   if (count <= 1) return ""
-  if (index === 0) return "col-span-2 row-span-2"
-  if (count === 2) return "col-span-2 row-span-2"
-  if (count === 3) return "col-span-2"
-  if (count === 4 && index === count - 1) return "col-span-2"
+  if (index === 0) return "md:col-span-2 md:row-span-2"
+  if (count === 2) return "md:col-span-2 md:row-span-2"
+  if (count === 3) return "md:col-span-2"
+  if (count === 4 && index === count - 1) return "md:col-span-2"
   return ""
 }
-```
 
-Test, appended to `landing-sections.test.tsx`:
+export function PackageGallery({ images, name, alts }: { images: string[]; name: string; alts?: string[] }) {
+  if (images.length === 0) {
+    return (
+      <div
+        role="img"
+        aria-label="No photos yet"
+        className="flex aspect-[16/9] items-center justify-center rounded-lg bg-surface-sunken text-muted-foreground md:aspect-[21/8]"
+      >
+        <ImageIcon size={56} aria-hidden="true" />
+      </div>
+    )
+  }
 
-```tsx
-import { spanFor } from "./package-gallery"
+  const shown = images.slice(0, MOBILE_LIMIT)
+  const desktopCount = Math.min(images.length, DESKTOP_LIMIT)
 
-describe("spanFor fills the desktop mosaic", () => {
-  const cells = (span: string) => (span === "col-span-2 row-span-2" ? 4 : span === "col-span-2" ? 2 : 1)
-
-  it.each([2, 3, 4, 5])("uses exactly 8 cells with %i images", (count) => {
-    const used = Array.from({ length: count }, (_, i) => cells(spanFor(i, count))).reduce((a, b) => a + b, 0)
-    expect(used).toBe(8)
-  })
-
-  it("adds no span for a single image", () => {
-    expect(spanFor(0, 1)).toBe("")
-  })
-})
+  return (
+    <div className="relative -mx-4 md:mx-0">
+      <ul
+        aria-label={`${name} photos`}
+        className={cn(
+          "flex snap-x snap-mandatory gap-2 overflow-x-auto px-4 pb-2",
+          "md:grid md:h-[420px] md:snap-none md:overflow-hidden md:rounded-lg md:px-0 md:pb-0",
+          desktopCount === 1 ? "md:grid-cols-1" : "md:grid-cols-4 md:grid-rows-2"
+        )}
+      >
+        {shown.map((src, index) => (
+          <li
+            key={src}
+            {...(index === 0 ? { "data-lead-image": "" } : {})}
+            className={cn(
+              "relative aspect-[16/9] w-[85%] shrink-0 snap-center overflow-hidden rounded-lg bg-surface-sunken",
+              "md:aspect-auto md:w-auto md:rounded-none",
+              index >= DESKTOP_LIMIT && "md:hidden",
+              spanFor(index, desktopCount)
+            )}
+          >
+            <Image
+              src={src}
+              alt={alts?.[index] ?? `${name}, photo ${index + 1}`}
+              fill
+              priority={index === 0}
+              sizes={index === 0 ? "(min-width: 768px) 50vw, 85vw" : "(min-width: 768px) 25vw, 85vw"}
+              className="object-cover"
+            />
+          </li>
+        ))}
+      </ul>
+      {images.length > 1 && (
+        <span className="pointer-events-none absolute top-3 left-7 rounded bg-background/90 px-2 py-1 text-xs font-medium md:hidden">
+          {images.length} photos · swipe
+        </span>
+      )}
+    </div>
+  )
+}
 ```
 
 Create `components/common/final-cta.tsx`:
@@ -2405,19 +2743,14 @@ Create `components/common/final-cta.tsx`:
 ```tsx
 import { ContactActions } from "@/components/common/contact-actions"
 
-export function FinalCta({
-  title = "Ready to see the elephants?",
-  packageName,
-}: {
-  title?: string
-  packageName?: string
-}) {
+export function FinalCta({ title = "Planning your trip to Habarana?", packageName }: { title?: string; packageName?: string }) {
   return (
     <section className="bg-primary px-4 py-16 text-primary-foreground">
       <div className="container mx-auto grid max-w-3xl justify-items-center gap-5 text-center">
         <h2 className="text-3xl md:text-4xl">{title}</h2>
         <p className="max-w-xl text-primary-foreground/85">
-          Send us your date and hotel. We'll reply with the park, the time and the current price. No payment needed to ask.
+          Send us your date and hotel. We&apos;ll reply within 24 hours with availability and the current price. No payment
+          needed to ask.
         </p>
         <ContactActions packageName={packageName} className="justify-center" />
       </div>
@@ -2429,28 +2762,19 @@ export function FinalCta({
 Run: `pnpm test`
 Expected: PASS.
 
-- [ ] **Step 5: Compose the page.** Rewrite the body of `app/(main)/packages/[id]/page.tsx` and keep `generateStaticParams`, the not-found handling, the slug `permanentRedirect` and the JSON-LD (now with `offers`). `generateMetadata` uses `resolvePackageMeta(packageData)`, with `title: { absolute: meta.title }` and the same values for OG/Twitter. Render:
+- [ ] **Step 5: Compose the page.** Rewrite the body of `app/(main)/packages/[id]/page.tsx`. Keep `generateStaticParams`, not-found handling, the slug `permanentRedirect` and JSON-LD (with `offers`). `generateMetadata` uses `resolvePackageMeta(packageData)`: `title: { absolute: meta.title }`, with the same values for OG/Twitter. Render:
 
 ```tsx
     <main className="bg-background pt-20">
       <JsonLd data={structuredData} />
-      <div className="container mx-auto px-4 py-6">
-        <Breadcrumbs name={packageData.name} />
-        <PackageGallery images={packageData.images} name={packageData.name} />
-        <div className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="container mx-auto grid gap-6 px-4 py-4 md:py-6">
+        <div className="hidden md:block">
+          <Breadcrumbs name={packageData.name} />
+        </div>
+        <PackageGallery images={packageData.images} name={packageData.name} alts={packageData.imageAlts} />
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="grid min-w-0 gap-10">
-            <header className="grid gap-4">
-              <h1>{packageData.name}</h1>
-              {packageData.summary && <p className="max-w-prose text-lg text-muted-foreground">{packageData.summary}</p>}
-              <TrustLine />
-              <FactChips
-                duration={packageData.duration}
-                groupSize={packageData.groupSize}
-                timeSlots={packageData.timeSlots}
-                pickupAreas={packageData.pickupAreas}
-              />
-            </header>
-            <div className="lg:hidden"><BookingPanel pkg={packageData} /></div>
+            <PackageHeader pkg={packageData} />
             <Highlights items={packageData.highlights} />
             <WhenToGo season={packageData.season} />
             <Itinerary steps={packageData.itinerary} />
@@ -2459,9 +2783,14 @@ Expected: PASS.
             <WhatToBring items={packageData.whatToBring} />
             <AboutExperience description={packageData.description} />
             <PackageFaqs faqs={packageData.faqs} />
+            <div className="md:hidden">
+              <Breadcrumbs name={packageData.name} />
+            </div>
           </div>
           <div className="hidden lg:block">
-            <div className="sticky top-24"><BookingPanel pkg={packageData} /></div>
+            <div className="sticky top-24">
+              <BookingPanel pkg={packageData} />
+            </div>
           </div>
         </div>
       </div>
@@ -2470,22 +2799,27 @@ Expected: PASS.
           <div className="container mx-auto grid gap-8">
             <h2>{packageData.category === "safari" ? "Other safaris from Habarana" : "You might also like"}</h2>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {relatedPackages.map((p) => <PackageCard key={p._id} pkg={p} />)}
+              {relatedPackages.map((p) => (
+                <PackageCard key={p._id} pkg={p} />
+              ))}
             </div>
           </div>
         </section>
       )}
-      <FinalCta packageName={packageData.name} />
+      <FinalCta title={packageData.category === "safari" ? "Ready to book your safari?" : undefined} packageName={packageData.name} />
       <MobileContactBar packageName={packageData.name} price={packageData} />
     </main>
 ```
 
-`Breadcrumbs` is a small local server component using the existing `components/ui/breadcrumb` primitives. It's moved from `package-details.tsx`. Delete `package-details.tsx`, and delete `image-gallery.tsx` if grep shows no other importer.
+`Breadcrumbs` is a small server component in the same file, moved from `package-details.tsx`'s breadcrumb block. Delete `package-details.tsx`, and delete `image-gallery.tsx` if grep shows no other importer.
 
 - [ ] **Step 6: Verify and commit.**
 
 Run: `pnpm test && pnpm typecheck && pnpm lint`
 Expected: PASS / clean.
+
+With `pnpm dev`: `node scripts/verify-layout.mjs http://localhost:3000 "/packages/hurulu-eco-park-safari:facts" "/packages/sri-lankan-culinary-journey:facts"`
+Expected: all PASS.
 
 ```bash
 git add components/packages components/common/final-cta.tsx lib/package-meta.ts lib/package-meta.test.ts "app/(main)/packages/[id]" components/ui/image-gallery.tsx
@@ -2498,21 +2832,28 @@ git commit -m "feat: rebuild package pages as conversion-first landing pages"
 
 **Files:**
 - Rewrite: `components/home/hero-section.tsx`
-- Create: `components/home/park-chooser.tsx`, `components/home/park-chooser.test.tsx`, `components/home/real-guests.tsx`, `components/home/how-booking-works.tsx`, `components/home/more-experiences.tsx`
+- Create: `components/home/park-chooser.tsx`, `components/home/home-sections.test.tsx`, `components/home/real-guests.tsx`, `components/home/how-booking-works.tsx`, `components/home/more-experiences.tsx`
 - Rewrite: `app/(main)/page.tsx`
-- Delete: `components/home/features-section.tsx`, `components/home/plan-visit-section.tsx`, `components/home/cta-banner-section.tsx`, `components/home/packages-section.tsx`, `components/home/testimonials-section.tsx` (its Elfsight embed moves into `real-guests.tsx`)
+- Delete: `components/home/features-section.tsx`, `components/home/plan-visit-section.tsx`, `components/home/cta-banner-section.tsx`, `components/home/packages-section.tsx`, `components/home/testimonials-section.tsx`
+- Modify: `components/home/featured-blogs-section.tsx` (fix `Link`+`Button` nesting)
 
 **Interfaces:**
-- Consumes: `getPackages`, `groupPackagesByCategory`, `PackageCard`, `ContactActions`, `TrustLine`, `FinalCta`, `imagery`, `FAQSection`, `FeaturedBlogsSection`.
-- Produces: `<ParkChooser packages: PublicPackage[] />`, which renders `null` when no safari packages exist.
+- Produces:
+  - `<HeroSection safaris: PublicPackage[] />`, which renders quick-pick rows when safaris exist
+  - `<ParkChooser safaris: PublicPackage[] />`
+  - `<MoreExperiences packages: PublicPackage[] />`
+  - `<RealGuests />`, `<HowBookingWorks />`
 
-- [ ] **Step 1: Failing test.** Create `components/home/park-chooser.test.tsx`:
+- [ ] **Step 1: Failing tests.** Create `components/home/home-sections.test.tsx`:
 
 ```tsx
 import { renderToStaticMarkup } from "react-dom/server"
 import { describe, expect, it } from "vitest"
 
 import type { PublicPackage } from "@/lib/package-serialize"
+import HeroSection from "./hero-section"
+import { HowBookingWorks } from "./how-booking-works"
+import { MoreExperiences } from "./more-experiences"
 import { ParkChooser } from "./park-chooser"
 
 const make = (id: string, extra: Partial<PublicPackage>): PublicPackage => ({
@@ -2526,56 +2867,112 @@ const make = (id: string, extra: Partial<PublicPackage>): PublicPackage => ({
   ...extra,
 })
 
-describe("ParkChooser", () => {
-  it("shows only safari packages, in display order", () => {
-    const html = renderToStaticMarkup(
-      <ParkChooser
-        packages={[
-          make("village", { category: "experience" }),
-          make("hurulu", { category: "safari", sortOrder: 3 }),
-          make("minneriya", { category: "safari", sortOrder: 1 }),
-        ]}
-      />
-    )
-    expect(html.indexOf("minneriya")).toBeLessThan(html.indexOf("hurulu"))
-    expect(html).not.toContain("/packages/village")
-    expect(html).toContain("Not sure which park?")
+const safaris = [
+  make("minneriya", { category: "safari", sortOrder: 1, priceFrom: 45, priceCurrency: "USD", priceUnit: "per jeep" }),
+  make("hurulu", { category: "safari", sortOrder: 2 }),
+]
+
+describe("HeroSection", () => {
+  it("answers what, duration, price, trust and WhatsApp for each safari", () => {
+    const html = renderToStaticMarkup(<HeroSection safaris={safaris} />)
+    expect(html).toContain("<h1")
+    expect(html).toContain("data-trust")
+    expect(html).toContain("wa.me")
+    expect(html.match(/data-fact="duration"/g)).toHaveLength(2)
+    expect(html).toContain("From US$45 per jeep")
+    expect(html).toContain("Price on request")
+    expect(html).toContain('href="/packages/hurulu"')
   })
 
-  it("renders nothing without safari packages", () => {
-    expect(renderToStaticMarkup(<ParkChooser packages={[make("village", { category: "experience" })]} />)).toBe("")
+  it("makes no service claims", () => {
+    expect(renderToStaticMarkup(<HeroSection safaris={safaris} />)).not.toMatch(/private|free|pickup from|guide/i)
   })
+
+  it("still renders without safaris, just without quick picks", () => {
+    const html = renderToStaticMarkup(<HeroSection safaris={[]} />)
+    expect(html).toContain("<h1")
+    expect(html).not.toContain('data-fact="duration"')
+  })
+})
+
+describe("ParkChooser and MoreExperiences", () => {
+  it("chooser shows safaris in order with neutral advice", () => {
+    const html = renderToStaticMarkup(<ParkChooser safaris={safaris} />)
+    expect(html.indexOf("/packages/minneriya")).toBeLessThan(html.indexOf("/packages/hurulu"))
+    expect(html).toContain("Not sure which park?")
+    expect(html).not.toMatch(/herds are|that week/i)
+  })
+
+  it("chooser renders nothing without safaris", () => {
+    expect(renderToStaticMarkup(<ParkChooser safaris={[]} />)).toBe("")
+  })
+
+  it("more experiences shows only non-safaris and renders nothing without them", () => {
+    const html = renderToStaticMarkup(<MoreExperiences packages={[make("village", { category: "experience" }), ...safaris]} />)
+    expect(html).toContain("/packages/village")
+    expect(html).not.toContain("/packages/minneriya")
+    expect(renderToStaticMarkup(<MoreExperiences packages={safaris} />)).toBe("")
+  })
+})
+
+it("how booking works describes the process only", () => {
+  const html = renderToStaticMarkup(<HowBookingWorks />)
+  expect(html).toContain("<ol")
+  expect(html).not.toMatch(/free|private|Sigiriya|Dambulla/i)
 })
 ```
 
-Run: `pnpm test components/home/park-chooser.test.tsx`
-Expected: FAIL, module not found.
+Run: `pnpm test components/home/home-sections.test.tsx`
+Expected: FAIL, modules not found or wrong props.
 
-- [ ] **Step 2: Implement the sections.** Create `components/home/park-chooser.tsx`:
+- [ ] **Step 2: Implement.** Rewrite `components/home/hero-section.tsx`:
 
 ```tsx
-import PackageCard from "@/components/ui/package-card"
-import { groupPackagesByCategory } from "@/lib/package-catalog"
+import Image from "next/image"
+import Link from "next/link"
+import { ArrowRight } from "@phosphor-icons/react/dist/ssr"
+
+import { ContactActions } from "@/components/common/contact-actions"
+import { TrustLine } from "@/components/common/trust-line"
+import { imagery } from "@/config/imagery"
 import type { PublicPackage } from "@/lib/package-serialize"
+import { formatPrice, PRICE_ON_REQUEST } from "@/lib/pricing"
 
-export function ParkChooser({ packages }: { packages: PublicPackage[] }) {
-  const safaris = groupPackagesByCategory(packages).find((group) => group.key === "safari")?.items ?? []
-  if (!safaris.length) return null
-
+export default function HeroSection({ safaris }: { safaris: PublicPackage[] }) {
   return (
-    <section id="safaris" className="scroll-mt-24 px-4 py-16 md:py-20">
-      <div className="container mx-auto grid gap-8">
-        <div className="grid max-w-2xl gap-3">
-          <h2>Choose your park</h2>
-          <p className="text-muted-foreground">
-            Minneriya, Kaudulla and Hurulu Eco Park are all a short drive from Habarana. Not sure which park? Send us your
-            dates and we&apos;ll suggest the park where the herds are that week.
+    <section className="relative isolate overflow-hidden px-4 pt-24 pb-8 md:pt-32 md:pb-16">
+      <Image src={imagery.hero.src} alt={imagery.hero.alt} fill priority data-lead-image sizes="100vw" className="-z-20 object-cover" />
+      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/60 via-black/55 to-black/75" aria-hidden="true" />
+      <div className="container mx-auto">
+        <div className="grid max-w-2xl gap-4 text-white">
+          <p className="text-sm font-medium tracking-wide text-white/85 uppercase">Minneriya · Kaudulla · Hurulu Eco Park</p>
+          <h1>Jeep safaris from Habarana</h1>
+          <TrustLine tone="light" />
+          <ContactActions compact className="max-w-md [&_a:last-child]:border-white/60 [&_a:last-child]:bg-transparent [&_a:last-child]:text-white" />
+          {safaris.length > 0 && (
+            <ul className="grid max-w-md gap-1.5" aria-label="Safaris">
+              {safaris.map((pkg) => (
+                <li key={pkg._id}>
+                  <Link
+                    href={`/packages/${pkg.slug}`}
+                    className="flex items-center gap-3 rounded bg-black/35 px-3 py-2 backdrop-blur-sm hover:bg-black/50"
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block leading-snug font-semibold">{pkg.name}</span>
+                      <span className="block text-sm text-white/85">
+                        <span data-fact="duration">{pkg.duration}</span> ·{" "}
+                        <span data-price>{formatPrice(pkg) ?? PRICE_ON_REQUEST}</span>
+                      </span>
+                    </span>
+                    <ArrowRight className="size-4 shrink-0" aria-hidden="true" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="max-w-xl text-white/90">
+            Message us your date and hotel. We&apos;ll reply within 24 hours with the park, the time and the current price.
           </p>
-        </div>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {safaris.map((pkg, index) => (
-            <PackageCard key={pkg._id} pkg={pkg} priority={index === 0} />
-          ))}
         </div>
       </div>
     </section>
@@ -2583,46 +2980,27 @@ export function ParkChooser({ packages }: { packages: PublicPackage[] }) {
 }
 ```
 
-Rewrite `components/home/hero-section.tsx`:
+The gradient keeps white text ≥ 4.5:1 over the brightest part of the photo. Check the H1, row text and the Call button outline in the Task 12 screenshot, and darken `via-black/55` if any area reads low.
+
+Create `components/home/park-chooser.tsx`:
 
 ```tsx
-import Image from "next/image"
-import { ArrowDown, Car, MapPin, UsersThree } from "@phosphor-icons/react/dist/ssr"
+import PackageCard from "@/components/ui/package-card"
+import type { PublicPackage } from "@/lib/package-serialize"
 
-import { ContactActions } from "@/components/common/contact-actions"
-import { TrustLine } from "@/components/common/trust-line"
-import { imagery } from "@/config/imagery"
-
-const FACTS = [
-  { icon: Car, label: "Private jeep" },
-  { icon: MapPin, label: "Hotel pickup" },
-  { icon: UsersThree, label: "Local guides" },
-] as const
-
-export default function HeroSection() {
+export function ParkChooser({ safaris }: { safaris: PublicPackage[] }) {
+  if (!safaris.length) return null
   return (
-    <section className="relative isolate flex min-h-[min(88svh,760px)] items-end overflow-hidden px-4 pt-28 pb-10 md:items-center md:pb-16">
-      <Image src={imagery.hero.src} alt={imagery.hero.alt} fill priority sizes="100vw" className="-z-20 object-cover" />
-      <div className="absolute inset-0 -z-10 bg-gradient-to-t from-black/80 via-black/45 to-black/20" aria-hidden="true" />
-      <div className="container mx-auto">
-        <div className="grid max-w-2xl gap-5 text-white">
-          <h1>Private jeep safaris from Habarana to Minneriya, Kaudulla &amp; Hurulu</h1>
-          <p className="text-lg text-white/90 md:text-xl">
-            A jeep just for your group, a local guide, and hotel pickup from Habarana, Sigiriya and Dambulla.
-          </p>
-          <TrustLine tone="light" />
-          <ContactActions className="[&_a:last-child]:border-white/60 [&_a:last-child]:bg-transparent [&_a:last-child]:text-white" />
-          <a href="#safaris" className="inline-flex w-fit items-center gap-1.5 text-sm font-medium underline-offset-4 hover:underline">
-            See the safaris <ArrowDown className="size-4" aria-hidden="true" />
-          </a>
-          <ul className="flex flex-wrap gap-2 pt-2" aria-label="What every safari includes">
-            {FACTS.map(({ icon: Icon, label }) => (
-              <li key={label} className="inline-flex items-center gap-1.5 rounded bg-white/15 px-3 py-1.5 text-sm backdrop-blur-sm">
-                <Icon className="size-4" aria-hidden="true" />
-                {label}
-              </li>
-            ))}
-          </ul>
+    <section id="safaris" className="scroll-mt-24 px-4 py-16 md:py-20">
+      <div className="container mx-auto grid gap-8">
+        <div className="grid max-w-2xl gap-3">
+          <h2>Choose your park</h2>
+          <p className="text-muted-foreground">Not sure which park? Send us your dates and we&apos;ll recommend one.</p>
+        </div>
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {safaris.map((pkg) => (
+            <PackageCard key={pkg._id} pkg={pkg} />
+          ))}
         </div>
       </div>
     </section>
@@ -2644,7 +3022,7 @@ export function RealGuests() {
     <section className="bg-surface-sunken px-4 py-16 md:py-20">
       <div className="container mx-auto grid gap-8">
         <div className="grid max-w-2xl gap-3">
-          <h2>Real guests, real herds</h2>
+          <h2>Guests on safari with us</h2>
           <TrustLine />
         </div>
         <ul className="grid grid-cols-2 gap-2 md:grid-cols-4">
@@ -2662,15 +3040,15 @@ export function RealGuests() {
 }
 ```
 
-Create `components/home/how-booking-works.tsx`. The numbered list is a real sequence:
+Create `components/home/how-booking-works.tsx`:
 
 ```tsx
 import { ContactActions } from "@/components/common/contact-actions"
 
 const STEPS = [
   { title: "Message us your date and hotel", detail: "WhatsApp or call, and tell us how many people are coming." },
-  { title: "We confirm the park, time and price", detail: "We reply within 24 hours with availability." },
-  { title: "Your guide picks you up", detail: "From your hotel in Habarana, Sigiriya or Dambulla." },
+  { title: "We reply within 24 hours", detail: "With availability, the time, the current price and pickup details." },
+  { title: "Confirm and meet your guide", detail: "Once it's confirmed, you're set for the day." },
 ] as const
 
 export function HowBookingWorks() {
@@ -2734,32 +3112,20 @@ export function MoreExperiences({ packages }: { packages: PublicPackage[] }) {
 }
 ```
 
-Add to `components/home/park-chooser.test.tsx`:
+Run: `pnpm test components/home/home-sections.test.tsx`
+Expected: PASS.
 
-```tsx
-import { MoreExperiences } from "./more-experiences"
-
-describe("MoreExperiences", () => {
-  it("shows non-safari packages and renders nothing when there are none", () => {
-    const html = renderToStaticMarkup(
-      <MoreExperiences packages={[make("village", { category: "experience" }), make("minneriya", { category: "safari" })]} />
-    )
-    expect(html).toContain("/packages/village")
-    expect(html).not.toContain("/packages/minneriya")
-    expect(renderToStaticMarkup(<MoreExperiences packages={[make("minneriya", { category: "safari" })]} />)).toBe("")
-  })
-})
-```
-
-- [ ] **Step 3: Compose the homepage.** `app/(main)/page.tsx`:
+- [ ] **Step 3: Compose the homepage.** `app/(main)/page.tsx`, keeping the existing `metadata` export:
 
 ```tsx
 export default async function Home() {
   const packages = await getPackages()
+  const safaris = groupPackagesByCategory(packages).find((group) => group.key === "safari")?.items ?? []
+
   return (
     <main>
-      <HeroSection />
-      <ParkChooser packages={packages} />
+      <HeroSection safaris={safaris} />
+      <ParkChooser safaris={safaris} />
       <RealGuests />
       <HowBookingWorks />
       <MoreExperiences packages={packages} />
@@ -2772,12 +3138,15 @@ export default async function Home() {
 }
 ```
 
-Keep the existing `metadata` export. Delete the five replaced home components after `grep -rn` confirms no other importer. `components/home/featured-blogs-section.tsx` keeps working, with its `Link` + `Button` nesting fixed to `Button asChild` in this step.
+Delete the five replaced home components after `grep -rn` confirms no importer. In `featured-blogs-section.tsx`, change the `Link` + `Button` to `Button asChild`.
 
 - [ ] **Step 4: Verify and commit.**
 
 Run: `pnpm test && pnpm typecheck && pnpm lint`
 Expected: PASS / clean.
+
+With `pnpm dev`: `node scripts/verify-layout.mjs http://localhost:3000 "/:facts"`
+Expected: all PASS.
 
 ```bash
 git add components/home "app/(main)/page.tsx"
@@ -2786,17 +3155,41 @@ git commit -m "feat: rebuild the homepage around parks, real guests and WhatsApp
 
 ---
 
-### Task 10: Book-now, contact and blog post
+### Task 10: Book-now, contact and blog
 
 **Files:**
-- Modify: `components/common/booking-form.tsx` (prop instead of `useSearchParams`; drop the `motion` wrapper)
-- Create: `components/common/booking-form.test.tsx`
-- Modify: `app/(main)/book-now/page.tsx`, `app/(main)/contact/page.tsx`, `app/(main)/blogs/[slug]/page.tsx`, `app/(main)/blogs/page.tsx` (add `MobileContactBar`)
+- Create: `lib/booking-prefill.ts`, `lib/booking-prefill.test.ts`, `components/common/booking-form.test.tsx`
+- Modify: `components/common/booking-form.tsx`, `app/(main)/book-now/page.tsx`, `app/(main)/contact/page.tsx`, `app/(main)/blogs/[slug]/page.tsx`, `app/(main)/blogs/page.tsx`
 
 **Interfaces:**
-- Produces: `BookingForm({ packages, initialPackageId }: { packages: {_id: string; name: string}[]; initialPackageId?: string })`.
+- Produces: `resolveInitialPackageId(raw: string | string[] | undefined, packages: ReadonlyArray<{ _id: string }>): string`, and `BookingForm({ packages, initialPackageId })`.
 
-- [ ] **Step 1: Failing test.** Create `components/common/booking-form.test.tsx`:
+- [ ] **Step 1: Failing tests.** Create `lib/booking-prefill.test.ts`:
+
+```ts
+import { describe, expect, it } from "vitest"
+
+import { resolveInitialPackageId } from "./booking-prefill"
+
+const packages = [{ _id: "a".repeat(24) }, { _id: "b".repeat(24) }]
+
+describe("resolveInitialPackageId", () => {
+  it("accepts the id of a current package", () => {
+    expect(resolveInitialPackageId("b".repeat(24), packages)).toBe("b".repeat(24))
+  })
+
+  it.each([
+    ["missing", undefined],
+    ["malformed", "not-an-id"],
+    ["stale id from an old link", "c".repeat(24)],
+    ["repeated query param", ["a".repeat(24), "b".repeat(24)]],
+  ])("returns empty for %s", (_label, raw) => {
+    expect(resolveInitialPackageId(raw, packages)).toBe("")
+  })
+})
+```
+
+Create `components/common/booking-form.test.tsx`:
 
 ```tsx
 import { renderToStaticMarkup } from "react-dom/server"
@@ -2809,42 +3202,56 @@ import BookingForm from "./booking-form"
 const packages = [{ _id: "a".repeat(24), name: "Hurulu Eco Park Safari" }]
 
 describe("BookingForm server render", () => {
-  it("is visible before JavaScript runs", () => {
-    expect(renderToStaticMarkup(<BookingForm packages={packages} />)).not.toMatch(/opacity:\s*0/)
-  })
-
-  it("renders its fields", () => {
+  it("is visible before JavaScript runs and renders its fields", () => {
     const html = renderToStaticMarkup(<BookingForm packages={packages} />)
+    expect(html).not.toMatch(/opacity:\s*0/)
     expect(html).toContain("Full Name")
     expect(html).toContain("Preferred Date")
-  })
-
-  it("preselects the package passed from the server", () => {
-    const html = renderToStaticMarkup(<BookingForm packages={packages} initialPackageId={"a".repeat(24)} />)
-    expect(html).toContain("Hurulu Eco Park Safari")
   })
 })
 ```
 
-Run: `pnpm test components/common/booking-form.test.tsx`
-Expected: FAIL. `useSearchParams` isn't mocked (throws), and `opacity:0` is present.
+The selected-value behaviour is verified in the browser, in Task 12 via `verify-layout.mjs` on `/book-now?packageId=…`, because Radix Select resolves the displayed value on the client.
 
-- [ ] **Step 2: Implement.**
+Run: `pnpm test lib/booking-prefill.test.ts components/common/booking-form.test.tsx`
+Expected: FAIL. The module is missing, `useSearchParams` isn't mocked (throws), and `opacity:0` is present.
+
+- [ ] **Step 2: Implement.** Create `lib/booking-prefill.ts`:
+
+```ts
+const OBJECT_ID = /^[a-f\d]{24}$/i
+
+/** Prefill only a current package; stale or malformed ids from old links become "". */
+export function resolveInitialPackageId(
+  raw: string | string[] | undefined,
+  packages: ReadonlyArray<{ _id: string }>
+): string {
+  if (typeof raw !== "string" || !OBJECT_ID.test(raw)) return ""
+  return packages.some((pkg) => pkg._id === raw) ? raw : ""
+}
+```
 
 `booking-form.tsx`:
 - Remove `useSearchParams` and the `motion` import.
-- Accept `initialPackageId?: string` and use it as the `packageId` default (validated with `/^[a-f\d]{24}$/i`, else `""`).
+- Accept `initialPackageId?: string` and use it as the `packageId` default.
+- Change the `Select` to controlled: `value={field.value}` instead of `defaultValue`, so the prefill displays.
 - Replace `<motion.div …>` with `<div className="bg-white rounded-xl shadow-lg p-6 md:p-8">`.
 
 `app/(main)/book-now/page.tsx`:
-- Accept `{ searchParams }: { searchParams: Promise<{ packageId?: string }> }`, do `const { packageId } = await searchParams`, and pass `initialPackageId={packageId}`.
+- Accept `{ searchParams }: { searchParams: Promise<{ packageId?: string | string[] }> }`.
+- Compute `initialPackageId = resolveInitialPackageId((await searchParams).packageId, packages)`.
 - Remove the `Suspense` wrapper.
-- Above the form add a block: `<div className="mb-8 grid gap-3 rounded-lg border bg-card p-6"><h2 className="text-2xl">Fastest: message us on WhatsApp</h2><p className="text-muted-foreground">We reply within 24 hours with availability and the current price.</p><ContactActions /></div>`. The 24-hour promise is the site's existing one; don't strengthen it.
-- Change the FAQ call to `<FAQSection variant="booking" />`.
+- Above the form, add `<div className="mb-8 grid gap-3 rounded-lg border bg-card p-6"><h2 className="text-2xl">Fastest: message us on WhatsApp</h2><p className="text-muted-foreground">We reply within 24 hours with availability and the current price.</p><ContactActions /></div>`.
+- Use `<FAQSection variant="booking" />`, and end `<main>` with `<MobileContactBar />`.
 
-`app/(main)/contact/page.tsx`: the `motion.div` becomes a `div`, drop the framer import, confirm the Task 3 `tel:` link, and add `<MobileContactBar />`.
+`app/(main)/contact/page.tsx`: the `motion.div` becomes a `div`, drop the framer import, keep the Task 3 `tel:` link, and end `<main>` with `<MobileContactBar />`.
 
-`app/(main)/blogs/[slug]/page.tsx`: before `{/* Comments Section */}` insert `<FinalCta title="Planning a safari from Habarana?" />`. Add `<MobileContactBar />` at the end of `<article>`'s parent. Also add `<MobileContactBar />` to `app/(main)/blogs/page.tsx`.
+`app/(main)/blogs/[slug]/page.tsx`:
+- Change the outer `<div className="min-h-screen bg-white">` to `<main className="min-h-screen bg-white">`.
+- Insert `<FinalCta title="Planning a safari from Habarana?" />` before `{/* Comments Section */}`.
+- End `<main>` with `<MobileContactBar />`.
+
+`app/(main)/blogs/page.tsx`: end `<main>` with `<MobileContactBar />`.
 
 Run: `pnpm test && pnpm typecheck && pnpm lint`
 Expected: PASS / clean.
@@ -2852,7 +3259,7 @@ Expected: PASS / clean.
 - [ ] **Step 3: Commit.**
 
 ```bash
-git add components/common/booking-form.tsx components/common/booking-form.test.tsx "app/(main)/book-now/page.tsx" "app/(main)/contact/page.tsx" "app/(main)/blogs/[slug]/page.tsx" "app/(main)/blogs/page.tsx"
+git add lib/booking-prefill.ts lib/booking-prefill.test.ts components/common/booking-form.tsx components/common/booking-form.test.tsx "app/(main)/book-now/page.tsx" "app/(main)/contact/page.tsx" "app/(main)/blogs/[slug]/page.tsx" "app/(main)/blogs/page.tsx"
 git commit -m "feat: server-rendered inquiry form, WhatsApp-first contact and blog CTAs"
 ```
 
@@ -2863,11 +3270,11 @@ git commit -m "feat: server-rendered inquiry form, WhatsApp-first contact and bl
 **Files:**
 - Create: `docs/content/package-landing-drafts.md`
 
-- [ ] **Step 1: Write the drafts** for Minneriya, Kaudulla, Hurulu, the village experience and the cooking class. Each draft has every landing field in the exact admin format from Task 2: summary, seoTitle, seoDescription, groupSize, highlights, notIncluded, timeSlots, pickupAreas, whatToBring, itinerary (`time | title | detail`), FAQs (blocks) and season.
-  - **Source only from existing site copy:** the live package descriptions, the five live blog posts, and the FAQ. Cite the source URL under each draft.
-  - Where the sources contradict each other (season: "May–Oct" vs "Apr–Sep" vs "Aug–Dec"; herd size "200–300" vs "300–700"), don't pick one. Show both and mark **[confirm]**.
-  - Every price, time slot, ticket inclusion and pickup area is marked **[confirm]**.
-  - Also list the typo fixes for each package's `description` (from the audit) as before/after pairs.
+- [ ] **Step 1: Write the drafts** for Minneriya, Kaudulla, Hurulu, the village experience and the cooking class. Each package gets two blocks.
+  - **Paste-ready.** Every landing field in the exact admin format from Task 2, using **only statements that already appear in live copy**: the live package descriptions, the five live blog posts and the live FAQ. There are no markers inside this block; the source URLs are listed under it.
+  - **Owner to confirm before publishing.** A question list: every price, start time, ticket inclusion, pickup area and charge, group size, and season month, plus each contradiction between sources (season: "May–Oct" vs "Apr–Sep" vs "Aug–Dec"; herd size: "200–300" vs "300–700"), each as a question with the conflicting quotes. Nothing from this list appears in the paste-ready block.
+  - Add typo fixes for each `description` as before/after pairs.
+  - Add a note that the 500-unique-word gate (Task 12) is met only once the confirmed content is in.
 
 - [ ] **Step 2: Commit.**
 
@@ -2878,39 +3285,82 @@ git commit -m "docs: draft landing-page copy for the five core packages"
 
 ---
 
-### Task 12: Whole-branch verification
+### Task 12: Whole-branch verification and release gates
 
-- [ ] **Step 1: Gates.**
+**Files:**
+- Create: `scripts/landing-word-report.mjs`
+
+- [ ] **Step 1: Unique-content report.** Create `scripts/landing-word-report.mjs`:
+
+```js
+#!/usr/bin/env node
+// Words per safari page that sit in sentences appearing on no other package page.
+// Advisory: prints GATE OPEN until every safari page has >= 500 such words.
+//   node scripts/landing-word-report.mjs http://localhost:3000
+const base = process.argv[2] ?? "http://localhost:3000"
+const MIN_WORDS = 500
+
+const listing = await (await fetch(new URL("/packages", base))).text()
+const slugs = [...new Set([...listing.matchAll(/href="\/packages\/([a-z0-9-]+)"/g)].map((m) => m[1]))]
+
+const mainText = (html) =>
+  (html.match(/<main[\s\S]*?<\/main>/)?.[0] ?? "")
+    .replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&[a-z#0-9]+;/gi, " ")
+    .replace(/\s+/g, " ")
+const sentences = (text) => text.split(/(?<=[.!?])\s+/).map((s) => s.trim().toLowerCase()).filter((s) => s.split(" ").length >= 4)
+
+const pages = {}
+for (const slug of slugs) pages[slug] = sentences(mainText(await (await fetch(new URL(`/packages/${slug}`, base))).text()))
+
+let open = false
+for (const slug of slugs.filter((s) => /safari/.test(s))) {
+  const others = new Set(slugs.filter((s) => s !== slug).flatMap((s) => pages[s]))
+  const words = pages[slug].filter((s) => !others.has(s)).reduce((n, s) => n + s.split(" ").length, 0)
+  if (words < MIN_WORDS) open = true
+  console.log(`${words >= MIN_WORDS ? "OK  " : "OPEN"}  ${slug}: ${words} unique words`)
+}
+console.log(open ? `\nGATE OPEN: needs owner content (>= ${MIN_WORDS} unique words per safari page)` : "\nGATE MET")
+```
+
+- [ ] **Step 2: Gates.**
 
 Run: `pnpm test && pnpm typecheck && pnpm lint && pnpm build`
 Expected: all green.
 
-- [ ] **Step 2: HTML checks on `pnpm start`** (dev DB):
+- [ ] **Step 3: HTML checks on `pnpm start`** (dev DB):
 
 ```bash
 B=http://localhost:3000
-PKG=$(curl -s $B/packages | grep -oE 'href="/packages/[a-z0-9-]+"' | head -1 | sed 's/href="//;s/"//')
-curl -s $B/ | grep -c 'wa.me/94766675883'                                   # ≥ 3 (hero, bar, final CTA)
-curl -s $B/ | grep -cE '<a[^>]*>\s*<button'                                 # 0
-curl -s $B/ | grep -c 'opacity:0'                                           # 0
-curl -s $B$PKG | grep -oE '<title>[^<]+</title>'                            # "… | Ceylon Safari"
-curl -s $B$PKG | grep -c 'Price on request\|From US\$\|From LKR'             # ≥ 1
-curl -s $B$PKG | grep -ciE 'free cancellation|instant confirmation'         # 0
-curl -s "$B/book-now?packageId=$(curl -s $B$PKG | grep -oE 'packageId=[a-f0-9]{24}' | head -1 | cut -d= -f2)" | grep -c 'Loading form'  # 0
-curl -s $B/definitely-missing | grep -oE '<meta name="robots"[^>]*>'        # exactly one noindex
-grep -rn "umami\|posthog\|data-umami" app components lib config             # no output
+count() { grep -o "$1" | wc -l | tr -d ' '; }
+PKG=/packages/hurulu-eco-park-safari
+curl -s $B/ | count 'wa.me/94766675883'                                          # ≥ 4 (hero, quick-pick cards, final CTA, bar)
+curl -s $B/ | grep -oE '<a[^>]*>\s*<button' | wc -l                              # 0
+curl -s $B/ | count 'opacity:0'                                                  # 0
+curl -s $B$PKG | grep -oE '<title>[^<]+</title>'                                 # "… | Ceylon Safari"
+curl -s $B$PKG | grep -oiE 'free cancellation|instant confirmation|free hotel pickup' | wc -l   # 0
+curl -s $B$PKG | grep -o '"availability"' | wc -l                                # 0
+curl -s $B/definitely-missing | grep -oE '<meta name="robots"[^>]*>'             # exactly one noindex
+grep -rn "umami\|posthog" app components lib config                             # no output
 ```
 
-- [ ] **Step 3: Visual check at 390 px and 1280 px.** Screenshot these in light theme:
-  - `/`;
-  - a package with no landing data;
-  - a package after pasting one draft from Task 11 into the **dev** admin.
+- [ ] **Step 4: Browser checks.**
 
-  Check:
-  - the first screen shows the H1, trust line and WhatsApp;
-  - the mobile bar doesn't cover the footer's last line;
-  - there's no horizontal overflow;
-  - the booking panel sticks on desktop;
-  - the season strip is readable.
+```bash
+ID=$(curl -s $B$PKG | grep -oE 'packageId=[a-f0-9]{24}' | head -1 | cut -d= -f2)
+LONG=$(curl -s $B/packages | grep -oE 'href="/packages/[a-z0-9-]+"' | sed 's/href="//;s/"//' | awk '{ print length, $0 }' | sort -rn | head -1 | cut -d' ' -f2)
+node scripts/verify-layout.mjs $B "/:facts" "$PKG:facts" "$LONG:facts" /packages /contact "/book-now?packageId=$ID" /blogs
+```
 
-- [ ] **Step 4: Report** the evidence to the user. Hand the owner-facing items to the user: pasting drafts into the admin after confirming the facts, setting `category` and `sortOrder` on the live packages, and deleting the `explore-sri-lanka-…` package so Task 7's redirect applies.
+Expected: all PASS at phone, tablet and desktop, at 100% and 125% text. Then paste one Task 11 paste-ready draft into the **dev** admin for Hurulu and rerun `node scripts/verify-layout.mjs $B "$PKG:facts"`. Expected: all PASS with full landing data too.
+
+- [ ] **Step 5: Visual pass.** Take 390 px and 1280 px screenshots of the same pages (CDP `Page.captureScreenshot`, or `verify-layout.mjs` extended locally). Check hero text contrast over the photo, the season strip's legibility, and that nothing clips. Fix, then rerun Step 4.
+
+- [ ] **Step 6: Content gate.** Run `node scripts/landing-word-report.mjs $B`. Report the per-page numbers to the user. **GATE OPEN is expected** until the owner's confirmed content is entered; it's reported, not claimed as met.
+
+- [ ] **Step 7: Report.** Give the user the evidence plus the owner/dev launch checklist:
+  1. Set explicit `category` and `sortOrder` in admin. Inference covers today, but explicit is better.
+  2. Confirm and enter the Task 11 content.
+  3. Delete the `explore-sri-lanka-…` package so the Task 7 redirect applies.
+  4. Rerun Steps 4 and 6 against production after deploy.
