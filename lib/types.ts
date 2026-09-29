@@ -41,6 +41,18 @@ export const passwordPolicySchema = z
 		"Password must contain at least one special character"
 	);
 
+const optionalText = (maximum: number) =>
+	z.string().trim().max(maximum).nullable().optional();
+
+const listOf = (maxItems: number, maxLength: number, label: string) =>
+	z
+		.array(trimmedString(1, maxLength, label))
+		.max(maxItems)
+		.nullable()
+		.optional();
+
+const monthSchema = z.number().int().min(1).max(12);
+
 // Package Schema
 export const packageSchema = z.object({
 	name: trimmedString(3, 120, "Name"),
@@ -67,23 +79,85 @@ export const packageSchema = z.object({
 	priceCurrency: z.enum(PRICE_CURRENCIES).nullable().optional(),
 	priceUnit: z.enum(PRICE_UNITS).nullable().optional(),
 	priceNote: z.string().trim().max(160).nullable().optional(),
+	// Optional landing-page content. Rendered only when present.
+	summary: optionalText(220),
+	seoTitle: optionalText(70),
+	seoDescription: optionalText(160),
+	groupSize: optionalText(60),
+	highlights: listOf(8, 140, "Highlight"),
+	notIncluded: listOf(12, 140, "Not included item"),
+	timeSlots: listOf(4, 40, "Time slot"),
+	pickupAreas: listOf(10, 60, "Pickup area"),
+	whatToBring: listOf(10, 100, "What to bring item"),
+	// Keyed by image URL, not position, so gaps, reordering and removal can
+	// never shift a description onto another photo.
+	imageAlts: z
+		.array(
+			z.object({
+				src: z.url("Each described image must be a valid URL"),
+				alt: trimmedString(1, 150, "Image description"),
+			})
+		)
+		.max(30)
+		.nullable()
+		.optional(),
+	itinerary: z
+		.array(
+			z.object({
+				time: optionalText(20),
+				title: trimmedString(1, 100, "Itinerary step"),
+				detail: optionalText(300),
+			})
+		)
+		.max(10)
+		.nullable()
+		.optional(),
+	faqs: z
+		.array(
+			z.object({
+				question: trimmedString(5, 200, "Question"),
+				answer: trimmedString(5, 1_000, "Answer"),
+			})
+		)
+		.max(10)
+		.nullable()
+		.optional(),
+	season: z
+		.object({
+			peak: z.array(monthSchema).max(12),
+			good: z.array(monthSchema).max(12),
+		})
+		.nullable()
+		.optional(),
 }).superRefine((value, context) => {
-	if (value.priceFrom == null) return;
-	if (!value.priceCurrency) {
+	// Independent checks: no early return, or later checks would be skipped.
+	if (value.priceFrom != null && !value.priceCurrency) {
 		context.addIssue({
 			code: "custom",
 			path: ["priceCurrency"],
 			message: "Choose a currency for the price",
 		});
 	}
-	if (!value.priceUnit) {
+	if (value.priceFrom != null && !value.priceUnit) {
 		context.addIssue({
 			code: "custom",
 			path: ["priceUnit"],
 			message: "Choose what the price covers",
 		});
 	}
+	if (value.season) {
+		const all = [...value.season.peak, ...value.season.good];
+		if (new Set(all).size !== all.length) {
+			context.addIssue({
+				code: "custom",
+				path: ["season"],
+				message: "Each month can be marked once, as best or good",
+			});
+		}
+	}
 });
+
+export type PackageInput = z.infer<typeof packageSchema>;
 
 // Inquiry Schema
 export const inquirySchema = z.object({

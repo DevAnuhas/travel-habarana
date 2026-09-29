@@ -115,3 +115,84 @@ describe("packageSchema merchandising fields", () => {
     ).toBe(false)
   })
 })
+
+describe("packageSchema landing fields", () => {
+  const landing = {
+    summary:
+      "See the elephant gathering at Minneriya tank in a jeep with a local guide.",
+    seoTitle: "Minneriya National Park Jeep Safari from Habarana",
+    seoDescription: "Minneriya jeep safari from Habarana.",
+    groupSize: "Up to 6 per jeep",
+    highlights: ["Elephant herds at the tank"],
+    notIncluded: ["Park entrance tickets"],
+    timeSlots: ["6:00 am", "2:30 pm"],
+    pickupAreas: ["Habarana", "Sigiriya"],
+    whatToBring: ["Hat"],
+    itinerary: [
+      { time: "2:30 pm", title: "Hotel pickup", detail: "In an open jeep" },
+    ],
+    faqs: [
+      {
+        question: "Is it private?",
+        answer: "Yes, the jeep is only for your group.",
+      },
+    ],
+    season: { peak: [8, 9], good: [7, 10] },
+    imageAlts: [
+      {
+        src: "https://res.cloudinary.com/demo/image/upload/hurulu.jpg",
+        alt: "Elephants at the tank at sunset",
+      },
+    ],
+  }
+
+  it("accepts a full landing payload and keeps it", () => {
+    const result = packageSchema.parse({ ...legacyPackage, ...landing })
+    expect(result).toMatchObject(landing)
+  })
+
+  it("accepts null for every landing field", () => {
+    const nulls = Object.fromEntries(
+      Object.keys(landing).map((key) => [key, null])
+    )
+    expect(
+      packageSchema.safeParse({ ...legacyPackage, ...nulls }).success
+    ).toBe(true)
+  })
+
+  it.each([
+    [
+      "too many highlights",
+      { highlights: Array.from({ length: 9 }, (_, i) => `Highlight ${i}`) },
+    ],
+    ["month 13", { season: { peak: [13], good: [] } }],
+    ["month 0", { season: { peak: [], good: [0] } }],
+    ["duplicate month", { season: { peak: [8, 8], good: [] } }],
+    ["peak and good overlap", { season: { peak: [8], good: [8] } }],
+    [
+      "FAQ without answer",
+      { faqs: [{ question: "Is it private?", answer: "" }] },
+    ],
+    ["summary over 220 chars", { summary: "a".repeat(221) }],
+    [
+      "alt over 150 chars",
+      {
+        imageAlts: [
+          { src: "https://res.cloudinary.com/x.jpg", alt: "a".repeat(151) },
+        ],
+      },
+    ],
+    [
+      "alt with blank text",
+      { imageAlts: [{ src: "https://res.cloudinary.com/x.jpg", alt: "  " }] },
+    ],
+    [
+      "alt with a non-URL src",
+      { imageAlts: [{ src: "not a url", alt: "Elephants" }] },
+    ],
+  ])("rejects %s", (_label, extra) => {
+    expect(
+      packageSchema.safeParse({ ...legacyPackage, ...extra }).success
+    ).toBe(false)
+  })
+})

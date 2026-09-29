@@ -35,6 +35,60 @@ const packageSchema = new mongoose.Schema(
 		},
 		priceUnit: { type: String, enum: [...PRICE_UNITS, null], default: null },
 		priceNote: { type: String, default: null },
+		// Optional landing-page content (see lib/package-serialize.ts).
+		summary: { type: String, default: null },
+		seoTitle: { type: String, default: null },
+		seoDescription: { type: String, default: null },
+		groupSize: { type: String, default: null },
+		highlights: { type: [String], default: undefined },
+		notIncluded: { type: [String], default: undefined },
+		timeSlots: { type: [String], default: undefined },
+		pickupAreas: { type: [String], default: undefined },
+		whatToBring: { type: [String], default: undefined },
+		imageAlts: {
+			type: [
+				new mongoose.Schema(
+					{
+						src: { type: String, required: true },
+						alt: { type: String, required: true },
+					},
+					{ _id: false }
+				),
+			],
+			default: undefined,
+		},
+		itinerary: {
+			type: [
+				new mongoose.Schema(
+					{
+						time: String,
+						title: { type: String, required: true },
+						detail: String,
+					},
+					{ _id: false }
+				),
+			],
+			default: undefined,
+		},
+		faqs: {
+			type: [
+				new mongoose.Schema(
+					{
+						question: { type: String, required: true },
+						answer: { type: String, required: true },
+					},
+					{ _id: false }
+				),
+			],
+			default: undefined,
+		},
+		season: {
+			type: new mongoose.Schema(
+				{ peak: [Number], good: [Number] },
+				{ _id: false }
+			),
+			default: null,
+		},
 	},
 	{
 		timestamps: true,

@@ -50,3 +50,21 @@ export function selectRelatedPackages<T extends OrderablePackage>(
   const rest = others.filter((p) => !sameCategory.includes(p))
   return [...sameCategory, ...rest].slice(0, limit)
 }
+
+// Explicit keyword fallback for packages whose admin category is unset
+// (every live package as of 29 Sep 2026). Order matters: "village-experience-tour"
+// must be an experience, not a tour. The admin's category always wins.
+const CATEGORY_RULES: ReadonlyArray<readonly [RegExp, PackageCategory]> = [
+  [/safari/, "safari"],
+  [/village|cooking|culinary/, "experience"],
+  [/cottage|room|stay|hotel/, "stay"],
+  [/tour/, "tour"],
+]
+
+export function inferCategory(
+  slug: string,
+  name: string
+): PackageCategory | undefined {
+  const haystack = `${slug} ${name}`.toLowerCase()
+  return CATEGORY_RULES.find(([pattern]) => pattern.test(haystack))?.[1]
+}

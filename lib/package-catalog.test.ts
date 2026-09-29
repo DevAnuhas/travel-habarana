@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  inferCategory,
   selectRelatedPackages,
   sortPackages,
   type OrderablePackage,
@@ -75,5 +76,35 @@ describe("selectRelatedPackages", () => {
 
   it("returns an empty list when nothing else exists", () => {
     expect(selectRelatedPackages(minneriya, [minneriya])).toEqual([])
+  })
+})
+
+describe("inferCategory", () => {
+  // The 11 live slugs (www.ceylonsafari.com/packages, 29 Sep 2026); the 5 dev
+  // slugs are a subset of these.
+  it.each([
+    ["hurulu-eco-park-safari", "safari"],
+    ["minneriya-national-park-safari", "safari"],
+    ["kaudulla-national-park-safari", "safari"],
+    ["village-experience-tour", "experience"],
+    ["sri-lankan-culinary-journey", "experience"],
+    ["polonnaruwa-city-tours", "tour"],
+    ["sigiriya-city-tours", "tour"],
+    ["medirigiriya-vatadageya-tour", "tour"],
+    ["srilankan-day-and-multi-day-tours", "tour"],
+    ["explore-sri-lanka-a-complete-guide-to-every-city-tour", "tour"],
+    ["habarana-cottages-and-rooms", "stay"],
+  ])("%s → %s", (slug, expected) => {
+    expect(inferCategory(slug, slug.replace(/-/g, " "))).toBe(expected)
+  })
+
+  it("uses the name when the slug says nothing", () => {
+    expect(inferCategory("package-7", "Habarana Cooking Class")).toBe(
+      "experience"
+    )
+  })
+
+  it("returns undefined when nothing matches", () => {
+    expect(inferCategory("misc", "Airport transfer")).toBeUndefined()
   })
 })
