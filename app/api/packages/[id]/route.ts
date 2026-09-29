@@ -6,7 +6,7 @@ import Package from "@/models/Package";
 import { packageIdentifierSchema, packageSchema } from "@/lib/types";
 import { NotFoundError } from "@/lib/errors";
 import { withErrorHandler, withAdminAuth } from "@/middleware/error-handler";
-import { generateSlug } from "@/utils/slug";
+import { findAvailableSlug } from "@/lib/package-slug-store";
 import { planSlugChange } from "@/lib/package-slugs";
 import { parseJsonBody } from "@/lib/api";
 
@@ -79,17 +79,10 @@ export async function PUT(
 			// A rename regenerates the slug; the old one goes into previousSlugs so
 			// indexed URLs keep resolving (the page 308s them to the new slug).
 			if (updatedPackage.name !== packageItem.name) {
-				let nextSlug = generateSlug(updatedPackage.name);
-
-				const existingWithSlug = await Package.findOne({
-					slug: nextSlug,
-					_id: { $ne: packageItem._id },
-				});
-
-				// If slug exists, add a timestamp suffix to make it unique
-				if (existingWithSlug) {
-					nextSlug = `${nextSlug}-${Date.now().toString().slice(-4)}`;
-				}
+				const nextSlug = await findAvailableSlug(
+					updatedPackage.name,
+					packageItem._id
+				);
 
 				const slugState = planSlugChange(
 					{
