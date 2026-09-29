@@ -66,7 +66,7 @@ export default async function PackagesPage() {
         </div>
       </section>
 
-      <FAQSection />
+      <FAQSection variant="safari" />
     </main>
   )
 }

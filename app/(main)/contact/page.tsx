@@ -174,7 +174,7 @@ export default function ContactPage() {
         </div>
       </section>
 
-      <FAQSection />
+      <FAQSection variant="booking" />
     </main>
   )
 }

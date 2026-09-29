@@ -62,7 +62,7 @@ export default async function BookNowPage() {
         </div>
       </section>
 
-      <FAQSection />
+      <FAQSection variant="booking" />
     </main>
   )
 }

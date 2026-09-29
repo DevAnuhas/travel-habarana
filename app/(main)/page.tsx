@@ -40,7 +40,7 @@ export default function Home() {
       <TestimonialsSection />
       <FeaturedBlogsSection />
       <CTABannerSection />
-      <FAQSection />
+      <FAQSection variant="safari" />
     </>
   )
 }
