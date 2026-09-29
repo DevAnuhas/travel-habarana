@@ -312,16 +312,13 @@ export function ImageUpload({
 			{/* Dropzone */}
 			<div
 				{...getRootProps()}
-				className={`border-2 border-dashed rounded-lg p-8 cursor-pointer flex flex-col items-center justify-center transition-all duration-300 ${
+				className={`border-2 border-dashed rounded-lg p-8 cursor-pointer flex flex-col items-center justify-center transition-all duration-300 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
 					isDragActive
 						? "border-primary bg-primary/5"
 						: isDisabled
 						? "border-gray-200 bg-gray-50 cursor-not-allowed"
 						: "border-gray-300 hover:border-primary hover:bg-gray-50"
 				}`}
-				style={{
-					outline: "none",
-				}}
 			>
 				<input {...getInputProps()} />
 				<motion.div

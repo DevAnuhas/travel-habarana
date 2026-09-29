@@ -124,7 +124,7 @@ export default function Navbar() {
 							<Phone className="text-current" />
 						</a>
 						<button
-							className="text-2xl focus:outline-none"
+							className="rounded-sm text-2xl focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current"
 							onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
 							aria-label="Toggle menu"
 							aria-expanded={isMobileMenuOpen}
