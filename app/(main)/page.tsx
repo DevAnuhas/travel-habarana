@@ -1,19 +1,22 @@
 import type { Metadata } from "next"
 
-import HeroSection from "@/components/home/hero-section"
-import PackagesSection from "@/components/home/packages-section"
-import PlanVisitSection from "@/components/home/plan-visit-section"
-import FeaturesSection from "@/components/home/features-section"
-import TestimonialsSection from "@/components/home/testimonials-section"
-import FeaturedBlogsSection from "@/components/home/featured-blogs-section"
-import CTABannerSection from "@/components/home/cta-banner-section"
 import FAQSection from "@/components/common/faq-section"
+import { FinalCta } from "@/components/common/final-cta"
+import { MobileContactBar } from "@/components/common/mobile-contact-bar"
+import FeaturedBlogsSection from "@/components/home/featured-blogs-section"
+import HeroSection from "@/components/home/hero-section"
+import { HowBookingWorks } from "@/components/home/how-booking-works"
+import { MoreExperiences } from "@/components/home/more-experiences"
+import { ParkChooser } from "@/components/home/park-chooser"
+import { RealGuests } from "@/components/home/real-guests"
+import { groupPackagesByCategory } from "@/lib/package-catalog"
+import { getPackages } from "@/lib/packages"
 import { siteConfig } from "@/config/site"
 
 export const metadata: Metadata = {
   title: "Minneriya & Habarana Jeep Safaris",
   description:
-    "Private elephant jeep safaris from Habarana to Minneriya, Kaudulla, and Hurulu Eco Park, plus village tours and Sri Lankan cooking experiences.",
+    "Jeep safaris from Habarana to Minneriya, Kaudulla and Hurulu Eco Park, plus village tours and Sri Lankan cooking experiences.",
   alternates: { canonical: "/" },
   openGraph: {
     title: "Minneriya & Habarana Jeep Safaris | Ceylon Safari",
@@ -30,17 +33,23 @@ export const metadata: Metadata = {
   },
 }
 
-export default function Home() {
+export default async function Home() {
+  const packages = await getPackages()
+  const safaris =
+    groupPackagesByCategory(packages).find((group) => group.key === "safari")
+      ?.items ?? []
+
   return (
-    <>
-      <HeroSection />
-      <PackagesSection />
-      <PlanVisitSection />
-      <FeaturesSection />
-      <TestimonialsSection />
-      <FeaturedBlogsSection />
-      <CTABannerSection />
+    <main>
+      <HeroSection safaris={safaris} />
+      <ParkChooser safaris={safaris} />
+      <RealGuests />
+      <HowBookingWorks />
+      <MoreExperiences packages={packages} />
       <FAQSection variant="safari" />
-    </>
+      <FeaturedBlogsSection />
+      <FinalCta />
+      <MobileContactBar />
+    </main>
   )
 }

@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: `Book a Safari with ${siteConfig.name}`,
     description:
-      "Request current pricing and availability for a private jeep safari or village experience.",
+      "Request current pricing and availability for a jeep safari or village experience.",
     url: "/book-now",
     images: [
       {

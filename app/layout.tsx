@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     template: `%s | ${siteConfig.name}`,
   },
   description:
-    "Book private elephant jeep safaris from Habarana to Minneriya, Kaudulla, and Hurulu Eco Park, plus local village and cooking experiences.",
+    "Jeep safaris from Habarana to Minneriya, Kaudulla and Hurulu Eco Park, plus village and Sri Lankan cooking experiences.",
   openGraph: {
     title: "Minneriya & Habarana Jeep Safaris | Ceylon Safari",
     description: siteConfig.description,

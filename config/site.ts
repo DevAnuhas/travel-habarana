@@ -5,7 +5,7 @@ export const siteConfig = {
     "Travel Habarana",
   ],
   description:
-    "Private jeep safaris to Minneriya, Kaudulla, and Hurulu Eco Park, plus authentic village experiences led by a local Habarana team.",
+    "Jeep safaris to Minneriya, Kaudulla and Hurulu Eco Park, and village experiences, from a local Habarana team.",
   url: "https://www.ceylonsafari.com",
   locale: "en_LK",
   logo: "/assets/ceylon-safari-logo.png",

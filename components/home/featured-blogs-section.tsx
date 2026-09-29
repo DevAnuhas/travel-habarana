@@ -35,15 +35,15 @@ export default async function FeaturedBlogsSection() {
 					)}
 				</div>
 				<div className="text-center">
-					<Link href="/blogs" className="group">
-						<Button size={"lg"}>
+					<Button asChild size={"lg"}>
+						<Link href="/blogs" className="group">
 							View All Blog Posts
 							<ArrowRight
 								size={16}
 								className="ml-1 group-hover:translate-x-1 transition-all"
 							/>
-						</Button>
-					</Link>
+						</Link>
+					</Button>
 				</div>
 			</div>
 		</section>
