@@ -3,6 +3,7 @@ import { notFound, permanentRedirect } from "next/navigation"
 
 import { siteConfig } from "@/config/site"
 import { JsonLd } from "@/components/seo/json-ld"
+import { selectRelatedPackages } from "@/lib/package-catalog"
 import { getPackage, getPackages } from "@/lib/packages"
 import { PackageDetails } from "./package-details"
 
@@ -78,9 +79,7 @@ export default async function PackageDetailsPage({
     permanentRedirect(`/packages/${packageData.slug}`)
   }
 
-  const relatedPackages = packages
-    .filter((packageItem) => packageItem._id !== packageData._id)
-    .slice(0, 3)
+  const relatedPackages = selectRelatedPackages(packageData, packages)
   const canonicalUrl = new URL(
     `/packages/${packageData.slug}`,
     siteConfig.url

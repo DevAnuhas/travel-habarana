@@ -5,10 +5,11 @@ import mongoose from "mongoose";
 
 import connectMongoDB from "@/lib/mongodb";
 import PackageModel from "@/models/Package";
-import type {
-	PackageCategory,
-	PriceCurrency,
-	PriceUnit,
+import {
+	sortPackages,
+	type PackageCategory,
+	type PriceCurrency,
+	type PriceUnit,
 } from "@/lib/package-catalog";
 
 export interface PublicPackage {
@@ -78,7 +79,7 @@ export async function getPackages(): Promise<PublicPackage[]> {
 		.sort({ createdAt: -1 })
 		.lean()) as unknown as PackageDocument[];
 
-	return packages.map(serializePackage);
+	return sortPackages(packages.map(serializePackage));
 }
 
 export async function getPackage(

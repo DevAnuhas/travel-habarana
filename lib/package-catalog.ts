@@ -18,3 +18,35 @@ export type PriceCurrency = (typeof PRICE_CURRENCIES)[number]
 
 export const PRICE_UNITS = ["per jeep", "per person", "per group"] as const
 export type PriceUnit = (typeof PRICE_UNITS)[number]
+
+export interface OrderablePackage {
+  _id: string
+  category?: PackageCategory
+  sortOrder?: number
+  createdAt?: string
+}
+
+/** Admin display order first (0 is a real slot); unordered items last, newest first. */
+export function sortPackages<T extends OrderablePackage>(
+  items: readonly T[]
+): T[] {
+  return [...items].sort((a, b) => {
+    const orderA = a.sortOrder ?? Number.POSITIVE_INFINITY
+    const orderB = b.sortOrder ?? Number.POSITIVE_INFINITY
+    if (orderA !== orderB) return orderA - orderB
+    return (b.createdAt ?? "").localeCompare(a.createdAt ?? "")
+  })
+}
+
+export function selectRelatedPackages<T extends OrderablePackage>(
+  current: T,
+  all: readonly T[],
+  limit = 3
+): T[] {
+  const others = sortPackages(all.filter((p) => p._id !== current._id))
+  const sameCategory = current.category
+    ? others.filter((p) => p.category === current.category)
+    : []
+  const rest = others.filter((p) => !sameCategory.includes(p))
+  return [...sameCategory, ...rest].slice(0, limit)
+}
