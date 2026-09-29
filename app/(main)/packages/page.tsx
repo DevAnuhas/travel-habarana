@@ -1,72 +1,82 @@
 import FAQSection from "@/components/common/faq-section"
-import PackageCard from "@/components/ui/package-card"
-import SectionHeading from "@/components/ui/section-heading"
+import { MobileContactBar } from "@/components/common/mobile-contact-bar"
+import { TrustLine } from "@/components/common/trust-line"
 import { JsonLd } from "@/components/seo/json-ld"
+import PackageCard from "@/components/ui/package-card"
 import { siteConfig } from "@/config/site"
+import { groupPackagesByCategory } from "@/lib/package-catalog"
 import { getPackages } from "@/lib/packages"
+import { cn } from "@/lib/utils"
 
 export default async function PackagesPage() {
   const packages = await getPackages()
+  const groups = groupPackagesByCategory(packages)
   const itemListSchema = {
     "@context": "https://schema.org",
     "@type": "ItemList",
     name: "Ceylon Safari packages",
-    itemListElement: packages.map((packageItem, index) => ({
-      "@type": "ListItem",
-      position: index + 1,
-      name: packageItem.name,
-      url: new URL(`/packages/${packageItem.slug}`, siteConfig.url).toString(),
-    })),
+    itemListElement: groups
+      .flatMap((group) => group.items)
+      .map((packageItem, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        name: packageItem.name,
+        url: new URL(
+          `/packages/${packageItem.slug}`,
+          siteConfig.url
+        ).toString(),
+      })),
   }
 
   return (
-    <main className="pt-20">
+    <main>
       <JsonLd data={itemListSchema} />
-      <section className="bg-primary py-16 text-white md:py-24">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="mb-4 text-3xl font-bold md:text-4xl lg:text-5xl">
-            Habarana Safari &amp; Village Tour Packages
-          </h1>
-          <p className="mx-auto max-w-2xl text-lg md:text-xl">
-            Explore our experiences designed to showcase the best of Sri Lankan
-            wildlife and culture
+      <section className="bg-primary px-4 pt-28 pb-12 text-primary-foreground">
+        <div className="container mx-auto grid max-w-3xl gap-4">
+          <h1>Habarana Safari &amp; Village Tour Packages</h1>
+          <p className="text-lg text-primary-foreground/90">
+            Message us your dates and we&apos;ll reply within 24 hours with
+            availability and the current price.
           </p>
+          <TrustLine tone="light" />
         </div>
       </section>
 
-      <section className="bg-gray-50 py-16">
-        <div className="container mx-auto px-4">
-          <SectionHeading
-            title="Available Packages"
-            subtitle="Choose from our selection of safari and cultural experiences"
-          />
-
-          {packages.length === 0 ? (
-            <div className="py-12 text-center">
-              <p className="text-gray-500">
-                No packages available at the moment. Please check back later.
-              </p>
+      {groups.length === 0 ? (
+        <p className="px-4 py-16 text-center text-muted-foreground">
+          No packages available at the moment.
+        </p>
+      ) : (
+        groups.map((group, groupIndex) => (
+          <section
+            key={group.key}
+            aria-labelledby={`group-${group.key}`}
+            className={cn(
+              "px-4 py-14",
+              groupIndex % 2 === 1 && "bg-surface-sunken"
+            )}
+          >
+            <div className="container mx-auto grid gap-6">
+              <div className="grid max-w-2xl gap-2">
+                <h2 id={`group-${group.key}`}>{group.title}</h2>
+                <p className="text-muted-foreground">{group.intro}</p>
+              </div>
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {group.items.map((pkg, index) => (
+                  <PackageCard
+                    key={pkg._id}
+                    pkg={pkg}
+                    priority={groupIndex === 0 && index < 2}
+                  />
+                ))}
+              </div>
             </div>
-          ) : (
-            <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-2">
-              {packages.map((packageItem) => (
-                <PackageCard
-                  key={packageItem._id}
-                  id={packageItem._id}
-                  slug={packageItem.slug}
-                  name={packageItem.name}
-                  description={packageItem.description}
-                  duration={packageItem.duration}
-                  included={packageItem.included}
-                  image={packageItem.images[0]}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
+          </section>
+        ))
+      )}
 
       <FAQSection variant="safari" />
+      <MobileContactBar />
     </main>
   )
 }

@@ -22,16 +22,7 @@ export default async function PackagesSection() {
 				) : (
 					<div className="grid grid-cols-1 gap-8 md:grid-cols-2">
 						{packages.map((packageItem) => (
-							<PackageCard
-								key={packageItem._id}
-								id={packageItem._id}
-								slug={packageItem.slug}
-								name={packageItem.name}
-								description={packageItem.description}
-								duration={packageItem.duration}
-								included={packageItem.included}
-								image={packageItem.images[0]}
-							/>
+							<PackageCard key={packageItem._id} pkg={packageItem} />
 						))}
 					</div>
 				)}

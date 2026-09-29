@@ -68,3 +68,44 @@ export function inferCategory(
   const haystack = `${slug} ${name}`.toLowerCase()
   return CATEGORY_RULES.find(([pattern]) => pattern.test(haystack))?.[1]
 }
+
+// Neutral intros: they name the category, never claim what it includes.
+export const CATEGORY_SECTIONS = [
+  {
+    key: "safari",
+    title: "Jeep safaris",
+    intro:
+      "Jeep safaris to Minneriya, Kaudulla and Hurulu Eco Park from Habarana.",
+  },
+  {
+    key: "experience",
+    title: "Village & food experiences",
+    intro: "Village and food experiences around Habarana.",
+  },
+  {
+    key: "tour",
+    title: "Day tours",
+    intro:
+      "Day tours to the ancient cities and temples of the Cultural Triangle.",
+  },
+  { key: "stay", title: "Stays", intro: "Places to stay in Habarana." },
+  {
+    key: "other",
+    title: "More tours",
+    intro: "Other experiences around Habarana.",
+  },
+] as const satisfies ReadonlyArray<{
+  key: PackageCategory | "other"
+  title: string
+  intro: string
+}>
+
+export function groupPackagesByCategory<T extends OrderablePackage>(
+  items: readonly T[]
+) {
+  const sorted = sortPackages(items)
+  return CATEGORY_SECTIONS.map((section) => ({
+    ...section,
+    items: sorted.filter((p) => (p.category ?? "other") === section.key),
+  })).filter((group) => group.items.length > 0)
+}

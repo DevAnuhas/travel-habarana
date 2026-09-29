@@ -1,102 +1,97 @@
-import Image from "next/image";
-import Link from "next/link";
+import Image from "next/image"
+import Link from "next/link"
 import {
-	ArrowRight,
-	Clock,
-	Check,
-	ChatCircleDots,
-	Image as ImageIcon,
-} from "@phosphor-icons/react/dist/ssr";
-import { Button } from "./button";
+  ArrowRight,
+  Clock,
+  Image as ImageIcon,
+  WhatsappLogo,
+} from "@phosphor-icons/react/dist/ssr"
 
-interface PackageCardProps {
-	id: string;
-	slug?: string;
-	name: string;
-	description: string;
-	duration: string;
-	included: string[];
-	image?: string;
-}
+import { SeasonStrip } from "@/components/packages/season-strip"
+import { buildWhatsAppUrl } from "@/lib/contact-links"
+import type { PublicPackage } from "@/lib/package-serialize"
+import { formatPrice, PRICE_ON_REQUEST } from "@/lib/pricing"
+import { truncateAtWord } from "@/lib/seo"
 
 export default function PackageCard({
-	id,
-	slug,
-	name,
-	description,
-	duration,
-	included,
-	image,
-}: PackageCardProps) {
-	const packageIdentifier = slug || id;
+  pkg,
+  priority = false,
+}: {
+  pkg: PublicPackage
+  priority?: boolean
+}) {
+  const href = `/packages/${pkg.slug}`
+  const price = formatPrice(pkg)
+  const cover = pkg.images[0]
 
-	return (
-		<div className="bg-white rounded-xl overflow-hidden shadow-lg h-full flex flex-col transition-transform hover:-translate-y-1">
-			<Link href={`/packages/${packageIdentifier}`} passHref>
-				<div className="relative h-64 w-full overflow-hidden">
-					{image ? (
-						<Image
-							src={image}
-							alt={name}
-							fill
-							className="object-cover transition-transform duration-700 hover:scale-105"
-						/>
-					) : (
-						<div className="flex h-full items-center justify-center text-gray-400 bg-gray-200">
-							<ImageIcon size={48} />
-						</div>
-					)}
-					<div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-				</div>
-
-				<div className="p-6 flex-grow flex flex-col">
-					<div className="flex items-center mb-3">
-						<Clock size={16} className="text-primary mr-2" />
-						<span className="text-sm text-gray-600">{duration}</span>
-					</div>
-
-					<h3 className="text-xl font-bold mb-5">{name}</h3>
-
-					<div className="mb-6">
-						<h4 className="font-semibold text-sm mb-2 text-primary">
-							Includes:
-						</h4>
-						<ul className="grid grid-cols-2 gap-0.5">
-							{included.slice(0, 4).map((item, index) => (
-								<li key={index} className="flex items-start mb-1">
-									<Check
-										size={16}
-										className="text-primary mr-2 mt-1 flex-shrink-0"
-									/>
-									<span className="text-sm text-gray-600">{item}</span>
-								</li>
-							))}
-						</ul>
-					</div>
-
-					<p className="text-gray-600 mb-6 flex-grow line-clamp-3">
-						{description}
-					</p>
-
-					<div className="flex justify-between items-center gap-2">
-						<span className="flex items-center gap-2 text-sm text-muted-foreground">
-							<ChatCircleDots size={16} />
-							Contact us for pricing & availability
-						</span>
-						<div
-							className="inline-flex items-center justify-center text-primary font-medium hover:text-primary group cursor-pointer"
-						>
-							<Button variant={"link"}>
-								View Details
-								<ArrowRight
-									size={16}
-									className="ml-1 group-hover:ml-2 transition-all"
-								/>
-							</Button>
-						</div>
-					</div>
-				</div>
-			</Link>
-		</div>
-	);
+  return (
+    <article className="flex h-full flex-col overflow-hidden rounded-lg border bg-card shadow-sm transition-shadow hover:shadow-md">
+      <Link href={href} className="group block">
+        <div className="relative aspect-[4/3] bg-surface-sunken">
+          {cover ? (
+            <Image
+              src={cover}
+              alt={pkg.imageAlts?.[cover] ?? pkg.name}
+              fill
+              priority={priority}
+              sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+              className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center text-muted-foreground">
+              <ImageIcon size={48} aria-hidden="true" />
+            </div>
+          )}
+          <span
+            data-fact="duration"
+            className="absolute top-3 left-3 inline-flex items-center gap-1 rounded bg-background/90 px-2 py-1 text-xs font-medium"
+          >
+            <Clock className="size-3.5" aria-hidden="true" />
+            {pkg.duration}
+          </span>
+        </div>
+        <div className="grid gap-2 px-5 pt-5">
+          <h3 className="text-xl leading-snug group-hover:underline group-hover:underline-offset-4">
+            {pkg.name}
+          </h3>
+          <p className="line-clamp-2 text-sm text-muted-foreground">
+            {pkg.summary ?? truncateAtWord(pkg.description, 140)}
+          </p>
+        </div>
+      </Link>
+      <div className="mt-auto grid gap-4 px-5 pt-4 pb-5">
+        {pkg.category === "safari" && (
+          <SeasonStrip season={pkg.season} size="sm" />
+        )}
+        <p
+          data-price
+          className={price ? "font-semibold" : "text-sm text-muted-foreground"}
+        >
+          {price ?? PRICE_ON_REQUEST}
+        </p>
+        <div className="flex items-center justify-between gap-3 text-sm font-medium">
+          <Link
+            href={href}
+            className="inline-flex items-center gap-1 text-primary underline-offset-4 hover:underline"
+          >
+            View details <ArrowRight className="size-4" aria-hidden="true" />
+          </Link>
+          <a
+            href={buildWhatsAppUrl({ packageName: pkg.name })}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`Ask about ${pkg.name} on WhatsApp`}
+            className="inline-flex items-center gap-1 text-foreground underline-offset-4 hover:underline"
+          >
+            <WhatsappLogo
+              weight="fill"
+              className="size-4 text-whatsapp"
+              aria-hidden="true"
+            />
+            Ask
+          </a>
+        </div>
+      </div>
+    </article>
+  )
 }

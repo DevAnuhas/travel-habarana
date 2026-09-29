@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest"
 
 import {
+  CATEGORY_SECTIONS,
+  groupPackagesByCategory,
   inferCategory,
   selectRelatedPackages,
   sortPackages,
@@ -106,5 +108,27 @@ describe("inferCategory", () => {
 
   it("returns undefined when nothing matches", () => {
     expect(inferCategory("misc", "Airport transfer")).toBeUndefined()
+  })
+})
+
+// Reuses the file's `item(_id, extra: Partial<OrderablePackage>)` helper.
+describe("groupPackagesByCategory", () => {
+  it("orders groups safari → experience → tour → stay → other and skips empty ones", () => {
+    const groups = groupPackagesByCategory([
+      item("cottage", { category: "stay" }),
+      item("loose"),
+      item("hurulu", { category: "safari", sortOrder: 2 }),
+      item("minneriya", { category: "safari", sortOrder: 1 }),
+    ])
+    expect(groups.map((g) => g.key)).toEqual(["safari", "stay", "other"])
+    expect(groups[0].items.map((p) => p._id)).toEqual(["minneriya", "hurulu"])
+  })
+
+  it("keeps category intros neutral (no service claims)", () => {
+    for (const section of CATEGORY_SECTIONS) {
+      expect(section.intro).not.toMatch(
+        /private|free|pickup|guide|meal|bullock|cart|driver/i
+      )
+    }
   })
 })

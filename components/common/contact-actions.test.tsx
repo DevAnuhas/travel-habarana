@@ -27,6 +27,6 @@ describe("ContactActions", () => {
   })
 
   it("never nests a button inside a link", () => {
-    expect(html).not.toMatch(/<a[^>]*>(?:(?!<\/a>)[\s\S])*<button/)
+    expect(html).not.toMatch(/<a\s[^>]*>(?:(?!<\/a>)[\s\S])*<button/)
   })
 })
